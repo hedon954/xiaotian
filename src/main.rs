@@ -14,10 +14,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the logger
     env_logger::init();
 
-    // Create a tokio runtime
-    let runtime = tokio::runtime::Runtime::new()?;
-    let handle = runtime.handle().clone();
-
     // Create a storage instance
     let storage = Arc::new(MemoryStorage::new());
 
@@ -26,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::new(DefaultSourceFactory::new(None).expect("Failed to initialize source factory"));
 
     // Create and start the REPL
-    let mut repl = Repl::new(storage, source_factory, handle)?;
+    let mut repl = Repl::new(storage, source_factory)?;
     repl.start().await?;
 
     Ok(())

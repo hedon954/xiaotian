@@ -12,23 +12,17 @@ use crate::storage::Storage;
 pub struct Repl<S: Storage> {
     command_handler: CommandHandler<S>,
     editor: DefaultEditor,
-    runtime_handle: Handle,
 }
 
 impl<S: Storage> Repl<S> {
     /// Create a new REPL
-    pub fn new(
-        storage: Arc<S>,
-        source_factory: Arc<dyn SourceFactory>,
-        runtime_handle: Handle,
-    ) -> RustylineResult<Self> {
+    pub fn new(storage: Arc<S>, source_factory: Arc<dyn SourceFactory>) -> RustylineResult<Self> {
         let command_handler = CommandHandler::new(storage, source_factory);
         let editor = DefaultEditor::new()?;
 
         Ok(Self {
             command_handler,
             editor,
-            runtime_handle,
         })
     }
 

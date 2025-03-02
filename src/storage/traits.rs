@@ -31,7 +31,7 @@ pub trait RepositoryStorage {
 #[async_trait]
 pub trait SubscriptionStorage {
     /// Get a subscription by ID
-    async fn get_subscription(&self, id: &Uuid) -> Result<Subscription, StorageError>;
+    async fn get_subscription(&self, id: &Uuid) -> Result<Option<Subscription>, StorageError>;
 
     /// Get all subscriptions
     async fn get_all_subscriptions(&self) -> Result<Vec<Subscription>, StorageError>;

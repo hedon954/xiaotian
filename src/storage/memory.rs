@@ -67,11 +67,8 @@ impl RepositoryStorage for MemoryStorage {
 
 #[async_trait]
 impl SubscriptionStorage for MemoryStorage {
-    async fn get_subscription(&self, id: &Uuid) -> Result<Subscription, StorageError> {
-        self.subscriptions
-            .get(id)
-            .map(|s| s.clone())
-            .ok_or_else(|| StorageError::NotFound(*id))
+    async fn get_subscription(&self, id: &Uuid) -> Result<Option<Subscription>, StorageError> {
+        Ok(self.subscriptions.get(id).map(|s| s.clone()))
     }
 
     async fn get_all_subscriptions(&self) -> Result<Vec<Subscription>, StorageError> {
@@ -99,7 +96,7 @@ impl SubscriptionStorage for MemoryStorage {
             .iter()
             .find(|s| {
                 s.source_type == crate::models::SourceType::GitHub
-                    && s.source_id.starts_with(&format!("github:"))
+                    && s.source_id.starts_with("github:")
             })
             .map(|s| s.clone());
         Ok(subscription)

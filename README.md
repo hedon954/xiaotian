@@ -5,15 +5,18 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 ## Features
 
 - Repository subscription management
-- Update retrieval from GitHub repositories
-- Notification system for new updates
-- Report generation for repository activities
+- GitHub API integration with token support
+- Update retrieval from GitHub repositories (commits, issues, pull requests, releases)
+- Configuration management with persistent settings
+- Customizable update display with filtering options
+- User-friendly REPL interface
 
 ## Installation
 
 ### Prerequisites
 
 - Rust 1.70 or higher
+- GitHub Personal Access Token (optional, for higher API rate limits)
 
 ### Building from Source
 
@@ -26,7 +29,7 @@ cd xiaotian
 cargo build --release
 
 # Run the application
-cargo run --release
+cargo run --release --bin xiaotian
 ```
 
 ## Usage
@@ -51,9 +54,61 @@ xiaotian> help
 - `clear` - Clear all data
 - `exit` or `quit` - Exit the application
 
+### New Commands in v0.2.1
+
+- `config get <key>` - Get a configuration value (github_token, default_fetch_days, default_show_limit)
+- `config set <key> <value>` - Set a configuration value
+- `fetch updates <subscription_id> [days]` - Fetch updates for a subscription for the last N days
+- `show updates <subscription_id> [limit]` - Show recent updates for a subscription with optional limit
+
+## Configuration
+
+XiaoTian supports persistent configuration through the `config` command:
+
+```
+# Set GitHub API token
+xiaotian> config set github_token ghp_your_token_here
+
+# Configure default number of days for fetch updates
+xiaotian> config set default_fetch_days 14
+
+# Configure default limit for showing updates
+xiaotian> config set default_show_limit 20
+```
+
+## Examples
+
+### Managing Subscriptions and Fetching Updates
+
+```
+# Add a subscription to the Rust repository
+xiaotian> add subscription rust-lang rust
+
+# List subscriptions
+xiaotian> list subscriptions
+Subscriptions:
+- rust-lang/rust (8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g)
+
+# Fetch recent updates
+xiaotian> fetch updates 8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g 7
+
+# Show updates with limit
+xiaotian> show updates 8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g 10
+```
+
 ## Development
 
-XiaoTian is currently in version 0.1.0, focusing on the core architecture and basic functionality.
+XiaoTian is currently in version 0.2.1. Key features implemented:
+
+- Core architecture and storage system (v0.1.0)
+- GitHub API integration (v0.2.0)
+- REPL commands for configuration and update management (v0.2.1)
+
+Future development plans include:
+
+- Update notification system
+- Report generation
+- Support for additional source types beyond GitHub
 
 ## License
 

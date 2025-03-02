@@ -277,7 +277,7 @@ impl GitHubSource {
             releases
                 .items
                 .into_iter()
-                .filter(|r| r.published_at.map_or(false, |d| d >= since_time))
+                .filter(|r| r.published_at.is_some_and(|d| d >= since_time))
                 .collect::<Vec<_>>()
         } else {
             releases.items

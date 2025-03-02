@@ -97,7 +97,10 @@ impl SubscriptionStorage for MemoryStorage {
         let subscription = self
             .subscriptions
             .iter()
-            .find(|s| s.repository.id == *repo_id)
+            .find(|s| {
+                s.source_type == crate::models::SourceType::GitHub
+                    && s.source_id.starts_with(&format!("github:"))
+            })
             .map(|s| s.clone());
         Ok(subscription)
     }
@@ -137,10 +140,15 @@ impl UpdateStorage for MemoryStorage {
         &self,
         repo_id: &Uuid,
     ) -> Result<Vec<Update>, StorageError> {
+        let source_id = format!("github:{}", repo_id);
+
         let filtered: Vec<Update> = self
             .updates
             .iter()
-            .filter(|u| u.repository_id == *repo_id)
+            .filter(|u| {
+                u.source_type == crate::models::SourceType::GitHub
+                    && u.source_id.contains(&repo_id.to_string())
+            })
             .map(|u| u.clone())
             .collect();
         Ok(filtered)

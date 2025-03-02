@@ -1,18 +1,23 @@
 use std::sync::Arc;
 
 use super::error::ReplError;
+use crate::models::source::SourceFactory;
 use crate::models::{Repository, Subscription};
 use crate::storage::Storage;
 
 /// Command handler for REPL
 pub struct CommandHandler<S: Storage> {
     storage: Arc<S>,
+    source_factory: Arc<dyn SourceFactory>,
 }
 
 impl<S: Storage> CommandHandler<S> {
     /// Create a new command handler
-    pub fn new(storage: Arc<S>) -> Self {
-        Self { storage }
+    pub fn new(storage: Arc<S>, source_factory: Arc<dyn SourceFactory>) -> Self {
+        Self {
+            storage,
+            source_factory,
+        }
     }
 
     /// Execute a command
@@ -85,17 +90,8 @@ Available commands:
                 let owner = args[1].to_string();
                 let name = args[2].to_string();
 
-                // Get the repository or create it if it doesn't exist
-                let repository = match self.storage.get_repository_by_name(&owner, &name).await {
-                    Ok(repo) => repo,
-                    Err(_) => {
-                        let repo = Repository::new(owner.clone(), name.clone());
-                        self.storage.save_repository(repo).await?
-                    }
-                };
-
-                // Create a new subscription
-                let subscription = Subscription::simple(repository);
+                // Create a new GitHub subscription
+                let subscription = Subscription::simple_github(owner.clone(), name.clone());
 
                 // Save the subscription
                 self.storage.save_subscription(subscription).await?;
@@ -141,7 +137,7 @@ Available commands:
 
                 let mut result = String::from("Subscriptions:\n");
                 for sub in subscriptions {
-                    result.push_str(&format!("- {} ({})\n", sub.repository.full_name(), sub.id));
+                    result.push_str(&format!("- {} ({})\n", sub.name, sub.id));
                 }
 
                 Ok(result)
@@ -212,10 +208,9 @@ Available commands:
 
                 let mut result = String::new();
                 result.push_str(&format!("Subscription: {}\n", subscription.id));
-                result.push_str(&format!(
-                    "Repository: {}/{}\n",
-                    subscription.repository.owner, subscription.repository.name
-                ));
+                result.push_str(&format!("Name: {}\n", subscription.name));
+                result.push_str(&format!("Source Type: {:?}\n", subscription.source_type));
+                result.push_str(&format!("Source ID: {}\n", subscription.source_id));
 
                 if !subscription.tags.is_empty() {
                     result.push_str(&format!("Tags: {}\n", subscription.tags.join(", ")));

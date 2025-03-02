@@ -1,13 +1,16 @@
 mod models;
 mod repl;
+mod sources;
 mod storage;
 
 use std::sync::Arc;
 
 use repl::Repl;
+use sources::DefaultSourceFactory;
 use storage::MemoryStorage;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the logger
     env_logger::init();
 
@@ -18,9 +21,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a storage instance
     let storage = Arc::new(MemoryStorage::new());
 
+    // Create the source factory (without authentication for now)
+    let source_factory =
+        Arc::new(DefaultSourceFactory::new(None).expect("Failed to initialize source factory"));
+
     // Create and start the REPL
-    let mut repl = Repl::new(storage, handle)?;
-    repl.start()?;
+    let mut repl = Repl::new(storage, source_factory, handle)?;
+    repl.start().await?;
 
     Ok(())
 }

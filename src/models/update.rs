@@ -2,7 +2,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Type of GitHub event
+use super::source::SourceType;
+
+/// Type of update event
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum UpdateEventType {
     /// New commit
@@ -17,16 +19,25 @@ pub enum UpdateEventType {
     IssueUpdate,
     /// New release
     Release,
+    /// Generic article or post
+    Article,
+    /// Generic comment
+    Comment,
+    /// Other event types
+    Other,
 }
 
-/// Represents an update event from a repository
+/// Represents an update event from any source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Update {
     /// Unique identifier for the update
     pub id: Uuid,
 
-    /// Repository this update is from
-    pub repository_id: Uuid,
+    /// Source type (GitHub, HackerNews, etc.)
+    pub source_type: SourceType,
+
+    /// Source identifier (e.g., repository ID)
+    pub source_id: String,
 
     /// Type of event
     pub event_type: UpdateEventType,
@@ -50,13 +61,14 @@ pub struct Update {
     pub fetched_at: DateTime<Utc>,
 
     /// Additional data in JSON format
-    pub additional_data: Option<String>,
+    pub additional_data: Option<serde_json::Value>,
 }
 
 impl Update {
     /// Create a new update
     pub fn new(
-        repository_id: Uuid,
+        source_type: SourceType,
+        source_id: String,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,
@@ -66,7 +78,8 @@ impl Update {
     ) -> Self {
         Self {
             id: Uuid::new_v4(),
-            repository_id,
+            source_type,
+            source_id,
             event_type,
             title,
             description,
@@ -75,6 +88,33 @@ impl Update {
             event_date,
             fetched_at: Utc::now(),
             additional_data: None,
+        }
+    }
+
+    /// Create a new update with additional data
+    pub fn with_data(
+        source_type: SourceType,
+        source_id: String,
+        event_type: UpdateEventType,
+        title: String,
+        description: Option<String>,
+        url: String,
+        author: Option<String>,
+        event_date: DateTime<Utc>,
+        additional_data: serde_json::Value,
+    ) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            source_type,
+            source_id,
+            event_type,
+            title,
+            description,
+            url,
+            author,
+            event_date,
+            fetched_at: Utc::now(),
+            additional_data: Some(additional_data),
         }
     }
 }

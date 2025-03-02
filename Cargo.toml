@@ -1,11 +1,24 @@
 [package]
 name = "xiaotian"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["Hedon <171725713@qq.com>"]
 description = "A CLI tool for monitoring GitHub repositories."
 license = "MIT"
 repository = "https://github.com/hedon954/xiaotian"
+
+# 添加库配置
+[lib]
+name = "xiaotian"
+path = "src/lib.rs"
+
+# 这里是一个示例，禁用未使用的导入警告
+lints = { unused_imports = "allow" }
+
+[[example]]
+name = "github_fetch"
+path = "examples/github_fetch.rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

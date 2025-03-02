@@ -5,6 +5,7 @@ use rustyline::{DefaultEditor, Result as RustylineResult};
 use tokio::runtime::Handle;
 
 use super::commands::CommandHandler;
+use crate::models::source::SourceFactory;
 use crate::storage::Storage;
 
 /// REPL (Read-Eval-Print Loop) for XiaoTian
@@ -16,8 +17,12 @@ pub struct Repl<S: Storage> {
 
 impl<S: Storage> Repl<S> {
     /// Create a new REPL
-    pub fn new(storage: Arc<S>, runtime_handle: Handle) -> RustylineResult<Self> {
-        let command_handler = CommandHandler::new(storage);
+    pub fn new(
+        storage: Arc<S>,
+        source_factory: Arc<dyn SourceFactory>,
+        runtime_handle: Handle,
+    ) -> RustylineResult<Self> {
+        let command_handler = CommandHandler::new(storage, source_factory);
         let editor = DefaultEditor::new()?;
 
         Ok(Self {
@@ -28,7 +33,7 @@ impl<S: Storage> Repl<S> {
     }
 
     /// Start the REPL
-    pub fn start(&mut self) -> RustylineResult<()> {
+    pub async fn start(&mut self) -> RustylineResult<()> {
         println!(
             "{}",
             "Welcome to XiaoTian - GitHub Repository Tracker".bright_green()
@@ -46,7 +51,7 @@ impl<S: Storage> Repl<S> {
                         break;
                     }
 
-                    self.process_command(&line);
+                    self.process_command(&line).await;
                 }
                 Err(err) => {
                     println!("Error: {:?}", err);
@@ -59,7 +64,7 @@ impl<S: Storage> Repl<S> {
     }
 
     /// Process a command
-    fn process_command(&self, line: &str) {
+    async fn process_command(&self, line: &str) {
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.is_empty() {
             return;
@@ -73,9 +78,7 @@ impl<S: Storage> Repl<S> {
         };
 
         // Execute the command in the tokio runtime
-        let result = self
-            .runtime_handle
-            .block_on(async { self.command_handler.execute(command, args).await });
+        let result = self.command_handler.execute(command, args).await;
 
         match result {
             Ok(output) => println!("{}", output),

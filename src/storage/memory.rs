@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use super::error::StorageError;
 use super::{RepositoryStorage, Storage, SubscriptionStorage, UpdateStorage};
-use crate::models::{Repository, Subscription, Update};
+use crate::models::{Repository, SourceType, Subscription, Update};
 
 /// In-memory implementation of Storage using DashMap
 #[derive(Debug, Clone, Default)]
@@ -94,10 +94,7 @@ impl SubscriptionStorage for MemoryStorage {
         let subscription = self
             .subscriptions
             .iter()
-            .find(|s| {
-                s.source_type == crate::models::SourceType::GitHub
-                    && s.source_id.starts_with("github:")
-            })
+            .find(|s| s.source_type == SourceType::GitHub && s.source_id.starts_with("github:"))
             .map(|s| s.clone());
         Ok(subscription)
     }

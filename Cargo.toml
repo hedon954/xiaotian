@@ -12,8 +12,10 @@ repository = "https://github.com/hedon954/xiaotian"
 name = "xiaotian"
 path = "src/lib.rs"
 
-# 这里是一个示例，禁用未使用的导入警告
-lints = { unused_imports = "allow" }
+[[bin]]
+name = "xiaotian"
+path = "src/main.rs"
+
 
 [[example]]
 name = "github_fetch"

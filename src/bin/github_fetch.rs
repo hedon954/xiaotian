@@ -4,15 +4,9 @@ use std::sync::Arc;
 use chrono::{Duration, Utc};
 use octocrab::Octocrab;
 
-use crate::models::UpdateEventType;
-use crate::models::source::Source;
-use crate::sources::github::GitHubSource;
-
-#[path = "../models/mod.rs"]
-mod models;
-
-#[path = "../sources/mod.rs"]
-mod sources;
+use xiaotian::models::UpdateEventType;
+use xiaotian::models::source::Source;
+use xiaotian::sources::github::GitHubSource;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

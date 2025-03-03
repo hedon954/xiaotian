@@ -54,11 +54,6 @@ impl SourceFactory for DefaultSourceFactory {
                 );
                 Ok(Box::new(source))
             }
-            // Add cases for other source types as they are implemented
-            _ => Err(SourceError::Other(format!(
-                "Unsupported source type: {}",
-                config.source_type
-            ))),
         }
     }
 }

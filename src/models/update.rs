@@ -66,6 +66,7 @@ pub struct Update {
 
 impl Update {
     /// Create a new update
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         source_type: SourceType,
         source_id: String,
@@ -92,6 +93,7 @@ impl Update {
     }
 
     /// Create a new update with additional data
+    #[allow(clippy::too_many_arguments)]
     pub fn with_data(
         source_type: SourceType,
         source_id: String,

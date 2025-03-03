@@ -89,7 +89,7 @@ impl SubscriptionStorage for MemoryStorage {
 
     async fn get_subscription_by_repository(
         &self,
-        repo_id: &Uuid,
+        _repo_id: &Uuid,
     ) -> Result<Option<Subscription>, StorageError> {
         let subscription = self
             .subscriptions
@@ -134,7 +134,7 @@ impl UpdateStorage for MemoryStorage {
         &self,
         repo_id: &Uuid,
     ) -> Result<Vec<Update>, StorageError> {
-        let source_id = format!("github:{}", repo_id);
+        let _source_id = format!("github:{}", repo_id);
 
         let filtered: Vec<Update> = self
             .updates

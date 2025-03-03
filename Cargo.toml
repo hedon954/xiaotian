@@ -14,8 +14,11 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "xiaotian"
-path = "src/main.rs"
+path = "src/bin/xiaotian.rs"
 
+[[bin]]
+name = "github_fetch"
+path = "src/bin/github_fetch.rs"
 
 [[example]]
 name = "github_fetch"

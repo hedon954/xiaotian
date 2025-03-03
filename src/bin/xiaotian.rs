@@ -1,14 +1,9 @@
-mod models;
-mod repl;
-mod sources;
-mod storage;
-
 use std::sync::Arc;
 
-use models::AppConfig;
-use repl::Repl;
-use sources::DefaultSourceFactory;
-use storage::MemoryStorage;
+use xiaotian::models::AppConfig;
+use xiaotian::repl::Repl;
+use xiaotian::sources::DefaultSourceFactory;
+use xiaotian::storage::MemoryStorage;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

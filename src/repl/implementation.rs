@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use colored::Colorize;
 use rustyline::{DefaultEditor, Result as RustylineResult};
-use tokio::runtime::Handle;
 
 use super::commands::CommandHandler;
 use crate::models::source::SourceFactory;

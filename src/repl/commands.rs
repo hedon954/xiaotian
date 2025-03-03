@@ -5,8 +5,8 @@ use chrono::{Duration, Utc};
 use uuid::Uuid;
 
 use super::error::ReplError;
-use crate::models::source::{Source, SourceFactory};
-use crate::models::{AppConfig, Repository, Subscription, Update, UpdateType};
+use crate::models::source::SourceFactory;
+use crate::models::{AppConfig, Repository, Subscription, Update};
 use crate::storage::Storage;
 
 /// Command handler for REPL

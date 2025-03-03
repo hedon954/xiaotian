@@ -3,7 +3,6 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use octocrab::Octocrab;
-use octocrab::models::repos;
 use serde_json::json;
 
 use crate::models::source::{SourceMetadata, SourceType};

@@ -3,7 +3,7 @@ use dashmap::DashMap;
 use uuid::Uuid;
 
 use super::error::StorageError;
-use super::traits::{RepositoryStorage, Storage, SubscriptionStorage, UpdateStorage};
+use super::{RepositoryStorage, Storage, SubscriptionStorage, UpdateStorage};
 use crate::models::{Repository, Subscription, Update};
 
 /// In-memory implementation of Storage using DashMap

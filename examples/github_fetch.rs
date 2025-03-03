@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("Failed to create GitHub client")
     };
 
-    // 创建 GitHub 源
+    // create GitHub source
     let source = GitHubSource::new(owner.clone(), repo.clone(), None, Arc::new(client));
 
     println!(
@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         owner, repo, days
     );
 
-    // 获取更新
+    // get updates
     let since = Utc::now() - Duration::days(days);
     match source.fetch_updates(Some(since)).await {
         Ok(updates) => {
@@ -74,7 +74,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            println!("\nCommits ({}个):", commits.len());
+            println!("\nCommits ({}):", commits.len());
             for commit in commits {
                 println!(
                     "  - {}: {}",
@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
 
-            println!("\nIssues ({}个):", issues.len());
+            println!("\nIssues ({}):", issues.len());
             for issue in issues {
                 println!(
                     "  - {}: {}",
@@ -92,12 +92,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
 
-            println!("\nPull Requests ({}个):", prs.len());
+            println!("\nPull Requests ({}):", prs.len());
             for pr in prs {
                 println!("  - {}: {}", pr.event_date.format("%Y-%m-%d"), pr.title);
             }
 
-            println!("\nReleases ({}个):", releases.len());
+            println!("\nReleases ({}):", releases.len());
             for release in releases {
                 println!(
                     "  - {}: {}",
@@ -107,7 +107,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             if !others.is_empty() {
-                println!("\nOther updates ({}个):", others.len());
+                println!("\nOther updates ({}):", others.len());
                 for other in others {
                     println!(
                         "  - {}: {}",

@@ -4,12 +4,10 @@ use std::sync::Arc;
 use chrono::{Duration, Utc};
 use octocrab::Octocrab;
 
-// 导入当前 crate 中的模块
 use crate::models::UpdateEventType;
 use crate::models::source::Source;
 use crate::sources::github::GitHubSource;
 
-// 添加这个标记表示这是一个独立的二进制文件
 #[path = "../models/mod.rs"]
 mod models;
 
@@ -18,10 +16,10 @@ mod sources;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 解析命令行参数
+    // parse command line arguments
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
-        eprintln!("用法: {} <所有者> <仓库名> [天数]", args[0]);
+        eprintln!("Usage: {} <owner> <repo> [days]", args[0]);
         std::process::exit(1);
     }
 
@@ -33,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         7
     };
 
-    // 创建 GitHub 客户端
+    // create GitHub client
     let token = env::var("GITHUB_TOKEN").ok();
     let client = if let Some(token) = token {
         println!("Use GitHub token for authentication");
@@ -50,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .expect("Failed to create GitHub client")
     };
 
-    // 创建 GitHub 源
+    // create GitHub source
     let source = GitHubSource::new(owner.clone(), repo.clone(), None, Arc::new(client));
 
     println!(
@@ -58,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         owner, repo, days
     );
 
-    // 获取更新
+    // get updates
     let since = Utc::now() - Duration::days(days);
     match source.fetch_updates(Some(since)).await {
         Ok(updates) => {
@@ -83,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
 
-            println!("\nCommits ({}个):", commits.len());
+            println!("\nCommits ({}):", commits.len());
             for commit in commits {
                 println!(
                     "  - {}: {}",
@@ -92,7 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
 
-            println!("\nIssues ({}个):", issues.len());
+            println!("\nIssues ({}):", issues.len());
             for issue in issues {
                 println!(
                     "  - {}: {}",
@@ -101,12 +99,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
 
-            println!("\nPull Requests ({}个):", prs.len());
+            println!("\nPull Requests ({}):", prs.len());
             for pr in prs {
                 println!("  - {}: {}", pr.event_date.format("%Y-%m-%d"), pr.title);
             }
 
-            println!("\nReleases ({}个):", releases.len());
+            println!("\nReleases ({}):", releases.len());
             for release in releases {
                 println!(
                     "  - {}: {}",
@@ -116,7 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             if !others.is_empty() {
-                println!("\nOther updates ({}个):", others.len());
+                println!("\nOther updates ({}):", others.len());
                 for other in others {
                     println!(
                         "  - {}: {}",

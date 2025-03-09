@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -16,27 +15,6 @@ pub struct Repository {
 
     /// Full repository URL
     pub url: String,
-
-    /// Repository description
-    pub description: Option<String>,
-
-    /// Default branch (usually main or master)
-    pub default_branch: Option<String>,
-
-    /// Number of stars
-    pub stars: Option<u64>,
-
-    /// Number of forks
-    pub forks: Option<u64>,
-
-    /// When the repository was created in GitHub
-    pub created_at: Option<DateTime<Utc>>,
-
-    /// When the repository was last updated in GitHub
-    pub updated_at: Option<DateTime<Utc>>,
-
-    /// When we last fetched this repository's information
-    pub last_fetched: Option<DateTime<Utc>>,
 }
 
 impl Repository {
@@ -49,13 +27,6 @@ impl Repository {
             owner,
             name,
             url,
-            description: None,
-            default_branch: None,
-            stars: None,
-            forks: None,
-            created_at: None,
-            updated_at: None,
-            last_fetched: None,
         }
     }
 

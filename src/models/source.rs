@@ -85,6 +85,15 @@ pub trait Source: Send + Sync {
 
     /// Get source-specific metadata
     fn get_metadata(&self) -> SourceMetadata;
+
+    /// Check if two updates are duplicates according to source-specific rules
+    ///
+    /// Default implementation considers updates with the same source_id, event_type, and title as duplicates
+    fn is_duplicate(&self, update1: &Update, update2: &Update) -> bool {
+        update1.source_id == update2.source_id
+            && update1.event_type == update2.event_type
+            && update1.title == update2.title
+    }
 }
 
 /// Source configuration - used when creating a source from a subscription

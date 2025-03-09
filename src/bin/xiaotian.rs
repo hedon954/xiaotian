@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_path = AppConfig::get_default_path();
     let config = AppConfig::load_from_file(&config_path).unwrap_or_default();
 
-    println!("XiaoTian v0.2.1");
+    println!("XiaoTian v0.2.2");
 
     // Log GitHub token status
     if config.github_token.is_some() {

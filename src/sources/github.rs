@@ -329,7 +329,7 @@ impl Source for GitHubSource {
     }
 
     fn get_description(&self) -> Option<String> {
-        None // We could fetch this from the API, but we'll leave it for now
+        None
     }
 
     fn get_url(&self) -> String {
@@ -340,23 +340,20 @@ impl Source for GitHubSource {
         &self,
         since: Option<DateTime<Utc>>,
     ) -> Result<Vec<Update>, SourceError> {
-        let mut all_updates = Vec::new();
+        let mut updates = Vec::new();
 
-        // Fetch different types of updates and combine them
-        let commit_updates = self.fetch_commits(since).await?;
-        let issue_updates = self.fetch_issues(since).await?;
-        let pr_updates = self.fetch_pull_requests(since).await?;
-        let release_updates = self.fetch_releases(since).await?;
+        // Fetch the different types of updates
+        let commits = self.fetch_commits(since).await?;
+        let issues = self.fetch_issues(since).await?;
+        let pull_requests = self.fetch_pull_requests(since).await?;
+        let releases = self.fetch_releases(since).await?;
 
-        all_updates.extend(commit_updates);
-        all_updates.extend(issue_updates);
-        all_updates.extend(pr_updates);
-        all_updates.extend(release_updates);
+        updates.extend(commits);
+        updates.extend(issues);
+        updates.extend(pull_requests);
+        updates.extend(releases);
 
-        // Sort updates by date, newest first
-        all_updates.sort_by(|a, b| b.event_date.cmp(&a.event_date));
-
-        Ok(all_updates)
+        Ok(updates)
     }
 
     fn get_metadata(&self) -> SourceMetadata {
@@ -366,8 +363,87 @@ impl Source for GitHubSource {
                 "owner": self.owner,
                 "repo": self.repo,
                 "branch": self.branch,
-                "url": self.get_url(),
             }),
+        }
+    }
+
+    fn is_duplicate(&self, update1: &Update, update2: &Update) -> bool {
+        // 基本条件：必须是相同仓库和相同事件类型
+        if update1.source_id != update2.source_id || update1.event_type != update2.event_type {
+            return false;
+        }
+
+        // 根据事件类型使用不同的判断标准
+        match update1.event_type {
+            UpdateEventType::Commit => {
+                // 对于提交，尝试从additional_data中提取SHA
+                if let (Some(data1), Some(data2)) =
+                    (&update1.additional_data, &update2.additional_data)
+                {
+                    if let (Some(sha1), Some(sha2)) = (
+                        data1.get("sha").and_then(|v| v.as_str()),
+                        data2.get("sha").and_then(|v| v.as_str()),
+                    ) {
+                        return sha1 == sha2;
+                    }
+                }
+                // 如果无法获取SHA，退回到标题和日期比较
+                update1.title == update2.title && update1.event_date == update2.event_date
+            }
+            UpdateEventType::Issue | UpdateEventType::IssueUpdate => {
+                // 对于问题，使用问题编号
+                if let (Some(data1), Some(data2)) =
+                    (&update1.additional_data, &update2.additional_data)
+                {
+                    if let (Some(num1), Some(num2)) = (
+                        data1.get("number").and_then(|v| v.as_u64()),
+                        data2.get("number").and_then(|v| v.as_u64()),
+                    ) {
+                        return num1 == num2;
+                    }
+                }
+                // 退回到标题和日期
+                update1.title == update2.title && update1.event_date == update2.event_date
+            }
+            UpdateEventType::PullRequest | UpdateEventType::PullRequestUpdate => {
+                // 对于PR，使用PR编号
+                if let (Some(data1), Some(data2)) =
+                    (&update1.additional_data, &update2.additional_data)
+                {
+                    if let (Some(num1), Some(num2)) = (
+                        data1.get("number").and_then(|v| v.as_u64()),
+                        data2.get("number").and_then(|v| v.as_u64()),
+                    ) {
+                        return num1 == num2;
+                    }
+                }
+                // 退回到标题和日期
+                update1.title == update2.title && update1.event_date == update2.event_date
+            }
+            UpdateEventType::Release => {
+                // 对于发布，使用tag名称和ID
+                if let (Some(data1), Some(data2)) =
+                    (&update1.additional_data, &update2.additional_data)
+                {
+                    if let (Some(id1), Some(id2)) = (
+                        data1.get("id").and_then(|v| v.as_u64()),
+                        data2.get("id").and_then(|v| v.as_u64()),
+                    ) {
+                        return id1 == id2;
+                    }
+                    // 退回到tag名称
+                    if let (Some(tag1), Some(tag2)) = (
+                        data1.get("tag_name").and_then(|v| v.as_str()),
+                        data2.get("tag_name").and_then(|v| v.as_str()),
+                    ) {
+                        return tag1 == tag2;
+                    }
+                }
+                // 退回到标题和日期
+                update1.title == update2.title && update1.event_date == update2.event_date
+            }
+            // 对于其他类型的更新，使用默认的标题、类型和ID比较
+            _ => update1.title == update2.title && update1.event_date == update2.event_date,
         }
     }
 }

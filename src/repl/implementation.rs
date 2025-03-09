@@ -3,24 +3,25 @@ use std::sync::Arc;
 use colored::Colorize;
 use rustyline::{DefaultEditor, Result as RustylineResult};
 
-use super::commands::CommandHandler;
+use crate::command::{Command, CommandParser};
 use crate::models::source::SourceFactory;
+use crate::process::{CommandProcessor, CommandProcessorImpl};
 use crate::storage::Storage;
 
 /// REPL (Read-Eval-Print Loop) for XiaoTian
-pub struct Repl<S: Storage> {
-    command_handler: CommandHandler<S>,
+pub struct Repl<S: Storage + Send + Sync + 'static> {
+    command_processor: CommandProcessorImpl<S>,
     editor: DefaultEditor,
 }
 
-impl<S: Storage> Repl<S> {
+impl<S: Storage + Send + Sync + 'static> Repl<S> {
     /// Create a new REPL
     pub fn new(storage: Arc<S>, source_factory: Arc<dyn SourceFactory>) -> RustylineResult<Self> {
-        let command_handler = CommandHandler::new(storage, source_factory);
+        let command_processor = CommandProcessorImpl::new(storage, source_factory);
         let editor = DefaultEditor::new()?;
 
         Ok(Self {
-            command_handler,
+            command_processor,
             editor,
         })
     }
@@ -58,20 +59,22 @@ impl<S: Storage> Repl<S> {
 
     /// Process a command
     async fn process_command(&self, line: &str) {
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.is_empty() {
+        // Parse the command
+        let command = match CommandParser::parse(line) {
+            Ok(cmd) => cmd,
+            Err(err) => {
+                println!("{}: {}", "Error".bright_red(), err);
+                return;
+            }
+        };
+
+        // Check for exit command (already handled in the loop)
+        if matches!(command, Command::Exit) {
             return;
         }
 
-        let command = parts[0];
-        let args = if parts.len() > 1 {
-            parts[1..].to_vec()
-        } else {
-            Vec::new()
-        };
-
-        // Execute the command in the tokio runtime
-        let result = self.command_handler.execute(command, args).await;
+        // Execute the command
+        let result = self.command_processor.process(command).await;
 
         match result {
             Ok(output) => println!("{}", output),

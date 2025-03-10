@@ -16,15 +16,6 @@ path = "src/lib.rs"
 name = "xiaotian"
 path = "src/bin/xiaotian.rs"
 
-[[bin]]
-name = "github_fetch"
-path = "src/bin/github_fetch.rs"
-
-[[example]]
-name = "github_fetch"
-path = "examples/github_fetch.rs"
-
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

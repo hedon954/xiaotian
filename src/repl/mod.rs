@@ -31,6 +31,14 @@ fn get_callbacks() -> ReplCallbacks {
     callbacks
 }
 
+const BANNER: &str = "
+                 .--~~,__
+    :-....,-------`~~'._.'
+    `-,,,  ,_      ;'~U'
+     _,-' ,'`-__; '--.     (Hi, I'm XiaoTian!)
+    (_/'~~      ''''(;
+";
+
 /// Create a new REPL instance
 pub fn create_repl(ctx: ReplContext) -> Repl<ReplContext, reedline_repl_rs::Error> {
     let history_file = dirs::home_dir()
@@ -43,7 +51,7 @@ pub fn create_repl(ctx: ReplContext) -> Repl<ReplContext, reedline_repl_rs::Erro
         .with_name("XiaoTian")
         .with_version(env!("CARGO_PKG_VERSION"))
         .with_prompt("xiaotian> ")
-        .with_banner("Welcome to XiaoTian REPL!".blue().to_string().as_ref())
+        .with_banner(BANNER.blue().to_string().as_str())
         .with_history(history_file, HISTORY_SIZE)
         .with_derived::<ReplCommand>(callbacks);
     repl

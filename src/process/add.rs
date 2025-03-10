@@ -49,7 +49,7 @@ impl<S: Storage> AddHandler<S> {
 
     /// Add a subscription
     pub async fn add_subscription(&self, owner: String, name: String) -> Result<String, AppError> {
-        // Get or create the repository
+        // get or create the repository
         let repo = match self.storage.get_repository_by_name(&owner, &name).await {
             Ok(repo) => repo,
             Err(_) => {
@@ -59,22 +59,29 @@ impl<S: Storage> AddHandler<S> {
                     name: name.clone(),
                     url: format!("https://github.com/{}/{}", owner, name),
                 };
-
-                // Save the repository and get the saved copy
                 self.storage.save_repository(new_repo).await?
             }
         };
 
-        // Create a subscription using simple_github helper method
-        let subscription = Subscription::simple_github(repo.owner, repo.name);
+        // create a subscription
+        let subscription = Subscription::simple_github(repo.owner.clone(), repo.name.clone());
         let id = subscription.id;
 
-        // Save the subscription
-        self.storage.save_subscription(subscription).await?;
+        // check if the source_id is valid (although we just created the repo, for safety)
+        // TODO: make it thread safe
+        if !self.storage.verify_source_exists(&subscription).await? {
+            return Err(AppError::ReferenceIntegrityError(format!(
+                "Cannot create subscription: Source {}/{} does not exist",
+                owner, name
+            )));
+        }
 
-        Ok(format!(
-            "Subscription added for: {}/{} (id: {})",
-            owner, name, id
-        ))
+        match self.storage.save_subscription(subscription).await {
+            Ok(_) => Ok(format!(
+                "Subscription added for: {}/{} (id: {})",
+                owner, name, id
+            )),
+            Err(e) => Err(AppError::StorageError(e)),
+        }
     }
 }

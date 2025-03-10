@@ -25,6 +25,14 @@ pub enum StorageError {
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
+    /// Reference integrity error
+    #[error("Reference integrity error: {0}")]
+    ReferenceIntegrityError(String),
+
+    /// Related entities exist
+    #[error("Cannot delete because {0} related entities exist")]
+    RelatedEntitiesExist(usize),
+
     /// Other error
     #[error("Storage error: {0}")]
     Other(String),

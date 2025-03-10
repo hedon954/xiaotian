@@ -18,6 +18,16 @@ impl<S: Storage> ListHandler<S> {
         Self { storage }
     }
 
+    /// Get a repository by owner and name
+    pub async fn get_repository_by_name(
+        &self,
+        owner: &str,
+        name: &str,
+    ) -> Result<crate::models::Repository, AppError> {
+        let repo = self.storage.get_repository_by_name(owner, name).await?;
+        Ok(repo)
+    }
+
     /// List all repositories
     pub async fn list_repositories(&self) -> Result<String, AppError> {
         let repositories = self.storage.get_all_repositories().await?;

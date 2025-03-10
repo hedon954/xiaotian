@@ -19,8 +19,11 @@ pub enum DeleteCommands {
 
 #[derive(Parser, Debug)]
 pub struct DeleteRepoOpts {
-    /// ID of the repository
-    id: Uuid,
+    /// Repository owner (username or organization)
+    owner: String,
+
+    /// Repository name
+    name: String,
 }
 
 #[derive(Parser, Debug)]
@@ -54,7 +57,24 @@ impl CmdExector for DeleteRepoOpts {
         self,
         processor: &mut Processor<T>,
     ) -> anyhow::Result<String> {
-        let ret = processor.delete_handler.delete_repository(self.id).await?;
+        // 使用list_handler获取仓库
+        let repo = match processor
+            .list_handler
+            .get_repository_by_name(&self.owner, &self.name)
+            .await
+        {
+            Ok(repo) => repo,
+            Err(_) => {
+                return Err(anyhow::anyhow!(
+                    "Repository {}/{} not found",
+                    self.owner,
+                    self.name
+                ));
+            }
+        };
+
+        // 执行删除
+        let ret = processor.delete_handler.delete_repository(repo.id).await?;
         Ok(ret)
     }
 }
@@ -74,8 +94,12 @@ impl CmdExector for DeleteSubOpts {
 
 impl From<&ArgMatches> for DeleteRepoOpts {
     fn from(args: &ArgMatches) -> Self {
-        let id = args.get_one::<Uuid>("id").unwrap();
-        Self { id: *id }
+        let owner = args.get_one::<String>("owner").unwrap();
+        let name = args.get_one::<String>("name").unwrap();
+        Self {
+            owner: owner.clone(),
+            name: name.clone(),
+        }
     }
 }
 

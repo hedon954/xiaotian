@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use super::error::StorageError;
 use super::{RepositoryStorage, Storage, SubscriptionStorage, UpdateStorage};
-use crate::models::{Repository, SourceType, Subscription, Update, UpdateEventType};
+use crate::models::{Repository, Subscription, Update, UpdateEventType};
 
 /// In-memory implementation of Storage using DashMap
 #[derive(Debug, Clone, Default)]
@@ -118,13 +118,16 @@ impl RepositoryStorage for MemoryStorage {
     async fn get_repository(&self, id: &Uuid) -> Result<Repository, StorageError> {
         self.repositories
             .get(id)
-            .map(|r| r.clone())
+            .map(|v| v.clone())
             .ok_or(StorageError::NotFound(*id))
     }
 
     async fn get_all_repositories(&self) -> Result<Vec<Repository>, StorageError> {
-        let repositories = self.repositories.iter().map(|r| r.clone()).collect();
-        Ok(repositories)
+        Ok(self
+            .repositories
+            .iter()
+            .map(|item| item.value().clone())
+            .collect())
     }
 
     async fn get_repository_by_name(
@@ -136,7 +139,12 @@ impl RepositoryStorage for MemoryStorage {
             .iter()
             .find(|r| r.owner == owner && r.name == name)
             .map(|r| r.clone())
-            .ok_or(StorageError::NotFound(Uuid::nil()))
+            .ok_or_else(|| {
+                StorageError::Other(format!(
+                    "Repository not found with owner/name: {}/{}",
+                    owner, name
+                ))
+            })
     }
 
     async fn save_repository(&self, repository: Repository) -> Result<Repository, StorageError> {
@@ -146,60 +154,192 @@ impl RepositoryStorage for MemoryStorage {
     }
 
     async fn delete_repository(&self, id: &Uuid) -> Result<(), StorageError> {
+        // 删除前检查是否有关联的订阅
+        let related_subs = self.find_related_subscriptions(id).await?;
+        if !related_subs.is_empty() {
+            return Err(StorageError::RelatedEntitiesExist(related_subs.len()));
+        }
+
+        if self.repositories.remove(id).is_some() {
+            Ok(())
+        } else {
+            Err(StorageError::NotFound(*id))
+        }
+    }
+
+    async fn find_related_subscriptions(
+        &self,
+        id: &Uuid,
+    ) -> Result<Vec<Subscription>, StorageError> {
+        // 获取仓库信息
+        let repo = self.get_repository(id).await?;
+        let repo_source_id = format!("github:{}:{}", repo.owner, repo.name);
+
+        // 查找与仓库相关的所有订阅
+        let related_subs: Vec<Subscription> = self
+            .subscriptions
+            .iter()
+            .filter(|s| s.source_id == repo_source_id)
+            .map(|s| s.clone())
+            .collect();
+
+        Ok(related_subs)
+    }
+
+    async fn cascade_delete_repository(&self, id: &Uuid) -> Result<(usize, usize), StorageError> {
+        // 获取关联的订阅
+        let related_subs = self.find_related_subscriptions(id).await?;
+
         if self.repositories.remove(id).is_none() {
             return Err(StorageError::NotFound(*id));
         }
-        Ok(())
+
+        // 记录删除的订阅数量和更新数量
+        let mut total_subs_deleted = 0;
+        let mut total_updates_deleted = 0;
+
+        // 级联删除所有关联的订阅及其更新
+        for sub in related_subs {
+            let updates_deleted = self.cascade_delete_subscription(&sub.id).await?;
+            total_updates_deleted += updates_deleted;
+            total_subs_deleted += 1;
+        }
+
+        Ok((total_subs_deleted, total_updates_deleted))
     }
 }
 
 #[async_trait]
 impl SubscriptionStorage for MemoryStorage {
     async fn get_subscription(&self, id: &Uuid) -> Result<Option<Subscription>, StorageError> {
-        Ok(self.subscriptions.get(id).map(|s| s.clone()))
+        Ok(self.subscriptions.get(id).map(|v| v.clone()))
     }
 
     async fn get_all_subscriptions(&self) -> Result<Vec<Subscription>, StorageError> {
-        let subscriptions = self.subscriptions.iter().map(|s| s.clone()).collect();
-        Ok(subscriptions)
+        Ok(self
+            .subscriptions
+            .iter()
+            .map(|item| item.value().clone())
+            .collect())
     }
 
     async fn get_subscriptions_by_tag(&self, tag: &str) -> Result<Vec<Subscription>, StorageError> {
-        let subscriptions = self
+        let subs: Vec<Subscription> = self
             .subscriptions
             .iter()
             .filter(|s| s.tags.contains(&tag.to_string()))
             .map(|s| s.clone())
             .collect();
-        Ok(subscriptions)
+
+        Ok(subs)
     }
 
     async fn get_subscription_by_repository(
         &self,
-        _repo_id: &Uuid,
+        repo_id: &Uuid,
     ) -> Result<Option<Subscription>, StorageError> {
-        let subscription = self
+        // First get the repository to extract owner/name
+        let repo = match self.get_repository(repo_id).await {
+            Ok(r) => r,
+            Err(_) => return Ok(None),
+        };
+
+        // Look for a subscription with matching source_id
+        let repo_source_id = format!("github:{}:{}", repo.owner, repo.name);
+
+        let sub = self
             .subscriptions
             .iter()
-            .find(|s| s.source_type == SourceType::GitHub && s.source_id.starts_with("github:"))
+            .find(|s| s.source_id == repo_source_id)
             .map(|s| s.clone());
-        Ok(subscription)
+
+        Ok(sub)
+    }
+
+    async fn get_subscriptions_by_source(
+        &self,
+        source_type: &str,
+        source_id: &str,
+    ) -> Result<Vec<Subscription>, StorageError> {
+        let full_source_id = format!("{}:{}", source_type, source_id);
+
+        let subs: Vec<Subscription> = self
+            .subscriptions
+            .iter()
+            .filter(|s| s.source_id == full_source_id)
+            .map(|s| s.clone())
+            .collect();
+
+        Ok(subs)
+    }
+
+    async fn verify_source_exists(
+        &self,
+        subscription: &Subscription,
+    ) -> Result<bool, StorageError> {
+        // 目前仅实现GitHub来源的验证
+        if subscription.source_type != crate::models::SourceType::GitHub {
+            // 如果不是GitHub，暂时返回true（因为我们只处理GitHub）
+            return Ok(true);
+        }
+
+        // 从source_id提取owner和name
+        // 格式应该是"github:owner:repo"
+        let parts: Vec<&str> = subscription.source_id.split(':').collect();
+        if parts.len() != 3 || parts[0] != "github" {
+            return Err(StorageError::ValidationError(
+                "Invalid GitHub source ID format".to_string(),
+            ));
+        }
+
+        let owner = parts[1];
+        let name = parts[2];
+
+        // 检查仓库是否存在
+        match self.get_repository_by_name(owner, name).await {
+            Ok(_) => Ok(true),
+            Err(_) => Ok(false),
+        }
     }
 
     async fn save_subscription(
         &self,
         subscription: Subscription,
     ) -> Result<Subscription, StorageError> {
+        // 验证source是否存在
+        if !self.verify_source_exists(&subscription).await? {
+            return Err(StorageError::ReferenceIntegrityError(format!(
+                "Source does not exist for subscription: {}",
+                subscription.source_id
+            )));
+        }
+
         let id = subscription.id;
         self.subscriptions.insert(id, subscription.clone());
         Ok(subscription)
     }
 
     async fn delete_subscription(&self, id: &Uuid) -> Result<(), StorageError> {
-        if self.subscriptions.remove(id).is_none() {
+        if self.subscriptions.remove(id).is_some() {
+            Ok(())
+        } else {
+            Err(StorageError::NotFound(*id))
+        }
+    }
+
+    async fn cascade_delete_subscription(&self, id: &Uuid) -> Result<usize, StorageError> {
+        // 先检查订阅是否存在
+        if self.subscriptions.get(id).is_none() {
             return Err(StorageError::NotFound(*id));
         }
-        Ok(())
+
+        // 删除与该订阅相关的所有更新
+        let updates_deleted = self.delete_updates_for_subscription(id).await?;
+
+        // 删除订阅本身
+        self.subscriptions.remove(id);
+
+        Ok(updates_deleted)
     }
 }
 
@@ -208,22 +348,29 @@ impl UpdateStorage for MemoryStorage {
     async fn get_update(&self, id: &Uuid) -> Result<Update, StorageError> {
         self.updates
             .get(id)
-            .map(|u| u.clone())
+            .map(|v| v.clone())
             .ok_or(StorageError::NotFound(*id))
     }
 
     async fn get_all_updates(&self) -> Result<Vec<Update>, StorageError> {
-        let updates = self.updates.iter().map(|u| u.clone()).collect();
-        Ok(updates)
+        Ok(self
+            .updates
+            .iter()
+            .map(|item| item.value().clone())
+            .collect())
     }
 
     async fn get_updates_for_repository(
         &self,
         repo_id: &Uuid,
     ) -> Result<Vec<Update>, StorageError> {
-        let repo_source_id = format!("github:{}", repo_id);
+        // First get the repository to extract owner/name
+        let repo = self.get_repository(repo_id).await?;
 
-        let updates = self
+        // Look for updates with matching source_id
+        let repo_source_id = format!("github:{}:{}", repo.owner, repo.name);
+
+        let updates: Vec<Update> = self
             .updates
             .iter()
             .filter(|u| u.source_id == repo_source_id)
@@ -233,15 +380,33 @@ impl UpdateStorage for MemoryStorage {
         Ok(updates)
     }
 
-    async fn save_update(&self, update: Update) -> Result<Update, StorageError> {
-        // Check if this update is a duplicate of an existing one
-        let is_duplicate = self
+    async fn get_updates_for_subscription(
+        &self,
+        subscription_id: &Uuid,
+    ) -> Result<Vec<Update>, StorageError> {
+        // get the subscription
+        let subscription = match self.get_subscription(subscription_id).await? {
+            Some(sub) => sub,
+            None => return Err(StorageError::NotFound(*subscription_id)),
+        };
+
+        // find the updates with matching source_id
+        let updates: Vec<Update> = self
             .updates
             .iter()
-            .any(|existing| self.is_duplicate_update(&existing, &update));
+            .filter(|u| u.source_id == subscription.source_id)
+            .map(|u| u.clone())
+            .collect();
 
-        // If it's a duplicate, return without saving
-        if is_duplicate {
+        Ok(updates)
+    }
+
+    async fn save_update(&self, update: Update) -> Result<Update, StorageError> {
+        if self
+            .updates
+            .iter()
+            .any(|existing| self.is_duplicate_update(&existing, &update))
+        {
             return Ok(update);
         }
 
@@ -251,10 +416,40 @@ impl UpdateStorage for MemoryStorage {
     }
 
     async fn delete_update(&self, id: &Uuid) -> Result<(), StorageError> {
-        if self.updates.remove(id).is_none() {
-            return Err(StorageError::NotFound(*id));
+        if self.updates.remove(id).is_some() {
+            Ok(())
+        } else {
+            Err(StorageError::NotFound(*id))
         }
-        Ok(())
+    }
+
+    async fn delete_updates_for_subscription(
+        &self,
+        subscription_id: &Uuid,
+    ) -> Result<usize, StorageError> {
+        // get the subscription
+        let subscription = match self.get_subscription(subscription_id).await? {
+            Some(sub) => sub,
+            None => return Err(StorageError::NotFound(*subscription_id)),
+        };
+
+        // get the related updates
+        let updates = self
+            .updates
+            .iter()
+            .filter(|u| u.source_id == subscription.source_id)
+            .map(|u| *u.key())
+            .collect::<Vec<Uuid>>();
+
+        // delete all the related updates
+        let mut count = 0;
+        for update_id in updates {
+            if self.updates.remove(&update_id).is_some() {
+                count += 1;
+            }
+        }
+
+        Ok(count)
     }
 }
 

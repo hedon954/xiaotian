@@ -98,17 +98,44 @@ xiaotian> show updates 8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g 10
 
 ## Development
 
-XiaoTian is currently in version 0.2.1. Key features implemented:
+XiaoTian is currently in version 0.2.5. Key features implemented:
 
 - Core architecture and storage system (v0.1.0)
 - GitHub API integration (v0.2.0)
 - REPL commands for configuration and update management (v0.2.1)
+- Command module refactoring and improved error handling (v0.2.2)
+- Command line parsing with Clap integration (v0.2.3)
+- Enhanced REPL experience with reedline-repl-rs (v0.2.4)
+- Data relationship integrity and enhanced user experience (v0.2.5)
 
 Future development plans include:
 
 - Update notification system
 - Report generation
 - Support for additional source types beyond GitHub
+
+### New in v0.2.5: Data Relationship & User Experience
+
+Version 0.2.5 focuses on improving data relationship integrity, user interaction, and code quality:
+
+- Reference integrity checks when adding subscriptions verify that the corresponding source exists
+- Interactive confirmation workflow for destructive operations
+- Improved error messages when attempting operations that would violate data integrity
+- Code optimizations to reduce duplication and increase maintainability
+
+Example of the new interactive confirmation flow when deleting a repository:
+
+```
+xiaotian> delete repo rust-lang rust
+This repository has 2 related subscriptions:
+- rust-lang/rust (8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g)
+- rust-lang/rust [Weekly] (9e2f8c53-2d4b-5a9e-8c0a-3b4c5d6e7f8g)
+
+Deleting this repository will also delete these subscriptions and their updates.
+Do you want to proceed? (y/N): y
+
+Repository rust-lang/rust deleted along with 2 subscriptions and 45 updates.
+```
 
 ## License
 

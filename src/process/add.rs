@@ -31,8 +31,9 @@ impl<S: Storage> AddHandler<S> {
             ))),
             Err(_) => {
                 // Create new repository
+                let id = Uuid::new_v4();
                 let repo = Repository {
-                    id: Uuid::new_v4(),
+                    id,
                     owner: owner.clone(),
                     name: name.clone(),
                     url: format!("https://github.com/{}/{}", owner, name),
@@ -41,7 +42,7 @@ impl<S: Storage> AddHandler<S> {
                 // Save the repository
                 self.storage.save_repository(repo).await?;
 
-                Ok(format!("Repository added: {}/{}", owner, name))
+                Ok(format!("Repository added: {}/{} (id: {})", owner, name, id))
             }
         }
     }
@@ -52,7 +53,6 @@ impl<S: Storage> AddHandler<S> {
         let repo = match self.storage.get_repository_by_name(&owner, &name).await {
             Ok(repo) => repo,
             Err(_) => {
-                // Create new repository
                 let new_repo = Repository {
                     id: Uuid::new_v4(),
                     owner: owner.clone(),
@@ -66,11 +66,15 @@ impl<S: Storage> AddHandler<S> {
         };
 
         // Create a subscription using simple_github helper method
-        let subscription = Subscription::simple_github(repo.owner.clone(), repo.name.clone());
+        let subscription = Subscription::simple_github(repo.owner, repo.name);
+        let id = subscription.id;
 
         // Save the subscription
         self.storage.save_subscription(subscription).await?;
 
-        Ok(format!("Subscription added for: {}/{}", owner, name))
+        Ok(format!(
+            "Subscription added for: {}/{} (id: {})",
+            owner, name, id
+        ))
     }
 }

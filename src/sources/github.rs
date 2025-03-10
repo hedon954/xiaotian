@@ -38,8 +38,8 @@ impl GitHubSource {
     }
 
     /// Convert GitHub API errors to SourceError
-    fn map_error<E: std::fmt::Display>(err: E) -> SourceError {
-        SourceError::ApiError(format!("GitHub API error: {}", err))
+    fn map_error<E: std::fmt::Debug>(err: E) -> SourceError {
+        SourceError::ApiError(format!("GitHub API error: {:?}", err))
     }
 
     /// Fetch commits from GitHub

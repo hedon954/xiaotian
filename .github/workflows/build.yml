@@ -72,6 +72,7 @@ jobs:
           git add CHANGELOG.md
           git commit -m "[skip] Update CHANGELOG.md with new changes"
           git push origin main --force
+        if: startsWith(github.ref, 'refs/tags/') && steps.git-cliff.outputs.content != ''
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')

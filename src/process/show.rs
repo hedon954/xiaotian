@@ -58,6 +58,11 @@ impl<S: Storage> ShowHandler<S> {
             subscription.id.to_string().bright_blue()
         ));
         result.push_str(&format!("Source Type: {:?}\n", subscription.source_type));
+        result.push_str(&format!("Source ID: {}\n", subscription.source_id));
+        result.push_str(&format!(
+            "Source Config: {:?}\n",
+            subscription.source_config
+        ));
 
         result.push_str("Update Types: ");
         if subscription.update_types.is_empty() {

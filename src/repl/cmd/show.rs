@@ -42,8 +42,8 @@ pub struct ShowUpdatesOpts {
 
 pub fn show(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
     match args.subcommand() {
-        Some(("repositories", args)) => show_repo(args, ctx),
-        Some(("subscriptions", args)) => show_sub(args, ctx),
+        Some(("repository", args)) => show_repo(args, ctx),
+        Some(("subscription", args)) => show_sub(args, ctx),
         Some(("updates", args)) => show_updates(args, ctx),
         _ => panic!("Invalid subcommand"),
     }

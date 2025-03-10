@@ -48,40 +48,26 @@ impl<S: Storage> AddHandler<S> {
     }
 
     /// Add a subscription
-    pub async fn add_subscription(&self, owner: String, name: String) -> Result<String, AppError> {
+    pub async fn add_subscription(&self, source_id: i32) -> Result<String, AppError> {
         // get or create the repository
-        let repo = match self.storage.get_repository_by_name(&owner, &name).await {
-            Ok(repo) => repo,
-            Err(_) => {
-                let new_repo = Repository {
-                    id: 0, // 让存储层分配 ID
-                    owner: owner.clone(),
-                    name: name.clone(),
-                    url: format!("https://github.com/{}/{}", owner, name),
-                };
-                self.storage.save_repository(new_repo).await?
+        let repo = match self.storage.get_repository(source_id).await? {
+            Some(repo) => repo,
+            None => {
+                return Err(AppError::AnyError(anyhow::anyhow!(
+                    "Repository with id {} not found",
+                    source_id
+                )));
             }
         };
 
         // create a subscription
-        let mut subscription =
+        let subscription =
             Subscription::simple_github(repo.owner.clone(), repo.name.clone(), repo.id);
-
-        // 让存储层分配 ID
-        subscription.id = 0;
-
-        // check if the source_id is valid (although we just created the repo, for safety)
-        if !self.storage.verify_source_exists(&subscription).await? {
-            return Err(AppError::ReferenceIntegrityError(format!(
-                "Cannot create subscription: Source {}/{} does not exist",
-                owner, name
-            )));
-        }
 
         match self.storage.save_subscription(subscription).await {
             Ok(sub) => Ok(format!(
                 "Subscription added for: {}/{} (id: {})",
-                owner, name, sub.id
+                repo.owner, repo.name, sub.id
             )),
             Err(e) => Err(AppError::StorageError(e)),
         }

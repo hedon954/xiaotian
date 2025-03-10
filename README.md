@@ -111,12 +111,13 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 - `add repository <owner> <name>` - Add a GitHub repository
 - `list repositories` - List all repositories
-- `show repository <owner> <name>` - Show repository details
-- `delete repository <owner> <name>` - Delete a repository (with interactive confirmation)
+- `show repository <id>` - Show repository details
+- `delete repository <id>` - Delete a repository (with interactive confirmation)
 
 ### Subscription Management
 
 - `add subscription <owner> <name>` - Subscribe to a repository
+- `subscribe <repository_id>` - Subscribe to a repository by ID
 - `list subscriptions` - List all subscriptions
 - `show subscription <id>` - Show subscription details
 - `delete subscription <id>` - Delete a subscription (with interactive confirmation)
@@ -128,7 +129,7 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 ## Development
 
-XiaoTian is currently in version 0.2.5. Key features implemented:
+XiaoTian is currently in version 0.2.6. Key features implemented:
 
 - Core architecture and storage system (v0.1.0)
 - GitHub API integration (v0.2.0)
@@ -137,28 +138,32 @@ XiaoTian is currently in version 0.2.5. Key features implemented:
 - Command line parsing with Clap integration (v0.2.3)
 - Enhanced REPL experience with reedline-repl-rs (v0.2.4)
 - Data relationship integrity and enhanced user experience (v0.2.5)
+- ID system simplification with intuitive integer IDs (v0.2.6)
 
-### New in v0.2.5: Data Relationship & User Experience
+### New in v0.2.6: ID System Simplification
 
-Version 0.2.5 focuses on improving data relationship integrity, user interaction, and code quality:
+Version 0.2.6 focuses on improving the ID system, making it more intuitive and user-friendly:
 
-- Reference integrity checks when adding subscriptions verify that the corresponding source exists
-- Interactive confirmation workflow for destructive operations
-- Improved error messages when attempting operations that would violate data integrity
-- Code optimizations to reduce duplication and increase maintainability
+- Replaced UUID with auto-increment integers for repositories and subscriptions
+- Optimized model relationships with direct ID references
+- Enhanced error handling with more specific context information
+- Simplified command line interaction with easy-to-type integer IDs
+- Added `subscribe <repository_id>` command for direct repository subscription
 
-Example of the new interactive confirmation flow when deleting a repository:
+Example of the new ID system in action:
 
 ```
-xiaotian> delete repository rust-lang rust
-This repository has 2 related subscriptions:
-- rust-lang/rust (8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g)
-- rust-lang/rust [Weekly] (9e2f8c53-2d4b-5a9e-8c0a-3b4c5d6e7f8g)
+xiaotian> add repo rust-lang/rust
+Repository added with ID: 1
 
-Deleting this repository will also delete these subscriptions and their updates.
-Do you want to proceed? (y/N): y
+xiaotian> subscribe 1
+Subscription created with ID: 1
 
-Repository rust-lang/rust deleted along with 2 subscriptions and 45 updates.
+xiaotian> show subscription 1
+Subscription #1:
+  Repository: rust-lang/rust (ID: 1)
+  Last checked: Never
+  Status: Active
 ```
 
 ## Roadmap

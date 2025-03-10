@@ -65,10 +65,6 @@ pub trait SubscriptionStorage {
         source_id: i32,
     ) -> Result<Vec<Subscription>, StorageError>;
 
-    /// Verify source exists for a subscription
-    async fn verify_source_exists(&self, subscription: &Subscription)
-    -> Result<bool, StorageError>;
-
     /// Save a subscription
     async fn save_subscription(
         &self,

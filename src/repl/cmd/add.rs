@@ -27,10 +27,7 @@ pub struct AddRepoOpts {
 
 #[derive(Parser, Debug)]
 pub struct AddSubOpts {
-    /// Owner of the repository
-    owner: String,
-    /// Name of the repository
-    name: String,
+    source_id: i32,
 }
 
 pub fn add(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
@@ -67,7 +64,7 @@ impl CmdExector for AddSubOpts {
     async fn execute<T: Storage>(self, processor: &mut Processor<T>) -> anyhow::Result<String> {
         let ret = processor
             .add_handler
-            .add_subscription(self.owner, self.name)
+            .add_subscription(self.source_id)
             .await?;
         Ok(ret)
     }
@@ -86,11 +83,9 @@ impl From<&ArgMatches> for AddRepoOpts {
 
 impl From<&ArgMatches> for AddSubOpts {
     fn from(args: &ArgMatches) -> Self {
-        let owner = args.get_one::<String>("owner").unwrap();
-        let name = args.get_one::<String>("name").unwrap();
+        let source_id = args.get_one::<i32>("source_id").unwrap();
         Self {
-            owner: owner.to_string(),
-            name: name.to_string(),
+            source_id: *source_id,
         }
     }
 }

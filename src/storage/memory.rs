@@ -313,24 +313,10 @@ impl SubscriptionStorage for MemoryStorage {
         Ok(subs)
     }
 
-    async fn verify_source_exists(
-        &self,
-        subscription: &Subscription,
-    ) -> Result<bool, StorageError> {
-        let repo = self.get_repository(subscription.source_id).await?;
-        Ok(repo.is_some())
-    }
-
     async fn save_subscription(
         &self,
         mut subscription: Subscription,
     ) -> Result<Subscription, StorageError> {
-        if !self.verify_source_exists(&subscription).await? {
-            return Err(StorageError::ReferenceIntegrityError(
-                "Source referenced by subscription does not exist".to_string(),
-            ));
-        }
-
         if subscription.id == 0 {
             subscription.id = self.next_subscription_id();
         }

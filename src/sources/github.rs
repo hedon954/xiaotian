@@ -370,15 +370,12 @@ impl Source for GitHubSource {
     }
 
     fn is_duplicate(&self, update1: &Update, update2: &Update) -> bool {
-        // 基本条件：必须是相同仓库和相同事件类型
         if update1.source_id != update2.source_id || update1.event_type != update2.event_type {
             return false;
         }
 
-        // 根据事件类型使用不同的判断标准
         match update1.event_type {
             UpdateEventType::Commit => {
-                // 对于提交，尝试从additional_data中提取SHA
                 if let (Some(data1), Some(data2)) =
                     (&update1.additional_data, &update2.additional_data)
                 {
@@ -389,11 +386,9 @@ impl Source for GitHubSource {
                         return sha1 == sha2;
                     }
                 }
-                // 如果无法获取SHA，退回到标题和日期比较
                 update1.title == update2.title && update1.event_date == update2.event_date
             }
             UpdateEventType::Issue | UpdateEventType::IssueUpdate => {
-                // 对于问题，使用问题编号
                 if let (Some(data1), Some(data2)) =
                     (&update1.additional_data, &update2.additional_data)
                 {
@@ -404,11 +399,9 @@ impl Source for GitHubSource {
                         return num1 == num2;
                     }
                 }
-                // 退回到标题和日期
                 update1.title == update2.title && update1.event_date == update2.event_date
             }
             UpdateEventType::PullRequest | UpdateEventType::PullRequestUpdate => {
-                // 对于PR，使用PR编号
                 if let (Some(data1), Some(data2)) =
                     (&update1.additional_data, &update2.additional_data)
                 {
@@ -419,11 +412,9 @@ impl Source for GitHubSource {
                         return num1 == num2;
                     }
                 }
-                // 退回到标题和日期
                 update1.title == update2.title && update1.event_date == update2.event_date
             }
             UpdateEventType::Release => {
-                // 对于发布，使用tag名称和ID
                 if let (Some(data1), Some(data2)) =
                     (&update1.additional_data, &update2.additional_data)
                 {
@@ -433,7 +424,6 @@ impl Source for GitHubSource {
                     ) {
                         return id1 == id2;
                     }
-                    // 退回到tag名称
                     if let (Some(tag1), Some(tag2)) = (
                         data1.get("tag_name").and_then(|v| v.as_str()),
                         data2.get("tag_name").and_then(|v| v.as_str()),
@@ -441,10 +431,8 @@ impl Source for GitHubSource {
                         return tag1 == tag2;
                     }
                 }
-                // 退回到标题和日期
                 update1.title == update2.title && update1.event_date == update2.event_date
             }
-            // 对于其他类型的更新，使用默认的标题、类型和ID比较
             _ => update1.title == update2.title && update1.event_date == update2.event_date,
         }
     }

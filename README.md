@@ -81,7 +81,7 @@ xiaotian --version
 You should see output similar to:
 
 ```
-XiaoTian 0.2.5
+XiaoTian 0.2.6
 ```
 
 ## Usage

@@ -1,6 +1,6 @@
 [package]
 name = "xiaotian"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2024"
 authors = ["Hedon <171725713@qq.com>"]
 description = "A CLI tool for monitoring GitHub repositories."

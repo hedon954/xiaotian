@@ -3,7 +3,6 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
-use uuid::Uuid;
 
 use crate::error::AppError;
 use crate::models::UpdateEventType;
@@ -27,13 +26,9 @@ impl<S: Storage> FetchHandler<S> {
     }
 
     /// Fetch updates for a subscription
-    pub async fn fetch_updates(
-        &self,
-        subscription_id: Uuid,
-        days: u32,
-    ) -> Result<String, AppError> {
+    pub async fn fetch_updates(&self, subscription_id: i32, days: u32) -> Result<String, AppError> {
         // Get the subscription
-        let subscription = match self.storage.get_subscription(&subscription_id).await? {
+        let subscription = match self.storage.get_subscription(subscription_id).await? {
             Some(sub) => sub,
             None => {
                 return Err(AppError::AnyError(anyhow::anyhow!(
@@ -49,7 +44,7 @@ impl<S: Storage> FetchHandler<S> {
         // Get the source
         let source = self
             .source_factory
-            .create_source(subscription.source_config)
+            .create_source(subscription.source_config, subscription.source_id)
             .await?;
 
         // Fetch updates from the source

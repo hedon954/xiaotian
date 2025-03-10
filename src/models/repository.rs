@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 /// Repository represents a GitHub repository
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Repository {
     /// Unique identifier for the repository in our system
-    pub id: Uuid,
+    pub id: i32,
 
     /// Repository owner (username or organization)
     pub owner: String,
@@ -23,7 +22,7 @@ impl Repository {
         let url = format!("https://github.com/{}/{}", owner, name);
 
         Self {
-            id: Uuid::new_v4(),
+            id: 0, // 初始ID，将由存储层设置
             owner,
             name,
             url,

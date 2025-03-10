@@ -3,7 +3,6 @@
 use std::sync::Arc;
 
 use colored::Colorize;
-use uuid::Uuid;
 
 use crate::error::AppError;
 use crate::models::{Update, UpdateEventType};
@@ -42,8 +41,8 @@ impl<S: Storage> ShowHandler<S> {
     }
 
     /// Show subscription details
-    pub async fn show_subscription(&self, id: Uuid) -> Result<String, AppError> {
-        let subscription = match self.storage.get_subscription(&id).await? {
+    pub async fn show_subscription(&self, id: i32) -> Result<String, AppError> {
+        let subscription = match self.storage.get_subscription(id).await? {
             Some(sub) => sub,
             None => {
                 return Err(AppError::AnyError(anyhow::anyhow!(
@@ -53,13 +52,7 @@ impl<S: Storage> ShowHandler<S> {
             }
         };
 
-        // Source ID usually includes the type prefix, extract the meaningful part
-        let display_id = match subscription.source_id.split_once(':') {
-            Some((_, id)) => id.to_string(),
-            None => subscription.source_id.clone(),
-        };
-
-        let mut result = format!("Subscription: {}\n", display_id);
+        let mut result = format!("Subscription: {}\n", subscription.name);
         result.push_str(&format!(
             "ID: {}\n",
             subscription.id.to_string().bright_blue()
@@ -86,11 +79,11 @@ impl<S: Storage> ShowHandler<S> {
     /// Show updates for a subscription
     pub async fn show_updates(
         &self,
-        subscription_id: Uuid,
+        subscription_id: i32,
         limit: usize,
     ) -> Result<String, AppError> {
         // Check if subscription exists
-        let subscription = match self.storage.get_subscription(&subscription_id).await? {
+        let subscription = match self.storage.get_subscription(subscription_id).await? {
             Some(sub) => sub,
             None => {
                 return Err(AppError::AnyError(anyhow::anyhow!(
@@ -100,27 +93,11 @@ impl<S: Storage> ShowHandler<S> {
             }
         };
 
-        // Get repository ID from subscription
-        let repo_id = match subscription.source_id.strip_prefix("github:") {
-            Some(repo_id) => match Uuid::parse_str(repo_id) {
-                Ok(id) => id,
-                Err(_) => {
-                    return Err(AppError::AnyError(anyhow::anyhow!(
-                        "Invalid repository ID in subscription: {}",
-                        repo_id
-                    )));
-                }
-            },
-            None => {
-                return Err(AppError::AnyError(anyhow::anyhow!(
-                    "Unsupported source ID format: {}",
-                    subscription.source_id
-                )));
-            }
-        };
-
         // Get updates for repository
-        let updates = self.storage.get_updates_for_repository(&repo_id).await?;
+        let updates = self
+            .storage
+            .get_updates_for_repository(subscription.source_id)
+            .await?;
 
         if updates.is_empty() {
             return Ok(format!(

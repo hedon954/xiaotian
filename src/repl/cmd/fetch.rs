@@ -1,6 +1,5 @@
 use clap::{ArgMatches, Parser};
 use enum_dispatch::enum_dispatch;
-use uuid::Uuid;
 
 use crate::{
     process::Processor,
@@ -18,7 +17,7 @@ pub enum FetchCommands {
 #[derive(Parser, Debug)]
 pub struct FetchUpdatesOpts {
     /// ID of the subscription
-    id: Uuid,
+    id: i32,
     /// Number of days to fetch updates for
     #[arg(short, long, default_value = "10")]
     days: u32,
@@ -50,7 +49,7 @@ impl CmdExector for FetchUpdatesOpts {
 
 impl From<&ArgMatches> for FetchUpdatesOpts {
     fn from(args: &ArgMatches) -> Self {
-        let id = args.get_one::<Uuid>("id").unwrap();
+        let id = args.get_one::<i32>("id").unwrap();
         let days = args.get_one::<u32>("days").unwrap();
         Self {
             id: *id,

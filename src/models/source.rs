@@ -149,5 +149,9 @@ impl SourceConfigParser for SourceConfig {
 #[async_trait]
 pub trait SourceFactory: Send + Sync {
     /// Create a source instance from a configuration
-    async fn create_source(&self, config: SourceConfig) -> Result<Box<dyn Source>, AppError>;
+    async fn create_source(
+        &self,
+        config: SourceConfig,
+        source_id: i32,
+    ) -> Result<Box<dyn Source>, AppError>;
 }

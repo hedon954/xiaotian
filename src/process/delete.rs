@@ -1,13 +1,10 @@
 //! Delete command handler
 
-use std::io::{Write, stdin, stdout};
 use std::sync::Arc;
-
-use nu_ansi_term::Color;
 use uuid::Uuid;
 
 use crate::error::AppError;
-use crate::storage::Storage;
+use crate::storage::{Storage, StorageError};
 
 /// Handler for delete commands
 #[derive(Clone)]
@@ -21,114 +18,62 @@ impl<S: Storage> DeleteHandler<S> {
         Self { storage }
     }
 
-    /// Delete a repository
-    pub async fn delete_repository(&self, id: Uuid) -> Result<String, AppError> {
-        let repo = match self.storage.get_repository(&id).await {
-            Ok(repo) => repo,
-            Err(_) => {
-                return Err(AppError::AnyError(anyhow::anyhow!(
-                    "Repository with ID {} not found",
-                    id
-                )));
+    /// Delete a repository by ID
+    pub async fn delete_repository(&self, id: i32) -> Result<String, AppError> {
+        match self.storage.delete_repository(id).await {
+            Ok(_) => Ok(format!("Repository with ID {} deleted successfully", id)),
+            Err(StorageError::HasRelated(_, id, entity_type, count)) => {
+                Err(AppError::AnyError(anyhow::anyhow!(
+                    "Cannot delete repository with ID {}: {} related {} entities exist",
+                    id,
+                    count,
+                    entity_type
+                )))
             }
-        };
-
-        let repo_name = format!("{}/{}", repo.owner, repo.name);
-
-        // find the related subscriptions
-        let related_subs = self.storage.find_related_subscriptions(&id).await?;
-
-        if related_subs.is_empty() {
-            // if there are no related subscriptions, delete the repository directly
-            self.storage.delete_repository(&id).await?;
-            Ok(format!("Repository deleted: {}", repo_name))
-        } else {
-            // if there are related subscriptions, prompt the user and request confirmation
-            println!(
-                "This repository has {} related subscriptions:",
-                related_subs.len()
-            );
-            for sub in &related_subs {
-                println!("- {} ({})", sub.name, Color::Blue.paint(sub.id.to_string()));
-            }
-
-            println!(
-                "\nDeleting this repository will also delete these subscriptions and their updates."
-            );
-            print!("Do you want to proceed? (y/N): ");
-            stdout().flush().unwrap();
-
-            let mut input = String::new();
-            stdin().read_line(&mut input).unwrap();
-
-            if input.trim().to_lowercase() == "y" {
-                let (deleted_subs, deleted_updates) =
-                    self.storage.cascade_delete_repository(&id).await?;
-
-                Ok(format!(
-                    "Repository {} deleted along with {} subscriptions and {} updates.",
-                    Color::Green.paint(&repo_name),
-                    Color::Green.paint(deleted_subs.to_string()),
-                    Color::Green.paint(deleted_updates.to_string())
-                ))
-            } else {
-                Ok("Deletion cancelled.".to_string())
-            }
+            Err(e) => Err(AppError::StorageError(e)),
         }
     }
 
-    /// Delete a subscription
-    pub async fn delete_subscription(&self, id: Uuid) -> Result<String, AppError> {
-        // check if the subscription exists
-        let subscription = match self.storage.get_subscription(&id).await? {
-            Some(sub) => sub,
-            None => {
-                return Err(AppError::AnyError(anyhow::anyhow!(
-                    "Subscription with ID {} not found",
-                    id
-                )));
-            }
-        };
-
-        // get the number of updates
-        let updates = self.storage.get_updates_for_subscription(&id).await?;
-        let updates_count = updates.len();
-
-        if updates_count > 0 {
-            // if there are related updates, prompt the user and request confirmation
-            println!("This subscription has {} related updates.", updates_count);
-            println!("Deleting this subscription will also delete these updates.");
-            print!("Do you want to proceed? (y/N): ");
-            stdout().flush().unwrap();
-
-            let mut input = String::new();
-            stdin().read_line(&mut input).unwrap();
-
-            if input.trim().to_lowercase() == "y" {
-                // user confirmed, execute cascade deletion
-                let deleted_updates = self.storage.cascade_delete_subscription(&id).await?;
-
-                let display_name = subscription.name.clone();
-
-                return Ok(format!(
-                    "Subscription {} deleted along with {} updates.",
-                    Color::Green.paint(&display_name),
-                    Color::Green.paint(deleted_updates.to_string())
-                ));
-            } else {
-                return Ok("Deletion cancelled.".to_string());
-            }
+    /// Delete a subscription by ID
+    pub async fn delete_subscription(&self, id: i32) -> Result<String, AppError> {
+        match self.storage.delete_subscription(id).await {
+            Ok(_) => Ok(format!("Subscription with ID {} deleted successfully", id)),
+            Err(e) => Err(AppError::StorageError(e)),
         }
+    }
 
-        // if there are no related updates, delete the subscription directly
-        self.storage.delete_subscription(&id).await?;
+    /// Delete a repository and all related subscriptions (cascade delete)
+    pub async fn cascade_delete_repository(&self, id: i32) -> Result<String, AppError> {
+        match self.storage.cascade_delete_repository(id).await {
+            Ok((subs_deleted, updates_deleted)) => Ok(format!(
+                "Repository with ID {} deleted successfully along with {} subscriptions and {} updates",
+                id, subs_deleted, updates_deleted
+            )),
+            Err(e) => Err(AppError::StorageError(e)),
+        }
+    }
 
-        // Source ID usually includes the type prefix, extract the meaningful part
-        let display_id = match subscription.source_id.split_once(':') {
-            Some((_, id)) => id.to_string(),
-            None => subscription.source_id.clone(),
+    /// Delete a subscription and all related updates (cascade delete)
+    pub async fn cascade_delete_subscription(&self, id: i32) -> Result<String, AppError> {
+        match self.storage.cascade_delete_subscription(id).await {
+            Ok(updates_deleted) => Ok(format!(
+                "Subscription with ID {} deleted successfully along with {} updates",
+                id, updates_deleted
+            )),
+            Err(e) => Err(AppError::StorageError(e)),
+        }
+    }
+
+    /// Delete an update by ID
+    pub async fn delete_update(&self, id_str: &str) -> Result<String, AppError> {
+        let update_id = match Uuid::parse_str(id_str) {
+            Ok(id) => id,
+            Err(_) => return Err(AppError::InvalidIdentifier(id_str.to_string())),
         };
 
-        Ok(format!("Subscription deleted: {}", display_id))
+        match self.storage.delete_update(&update_id).await {
+            Ok(_) => Ok(format!("Update with ID {} deleted successfully", update_id)),
+            Err(e) => Err(AppError::StorageError(e)),
+        }
     }
 }

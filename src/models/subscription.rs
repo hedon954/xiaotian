@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use super::source::{SourceConfig, SourceType};
 
@@ -39,13 +38,13 @@ pub enum UpdateType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subscription {
     /// Unique identifier for the subscription
-    pub id: Uuid,
+    pub id: i32,
 
     /// Type of source (GitHub, HackerNews, etc.)
     pub source_type: SourceType,
 
     /// Unique identifier for the source
-    pub source_id: String,
+    pub source_id: i32,
 
     /// Source configuration
     pub source_config: SourceConfig,
@@ -65,13 +64,13 @@ impl Subscription {
     pub fn new(
         name: String,
         source_type: SourceType,
-        source_id: String,
+        source_id: i32,
         source_config: SourceConfig,
         tags: Vec<String>,
         update_types: Vec<UpdateType>,
     ) -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: 0,
             source_type,
             source_id,
             source_config,
@@ -85,10 +84,10 @@ impl Subscription {
     pub fn github_repo(
         owner: String,
         repo: String,
+        repo_id: i32,
         tags: Vec<String>,
         update_types: Vec<UpdateType>,
     ) -> Self {
-        let source_id = format!("github:{}:{}", owner, repo);
         let name = format!("{}/{}", owner, repo);
 
         let source_config = SourceConfig {
@@ -105,7 +104,7 @@ impl Subscription {
         Self::new(
             name,
             SourceType::GitHub,
-            source_id,
+            repo_id,
             source_config,
             tags,
             update_types,
@@ -113,7 +112,7 @@ impl Subscription {
     }
 
     /// Create a simple GitHub subscription with default settings
-    pub fn simple_github(owner: String, repo: String) -> Self {
-        Self::github_repo(owner, repo, Vec::new(), vec![UpdateType::All])
+    pub fn simple_github(owner: String, repo: String, repo_id: i32) -> Self {
+        Self::github_repo(owner, repo, repo_id, Vec::new(), vec![UpdateType::All])
     }
 }

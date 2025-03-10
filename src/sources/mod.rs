@@ -41,7 +41,11 @@ impl DefaultSourceFactory {
 
 #[async_trait]
 impl SourceFactory for DefaultSourceFactory {
-    async fn create_source(&self, config: SourceConfig) -> Result<Box<dyn Source>, AppError> {
+    async fn create_source(
+        &self,
+        config: SourceConfig,
+        source_id: i32,
+    ) -> Result<Box<dyn Source>, AppError> {
         match config.source_type {
             SourceType::GitHub => {
                 let github_config = config.parse_github_config()?;
@@ -50,6 +54,7 @@ impl SourceFactory for DefaultSourceFactory {
                     github_config.repo,
                     github_config.branch,
                     Arc::clone(&self.github_client),
+                    source_id,
                 );
                 Ok(Box::new(source))
             }

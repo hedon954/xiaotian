@@ -1,6 +1,5 @@
 use clap::{ArgMatches, Parser};
 use enum_dispatch::enum_dispatch;
-use uuid::Uuid;
 
 use crate::{
     process::Processor,
@@ -29,7 +28,7 @@ pub struct DeleteRepoOpts {
 #[derive(Parser, Debug)]
 pub struct DeleteSubOpts {
     /// ID of the subscription
-    id: Uuid,
+    id: i32,
 }
 
 pub fn delete(args: ArgMatches, ctx: &mut ReplContext) -> ReplResult {
@@ -57,7 +56,6 @@ impl CmdExector for DeleteRepoOpts {
         self,
         processor: &mut Processor<T>,
     ) -> anyhow::Result<String> {
-        // 使用list_handler获取仓库
         let repo = match processor
             .list_handler
             .get_repository_by_name(&self.owner, &self.name)
@@ -73,7 +71,6 @@ impl CmdExector for DeleteRepoOpts {
             }
         };
 
-        // 执行删除
         let ret = processor.delete_handler.delete_repository(repo.id).await?;
         Ok(ret)
     }
@@ -105,7 +102,7 @@ impl From<&ArgMatches> for DeleteRepoOpts {
 
 impl From<&ArgMatches> for DeleteSubOpts {
     fn from(args: &ArgMatches) -> Self {
-        let id = args.get_one::<Uuid>("id").unwrap();
+        let id = args.get_one::<i32>("id").unwrap();
         Self { id: *id }
     }
 }

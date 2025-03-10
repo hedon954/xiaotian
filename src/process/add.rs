@@ -2,8 +2,6 @@
 
 use std::sync::Arc;
 
-use uuid::Uuid;
-
 use crate::error::AppError;
 use crate::models::{Repository, Subscription};
 use crate::storage::Storage;
@@ -31,18 +29,20 @@ impl<S: Storage> AddHandler<S> {
             ))),
             Err(_) => {
                 // Create new repository
-                let id = Uuid::new_v4();
-                let repo = Repository {
-                    id,
+                let mut repo = Repository {
+                    id: 0, // 让存储层分配 ID
                     owner: owner.clone(),
                     name: name.clone(),
                     url: format!("https://github.com/{}/{}", owner, name),
                 };
 
                 // Save the repository
-                self.storage.save_repository(repo).await?;
+                repo = self.storage.save_repository(repo).await?;
 
-                Ok(format!("Repository added: {}/{} (id: {})", owner, name, id))
+                Ok(format!(
+                    "Repository added: {}/{} (id: {})",
+                    owner, name, repo.id
+                ))
             }
         }
     }
@@ -54,7 +54,7 @@ impl<S: Storage> AddHandler<S> {
             Ok(repo) => repo,
             Err(_) => {
                 let new_repo = Repository {
-                    id: Uuid::new_v4(),
+                    id: 0, // 让存储层分配 ID
                     owner: owner.clone(),
                     name: name.clone(),
                     url: format!("https://github.com/{}/{}", owner, name),
@@ -64,11 +64,13 @@ impl<S: Storage> AddHandler<S> {
         };
 
         // create a subscription
-        let subscription = Subscription::simple_github(repo.owner.clone(), repo.name.clone());
-        let id = subscription.id;
+        let mut subscription =
+            Subscription::simple_github(repo.owner.clone(), repo.name.clone(), repo.id);
+
+        // 让存储层分配 ID
+        subscription.id = 0;
 
         // check if the source_id is valid (although we just created the repo, for safety)
-        // TODO: make it thread safe
         if !self.storage.verify_source_exists(&subscription).await? {
             return Err(AppError::ReferenceIntegrityError(format!(
                 "Cannot create subscription: Source {}/{} does not exist",
@@ -77,9 +79,9 @@ impl<S: Storage> AddHandler<S> {
         }
 
         match self.storage.save_subscription(subscription).await {
-            Ok(_) => Ok(format!(
+            Ok(sub) => Ok(format!(
                 "Subscription added for: {}/{} (id: {})",
-                owner, name, id
+                owner, name, sub.id
             )),
             Err(e) => Err(AppError::StorageError(e)),
         }

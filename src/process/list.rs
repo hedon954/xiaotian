@@ -59,16 +59,11 @@ impl<S: Storage> ListHandler<S> {
 
         let mut result = String::from("Subscriptions:\n");
         for sub in subscriptions {
-            // Source ID usually includes the type prefix, extract the meaningful part
-            let display_id = match sub.source_id.split_once(':') {
-                Some((_, id)) => id,
-                None => &sub.source_id,
-            };
-
             result.push_str(&format!(
-                "- {} ({})\n",
-                display_id,
-                sub.id.to_string().bright_blue()
+                "- {}: {} (source_id: {})\n",
+                sub.id.to_string().bright_blue(),
+                sub.name,
+                sub.source_id.to_string().bright_blue(),
             ));
         }
 

@@ -37,7 +37,7 @@ pub struct Update {
     pub source_type: SourceType,
 
     /// Source identifier (e.g., repository ID)
-    pub source_id: String,
+    pub source_id: i32,
 
     /// Type of event
     pub event_type: UpdateEventType,
@@ -69,7 +69,7 @@ impl Update {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         source_type: SourceType,
-        source_id: String,
+        source_id: i32,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,
@@ -96,7 +96,7 @@ impl Update {
     #[allow(clippy::too_many_arguments)]
     pub fn with_data(
         source_type: SourceType,
-        source_id: String,
+        source_id: i32,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,

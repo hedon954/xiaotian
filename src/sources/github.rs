@@ -19,15 +19,18 @@ pub struct GitHubSource {
     /// GitHub client
     client: Arc<Octocrab>,
     /// Cached repository ID
-    repo_id: String,
+    repo_id: i32,
 }
 
 impl GitHubSource {
     /// Create a new GitHub source
-    pub fn new(owner: String, repo: String, branch: Option<String>, client: Arc<Octocrab>) -> Self {
-        // Create a unique ID for this repository
-        let repo_id = format!("github:{}:{}", owner, repo);
-
+    pub fn new(
+        owner: String,
+        repo: String,
+        branch: Option<String>,
+        client: Arc<Octocrab>,
+        repo_id: i32,
+    ) -> Self {
         Self {
             owner,
             repo,
@@ -99,7 +102,7 @@ impl GitHubSource {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                self.repo_id.clone(),
+                self.repo_id,
                 UpdateEventType::Commit,
                 title,
                 description,
@@ -160,7 +163,7 @@ impl GitHubSource {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                self.repo_id.clone(),
+                self.repo_id,
                 event_type,
                 issue.title,
                 issue.body,
@@ -237,7 +240,7 @@ impl GitHubSource {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                self.repo_id.clone(),
+                self.repo_id,
                 event_type,
                 pr.title.unwrap_or_else(|| format!("PR #{}", pr_num)),
                 pr.body,
@@ -296,7 +299,7 @@ impl GitHubSource {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                self.repo_id.clone(),
+                self.repo_id,
                 UpdateEventType::Release,
                 format!("Release: {}", release.name.unwrap_or(tag_name.clone())),
                 release.body,
@@ -320,7 +323,7 @@ impl Source for GitHubSource {
     }
 
     fn get_id(&self) -> String {
-        self.repo_id.clone()
+        self.repo_id.to_string()
     }
 
     fn get_name(&self) -> String {
@@ -460,18 +463,30 @@ mod tests {
     #[tokio::test]
     async fn test_github_source_creation() {
         let client = Arc::new(Octocrab::builder().build().unwrap());
-        let source = GitHubSource::new("rust-lang".to_string(), "rust".to_string(), None, client);
+        let source = GitHubSource::new(
+            "rust-lang".to_string(),
+            "rust".to_string(),
+            None,
+            client,
+            123456,
+        );
 
         assert_eq!(source.get_type().to_string(), "GitHub");
         assert_eq!(source.get_name(), "rust-lang/rust");
         assert_eq!(source.get_url(), "https://github.com/rust-lang/rust");
-        assert_eq!(source.get_id(), "github:rust-lang:rust");
+        assert_eq!(source.get_id(), "123456");
     }
 
     #[tokio::test]
     async fn test_fetch_updates() {
         let client = Arc::new(Octocrab::builder().build().unwrap());
-        let source = GitHubSource::new("rust-lang".to_string(), "rust".to_string(), None, client);
+        let source = GitHubSource::new(
+            "rust-lang".to_string(),
+            "rust".to_string(),
+            None,
+            client,
+            123456,
+        );
 
         // get the updates in the last 7 days
         let since = Utc::now() - Duration::days(7);
@@ -486,7 +501,7 @@ mod tests {
                 if !updates.is_empty() {
                     let update = &updates[0];
                     assert_eq!(update.source_type.to_string(), "GitHub");
-                    assert!(update.source_id.contains("github:rust-lang:rust"));
+                    assert!(update.source_id > 0);
                     assert!(!update.title.is_empty());
                     assert!(!update.url.is_empty());
                 }

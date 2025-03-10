@@ -1,6 +1,5 @@
 use clap::{ArgMatches, Parser};
 use enum_dispatch::enum_dispatch;
-use uuid::Uuid;
 
 use crate::{
     process::Processor,
@@ -30,13 +29,13 @@ pub struct ShowRepoOpts {
 #[derive(Parser, Debug)]
 pub struct ShowSubOpts {
     /// ID of the subscription
-    id: Uuid,
+    id: i32,
 }
 
 #[derive(Parser, Debug)]
 pub struct ShowUpdatesOpts {
     /// ID of the subscription
-    sub_id: Uuid,
+    sub_id: i32,
     /// Limit the number of updates to show
     limit: usize,
 }
@@ -117,14 +116,14 @@ impl From<&ArgMatches> for ShowRepoOpts {
 
 impl From<&ArgMatches> for ShowSubOpts {
     fn from(args: &ArgMatches) -> Self {
-        let id = args.get_one::<Uuid>("id").unwrap();
+        let id = args.get_one::<i32>("id").unwrap();
         Self { id: *id }
     }
 }
 
 impl From<&ArgMatches> for ShowUpdatesOpts {
     fn from(args: &ArgMatches) -> Self {
-        let sub_id = args.get_one::<Uuid>("sub_id").unwrap();
+        let sub_id = args.get_one::<i32>("sub_id").unwrap();
         let limit = args.get_one::<usize>("limit").unwrap_or(&10);
         Self {
             sub_id: *sub_id,

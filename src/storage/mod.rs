@@ -82,7 +82,7 @@ pub trait UpdateStorage {
 
 /// Combined storage interface
 #[async_trait]
-pub trait Storage: RepositoryStorage + SubscriptionStorage + UpdateStorage {
-    /// Clear all data
-    async fn clear(&self) -> Result<(), StorageError>;
+pub trait Storage:
+    RepositoryStorage + SubscriptionStorage + UpdateStorage + Send + Sync + 'static
+{
 }

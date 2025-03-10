@@ -5,54 +5,38 @@ use std::sync::Arc;
 use chrono::{Duration, Utc};
 use uuid::Uuid;
 
-use crate::command::FetchCommand;
+use crate::error::AppError;
+use crate::models::UpdateEventType;
 use crate::models::source::SourceFactory;
-use crate::models::{AppConfig, UpdateEventType};
-use crate::process::ProcessError;
 use crate::storage::Storage;
 
 /// Handler for fetch commands
-pub struct FetchHandler<'a, S: Storage> {
+#[derive(Clone)]
+pub struct FetchHandler<S: Storage> {
     storage: Arc<S>,
     source_factory: Arc<dyn SourceFactory>,
-    config: &'a AppConfig,
 }
 
-impl<'a, S: Storage> FetchHandler<'a, S> {
+impl<S: Storage> FetchHandler<S> {
     /// Create a new fetch handler
-    pub fn new(
-        storage: Arc<S>,
-        source_factory: Arc<dyn SourceFactory>,
-        config: &'a AppConfig,
-    ) -> Self {
+    pub fn new(storage: Arc<S>, source_factory: Arc<dyn SourceFactory>) -> Self {
         Self {
             storage,
             source_factory,
-            config,
-        }
-    }
-
-    /// Handle the fetch command
-    pub async fn handle(&self, command: FetchCommand) -> Result<String, ProcessError> {
-        match command {
-            FetchCommand::Updates {
-                subscription_id,
-                days,
-            } => self.fetch_updates(subscription_id, days).await,
         }
     }
 
     /// Fetch updates for a subscription
-    async fn fetch_updates(
+    pub async fn fetch_updates(
         &self,
         subscription_id: Uuid,
-        days: Option<u32>,
-    ) -> Result<String, ProcessError> {
+        days: u32,
+    ) -> Result<String, AppError> {
         // Get the subscription
         let subscription = match self.storage.get_subscription(&subscription_id).await? {
             Some(sub) => sub,
             None => {
-                return Err(ProcessError::not_found(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Subscription with ID {} not found",
                     subscription_id
                 )));
@@ -60,21 +44,19 @@ impl<'a, S: Storage> FetchHandler<'a, S> {
         };
 
         // Calculate the start date
-        let days = days.unwrap_or(self.config.default_fetch_days);
         let start_date = Utc::now() - Duration::days(days as i64);
 
         // Get the source
         let source = self
             .source_factory
             .create_source(subscription.source_config)
-            .await
-            .map_err(ProcessError::SourceError)?;
+            .await?;
 
         // Fetch updates from the source
         let updates = source
             .fetch_updates(Some(start_date))
             .await
-            .map_err(ProcessError::SourceError)?;
+            .map_err(AppError::SourceError)?;
 
         // Save updates
         for update in &updates {

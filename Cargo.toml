@@ -1,6 +1,6 @@
 [package]
 name = "xiaotian"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 authors = ["Hedon <171725713@qq.com>"]
 description = "A CLI tool for monitoring GitHub repositories."
@@ -32,9 +32,12 @@ path = "examples/github_fetch.rs"
 rustyline = "15.0.0"
 clap = { version = "4.4", features = ["derive"] }
 colored = "3.0.0"
+reedline-repl-rs = { version = "1.2.1", features = ["derive"] }
+nu-ansi-term = "0.50.0"
+enum_dispatch = "0.3.13"
 
 # Async runtime
-tokio = { version = "1.32", features = ["full"] }
+tokio = { version = "1.44.0", features = ["full"] }
 async-trait = "0.1"
 
 # GitHub API client (for future use)
@@ -45,7 +48,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Utility
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.40", features = ["serde"] }
 anyhow = "1.0"
 thiserror = "2.0.11"
 log = "0.4"
@@ -53,3 +56,5 @@ env_logger = "0.11.6"
 uuid = { version = "1.4", features = ["v4", "serde"] }
 dashmap = "6.1.0"
 dirs = "6.0.0"
+crossbeam-channel = "0.5.14"
+oneshot = "0.1.11"

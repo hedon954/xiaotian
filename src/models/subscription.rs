@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -48,7 +47,7 @@ pub struct Subscription {
     /// Unique identifier for the source
     pub source_id: String,
 
-    /// Source-specific configuration
+    /// Source configuration
     pub source_config: SourceConfig,
 
     /// Display name for this subscription
@@ -57,20 +56,8 @@ pub struct Subscription {
     /// Tags for categorizing this subscription
     pub tags: Vec<String>,
 
-    /// How often to check for updates
-    pub update_frequency: UpdateFrequency,
-
     /// What types of updates to track
     pub update_types: Vec<UpdateType>,
-
-    /// When the subscription was created
-    pub created_at: DateTime<Utc>,
-
-    /// When the subscription was last updated
-    pub updated_at: DateTime<Utc>,
-
-    /// When updates were last fetched
-    pub last_fetched: Option<DateTime<Utc>>,
 }
 
 impl Subscription {
@@ -81,11 +68,8 @@ impl Subscription {
         source_id: String,
         source_config: SourceConfig,
         tags: Vec<String>,
-        update_frequency: UpdateFrequency,
         update_types: Vec<UpdateType>,
     ) -> Self {
-        let now = Utc::now();
-
         Self {
             id: Uuid::new_v4(),
             source_type,
@@ -93,11 +77,7 @@ impl Subscription {
             source_config,
             name,
             tags,
-            update_frequency,
             update_types,
-            created_at: now,
-            updated_at: now,
-            last_fetched: None,
         }
     }
 
@@ -106,11 +86,11 @@ impl Subscription {
         owner: String,
         repo: String,
         tags: Vec<String>,
-        update_frequency: UpdateFrequency,
         update_types: Vec<UpdateType>,
     ) -> Self {
         let source_id = format!("github:{}:{}", owner, repo);
         let name = format!("{}/{}", owner, repo);
+
         let source_config = SourceConfig {
             source_type: SourceType::GitHub,
             config: serde_json::json!({
@@ -122,26 +102,18 @@ impl Subscription {
                     .collect::<Vec<String>>(),
             }),
         };
-
         Self::new(
             name,
             SourceType::GitHub,
             source_id,
             source_config,
             tags,
-            update_frequency,
             update_types,
         )
     }
 
     /// Create a simple GitHub subscription with default settings
     pub fn simple_github(owner: String, repo: String) -> Self {
-        Self::github_repo(
-            owner,
-            repo,
-            Vec::new(),
-            UpdateFrequency::default(),
-            vec![UpdateType::All],
-        )
+        Self::github_repo(owner, repo, Vec::new(), vec![UpdateType::All])
     }
 }

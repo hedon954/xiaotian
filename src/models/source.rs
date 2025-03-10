@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::models::Update;
+use crate::{error::AppError, models::Update};
 
 /// Represents the type of content source
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -149,5 +149,5 @@ impl SourceConfigParser for SourceConfig {
 #[async_trait]
 pub trait SourceFactory: Send + Sync {
     /// Create a source instance from a configuration
-    async fn create_source(&self, config: SourceConfig) -> Result<Box<dyn Source>, SourceError>;
+    async fn create_source(&self, config: SourceConfig) -> Result<Box<dyn Source>, AppError>;
 }

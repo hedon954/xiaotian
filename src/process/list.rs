@@ -4,11 +4,10 @@ use std::sync::Arc;
 
 use colored::Colorize;
 
-use crate::command::ListCommand;
-use crate::process::ProcessError;
-use crate::storage::Storage;
+use crate::{error::AppError, storage::Storage};
 
 /// Handler for list commands
+#[derive(Clone)]
 pub struct ListHandler<S: Storage> {
     storage: Arc<S>,
 }
@@ -19,17 +18,8 @@ impl<S: Storage> ListHandler<S> {
         Self { storage }
     }
 
-    /// Handle the list command
-    pub async fn handle(&self, command: ListCommand) -> Result<String, ProcessError> {
-        match command {
-            ListCommand::Repositories => self.list_repositories().await,
-            ListCommand::Subscriptions => self.list_subscriptions().await,
-            ListCommand::Updates => self.list_updates().await,
-        }
-    }
-
     /// List all repositories
-    async fn list_repositories(&self) -> Result<String, ProcessError> {
+    pub async fn list_repositories(&self) -> Result<String, AppError> {
         let repositories = self.storage.get_all_repositories().await?;
 
         if repositories.is_empty() {
@@ -50,7 +40,7 @@ impl<S: Storage> ListHandler<S> {
     }
 
     /// List all subscriptions
-    async fn list_subscriptions(&self) -> Result<String, ProcessError> {
+    pub async fn list_subscriptions(&self) -> Result<String, AppError> {
         let subscriptions = self.storage.get_all_subscriptions().await?;
 
         if subscriptions.is_empty() {
@@ -76,7 +66,7 @@ impl<S: Storage> ListHandler<S> {
     }
 
     /// List all updates
-    async fn list_updates(&self) -> Result<String, ProcessError> {
+    pub async fn list_updates(&self) -> Result<String, AppError> {
         let updates = self.storage.get_all_updates().await?;
 
         if updates.is_empty() {

@@ -4,12 +4,12 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::command::AddCommand;
+use crate::error::AppError;
 use crate::models::{Repository, Subscription};
-use crate::process::ProcessError;
 use crate::storage::Storage;
 
 /// Handler for add commands
+#[derive(Clone)]
 pub struct AddHandler<S: Storage> {
     storage: Arc<S>,
 }
@@ -20,21 +20,14 @@ impl<S: Storage> AddHandler<S> {
         Self { storage }
     }
 
-    /// Handle the add command
-    pub async fn handle(&self, command: AddCommand) -> Result<String, ProcessError> {
-        match command {
-            AddCommand::Repository { owner, name } => self.add_repository(owner, name).await,
-            AddCommand::Subscription { owner, name } => self.add_subscription(owner, name).await,
-        }
-    }
-
     /// Add a repository
-    async fn add_repository(&self, owner: String, name: String) -> Result<String, ProcessError> {
+    pub async fn add_repository(&self, owner: String, name: String) -> Result<String, AppError> {
         // Check if repository already exists
         match self.storage.get_repository_by_name(&owner, &name).await {
-            Ok(_) => Err(ProcessError::general(format!(
+            Ok(_) => Err(AppError::AnyError(anyhow::anyhow!(
                 "Repository '{}/{}' already exists",
-                owner, name
+                owner,
+                name
             ))),
             Err(_) => {
                 // Create new repository
@@ -54,7 +47,7 @@ impl<S: Storage> AddHandler<S> {
     }
 
     /// Add a subscription
-    async fn add_subscription(&self, owner: String, name: String) -> Result<String, ProcessError> {
+    pub async fn add_subscription(&self, owner: String, name: String) -> Result<String, AppError> {
         // Get or create the repository
         let repo = match self.storage.get_repository_by_name(&owner, &name).await {
             Ok(repo) => repo,

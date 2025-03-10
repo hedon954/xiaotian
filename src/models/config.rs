@@ -2,42 +2,52 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 /// Application configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
-    /// GitHub API token
-    pub github_token: Option<String>,
-    /// Default update days to fetch (for fetch command)
-    pub default_fetch_days: u32,
-    /// Default number of updates to show
-    pub default_show_limit: u32,
+    /// GitHub configuration
+    pub github: GitHubConfig,
 }
 
-impl Default for AppConfig {
+/// GitHub API configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitHubConfig {
+    /// GitHub API token
+    pub token: Option<String>,
+    /// GitHub API URL (for enterprise GitHub instances)
+    pub api_url: Option<String>,
+    /// GitHub API request timeout (in seconds)
+    pub timeout_seconds: u64,
+    /// GitHub API request retries
+    pub max_retries: u32,
+}
+
+impl Default for GitHubConfig {
     fn default() -> Self {
         Self {
-            github_token: None,
-            default_fetch_days: 7,
-            default_show_limit: 10,
+            token: None,
+            api_url: None,
+            timeout_seconds: 30,
+            max_retries: 3,
         }
     }
 }
 
 impl AppConfig {
-    /// Save config to file
-    pub fn save_to_file(&self, path: &PathBuf) -> Result<(), std::io::Error> {
-        let contents = serde_json::to_string_pretty(self)?;
-        std::fs::write(path, contents)
-    }
-
     /// Load config from file
-    pub fn load_from_file(path: &PathBuf) -> Result<Self, std::io::Error> {
+    pub fn load_from_file(path: &PathBuf) -> anyhow::Result<Self> {
         if !path.exists() {
-            return Ok(Self::default());
+            anyhow::bail!("Config file not found");
         }
 
         let contents = std::fs::read_to_string(path)?;
         let config = serde_json::from_str(&contents)?;
         Ok(config)
+    }
+
+    /// Load from default config file
+    pub fn load() -> anyhow::Result<Self> {
+        let path = Self::get_default_path();
+        Self::load_from_file(&path)
     }
 
     /// Get config file path
@@ -47,5 +57,10 @@ impl AppConfig {
         std::fs::create_dir_all(&path).ok();
         path.push("config.json");
         path
+    }
+
+    /// Get GitHub token
+    pub fn github_token(&self) -> Option<String> {
+        self.github.token.clone()
     }
 }

@@ -258,12 +258,4 @@ impl UpdateStorage for MemoryStorage {
     }
 }
 
-#[async_trait]
-impl Storage for MemoryStorage {
-    async fn clear(&self) -> Result<(), StorageError> {
-        self.repositories.clear();
-        self.subscriptions.clear();
-        self.updates.clear();
-        Ok(())
-    }
-}
+impl Storage for MemoryStorage {}

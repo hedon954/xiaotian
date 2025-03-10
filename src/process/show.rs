@@ -5,12 +5,12 @@ use std::sync::Arc;
 use colored::Colorize;
 use uuid::Uuid;
 
-use crate::command::ShowCommand;
+use crate::error::AppError;
 use crate::models::{Update, UpdateEventType};
-use crate::process::ProcessError;
 use crate::storage::Storage;
 
 /// Handler for show commands
+#[derive(Clone)]
 pub struct ShowHandler<S: Storage> {
     storage: Arc<S>,
 }
@@ -21,29 +21,15 @@ impl<S: Storage> ShowHandler<S> {
         Self { storage }
     }
 
-    /// Handle the show command
-    pub async fn handle(&self, command: ShowCommand) -> Result<String, ProcessError> {
-        match command {
-            ShowCommand::Repository { owner, name } => self.show_repository(owner, name).await,
-            ShowCommand::Subscription { id } => self.show_subscription(id).await,
-            ShowCommand::Updates {
-                subscription_id,
-                limit,
-            } => {
-                self.show_updates(subscription_id, limit.unwrap_or(10))
-                    .await
-            }
-        }
-    }
-
     /// Show repository details
-    async fn show_repository(&self, owner: String, name: String) -> Result<String, ProcessError> {
+    pub async fn show_repository(&self, owner: String, name: String) -> Result<String, AppError> {
         let repo = match self.storage.get_repository_by_name(&owner, &name).await {
             Ok(repo) => repo,
             Err(_) => {
-                return Err(ProcessError::not_found(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Repository '{}/{}' not found",
-                    owner, name
+                    owner,
+                    name
                 )));
             }
         };
@@ -56,11 +42,11 @@ impl<S: Storage> ShowHandler<S> {
     }
 
     /// Show subscription details
-    async fn show_subscription(&self, id: Uuid) -> Result<String, ProcessError> {
+    pub async fn show_subscription(&self, id: Uuid) -> Result<String, AppError> {
         let subscription = match self.storage.get_subscription(&id).await? {
             Some(sub) => sub,
             None => {
-                return Err(ProcessError::not_found(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Subscription with ID {} not found",
                     id
                 )));
@@ -79,10 +65,6 @@ impl<S: Storage> ShowHandler<S> {
             subscription.id.to_string().bright_blue()
         ));
         result.push_str(&format!("Source Type: {:?}\n", subscription.source_type));
-        result.push_str(&format!(
-            "Update Frequency: {:?}\n",
-            subscription.update_frequency
-        ));
 
         result.push_str("Update Types: ");
         if subscription.update_types.is_empty() {
@@ -102,16 +84,16 @@ impl<S: Storage> ShowHandler<S> {
     }
 
     /// Show updates for a subscription
-    async fn show_updates(
+    pub async fn show_updates(
         &self,
         subscription_id: Uuid,
         limit: usize,
-    ) -> Result<String, ProcessError> {
+    ) -> Result<String, AppError> {
         // Check if subscription exists
         let subscription = match self.storage.get_subscription(&subscription_id).await? {
             Some(sub) => sub,
             None => {
-                return Err(ProcessError::not_found(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Subscription with ID {} not found",
                     subscription_id
                 )));
@@ -123,14 +105,14 @@ impl<S: Storage> ShowHandler<S> {
             Some(repo_id) => match Uuid::parse_str(repo_id) {
                 Ok(id) => id,
                 Err(_) => {
-                    return Err(ProcessError::general(format!(
+                    return Err(AppError::AnyError(anyhow::anyhow!(
                         "Invalid repository ID in subscription: {}",
                         repo_id
                     )));
                 }
             },
             None => {
-                return Err(ProcessError::general(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Unsupported source ID format: {}",
                     subscription.source_id
                 )));
@@ -152,11 +134,7 @@ impl<S: Storage> ShowHandler<S> {
     }
 
     /// Format updates for display
-    fn format_updates(
-        &self,
-        mut updates: Vec<Update>,
-        limit: usize,
-    ) -> Result<String, ProcessError> {
+    fn format_updates(&self, mut updates: Vec<Update>, limit: usize) -> Result<String, AppError> {
         // Sort updates by date (newest first)
         updates.sort_by(|a, b| b.event_date.cmp(&a.event_date));
 

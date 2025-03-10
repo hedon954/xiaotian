@@ -4,11 +4,11 @@ use std::sync::Arc;
 
 use uuid::Uuid;
 
-use crate::command::DeleteCommand;
-use crate::process::ProcessError;
+use crate::error::AppError;
 use crate::storage::Storage;
 
 /// Handler for delete commands
+#[derive(Clone)]
 pub struct DeleteHandler<S: Storage> {
     storage: Arc<S>,
 }
@@ -19,21 +19,13 @@ impl<S: Storage> DeleteHandler<S> {
         Self { storage }
     }
 
-    /// Handle the delete command
-    pub async fn handle(&self, command: DeleteCommand) -> Result<String, ProcessError> {
-        match command {
-            DeleteCommand::Repository { id } => self.delete_repository(id).await,
-            DeleteCommand::Subscription { id } => self.delete_subscription(id).await,
-        }
-    }
-
     /// Delete a repository
-    async fn delete_repository(&self, id: Uuid) -> Result<String, ProcessError> {
+    pub async fn delete_repository(&self, id: Uuid) -> Result<String, AppError> {
         // Get the repository to show what was deleted
         let repo = match self.storage.get_repository(&id).await {
             Ok(repo) => repo,
             Err(_) => {
-                return Err(ProcessError::not_found(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Repository with ID {} not found",
                     id
                 )));
@@ -47,12 +39,12 @@ impl<S: Storage> DeleteHandler<S> {
     }
 
     /// Delete a subscription
-    async fn delete_subscription(&self, id: Uuid) -> Result<String, ProcessError> {
+    pub async fn delete_subscription(&self, id: Uuid) -> Result<String, AppError> {
         // Check if subscription exists
         let subscription = match self.storage.get_subscription(&id).await? {
             Some(sub) => sub,
             None => {
-                return Err(ProcessError::not_found(format!(
+                return Err(AppError::AnyError(anyhow::anyhow!(
                     "Subscription with ID {} not found",
                     id
                 )));

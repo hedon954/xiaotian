@@ -20,6 +20,9 @@ body = """
 {% else %}\
     ## [unreleased]
 {% endif %}\
+{% if message %}
+    {{ message }}
+{% endif %}\
 {% for group, commits in commits | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits
@@ -93,3 +96,4 @@ topo_order = false
 sort_commits = "oldest"
 # limit the number of commits included in the changelog.
 # limit_commits = 42
+remote = "origin"

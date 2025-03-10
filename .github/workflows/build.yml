@@ -39,6 +39,10 @@ jobs:
       #   run: cargo clippy --all-targets --all-features --tests --benches -- -D warnings
       - name: Execute rust tests
         run: cargo nextest run --all-features
+      - name: Get tags info
+        id: get_tag_message
+        run: git fetch origin +refs/tags/*:refs/tags/*
+        if: startsWith(github.ref, 'refs/tags/')
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v3
         id: git-cliff
@@ -48,12 +52,7 @@ jobs:
           args: -vv --latest --strip header
         env:
           OUTPUT: NEW_CHANGELOG.md
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          body: ${{ steps.git-cliff.outputs.content }}
-      - name: Prepend new changelog to existing CHANGELOG.md
+      - name: Prepend tag message and new changelog to existing CHANGELOG.md
         run: |
           cat NEW_CHANGELOG.md
           git fetch origin main:main
@@ -73,4 +72,8 @@ jobs:
           git add CHANGELOG.md
           git commit -m "[skip] Update CHANGELOG.md with new changes"
           git push origin main --force
-        if: startsWith(github.ref, 'refs/tags/') && steps.git-cliff.outputs.content != ''
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body: ${{ steps.git-cliff.outputs.content }}

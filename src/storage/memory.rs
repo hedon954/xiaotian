@@ -154,7 +154,6 @@ impl RepositoryStorage for MemoryStorage {
     }
 
     async fn delete_repository(&self, id: &Uuid) -> Result<(), StorageError> {
-        // 删除前检查是否有关联的订阅
         let related_subs = self.find_related_subscriptions(id).await?;
         if !related_subs.is_empty() {
             return Err(StorageError::RelatedEntitiesExist(related_subs.len()));
@@ -171,11 +170,9 @@ impl RepositoryStorage for MemoryStorage {
         &self,
         id: &Uuid,
     ) -> Result<Vec<Subscription>, StorageError> {
-        // 获取仓库信息
         let repo = self.get_repository(id).await?;
         let repo_source_id = format!("github:{}:{}", repo.owner, repo.name);
 
-        // 查找与仓库相关的所有订阅
         let related_subs: Vec<Subscription> = self
             .subscriptions
             .iter()
@@ -187,18 +184,15 @@ impl RepositoryStorage for MemoryStorage {
     }
 
     async fn cascade_delete_repository(&self, id: &Uuid) -> Result<(usize, usize), StorageError> {
-        // 获取关联的订阅
         let related_subs = self.find_related_subscriptions(id).await?;
 
         if self.repositories.remove(id).is_none() {
             return Err(StorageError::NotFound(*id));
         }
 
-        // 记录删除的订阅数量和更新数量
         let mut total_subs_deleted = 0;
         let mut total_updates_deleted = 0;
 
-        // 级联删除所有关联的订阅及其更新
         for sub in related_subs {
             let updates_deleted = self.cascade_delete_subscription(&sub.id).await?;
             total_updates_deleted += updates_deleted;
@@ -277,14 +271,10 @@ impl SubscriptionStorage for MemoryStorage {
         &self,
         subscription: &Subscription,
     ) -> Result<bool, StorageError> {
-        // 目前仅实现GitHub来源的验证
         if subscription.source_type != crate::models::SourceType::GitHub {
-            // 如果不是GitHub，暂时返回true（因为我们只处理GitHub）
             return Ok(true);
         }
 
-        // 从source_id提取owner和name
-        // 格式应该是"github:owner:repo"
         let parts: Vec<&str> = subscription.source_id.split(':').collect();
         if parts.len() != 3 || parts[0] != "github" {
             return Err(StorageError::ValidationError(
@@ -295,7 +285,6 @@ impl SubscriptionStorage for MemoryStorage {
         let owner = parts[1];
         let name = parts[2];
 
-        // 检查仓库是否存在
         match self.get_repository_by_name(owner, name).await {
             Ok(_) => Ok(true),
             Err(_) => Ok(false),
@@ -306,7 +295,6 @@ impl SubscriptionStorage for MemoryStorage {
         &self,
         subscription: Subscription,
     ) -> Result<Subscription, StorageError> {
-        // 验证source是否存在
         if !self.verify_source_exists(&subscription).await? {
             return Err(StorageError::ReferenceIntegrityError(format!(
                 "Source does not exist for subscription: {}",
@@ -328,17 +316,12 @@ impl SubscriptionStorage for MemoryStorage {
     }
 
     async fn cascade_delete_subscription(&self, id: &Uuid) -> Result<usize, StorageError> {
-        // 先检查订阅是否存在
         if self.subscriptions.get(id).is_none() {
             return Err(StorageError::NotFound(*id));
         }
 
-        // 删除与该订阅相关的所有更新
         let updates_deleted = self.delete_updates_for_subscription(id).await?;
-
-        // 删除订阅本身
         self.subscriptions.remove(id);
-
         Ok(updates_deleted)
     }
 }

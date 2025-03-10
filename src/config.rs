@@ -51,7 +51,7 @@ impl AppConfig {
     }
 
     /// Get config file path
-    pub fn get_default_path() -> PathBuf {
+    fn get_default_path() -> PathBuf {
         let mut path = dirs::config_dir().unwrap_or_else(|| PathBuf::from("."));
         path.push("xiaotian");
         std::fs::create_dir_all(&path).ok();

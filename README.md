@@ -86,28 +86,21 @@ XiaoTian 0.2.5
 
 ## Usage
 
-XiaoTian provides both a REPL (Read-Eval-Print Loop) interface and a traditional CLI mode:
-
-### REPL Mode
-
-Start the REPL interface:
-
 ```bash
-xiaotian
-```
+Commands available in XiaoTian
 
-Once in the REPL, use the `help` command to see available commands:
+Usage: [COMMAND]
 
-```
-xiaotian> help
-```
+Commands:
+  add     Add a repository or subscription
+  list    List repositories or subscriptions
+  show    Show details of a repository, subscription, or updates
+  delete  Delete a repository or subscription
+  fetch   Fetch updates for subscriptions
+  help    Print this message or the help of the given subcommand(s)
 
-### CLI Mode
-
-Run single commands directly:
-
-```bash
-xiaotian add repository rust-lang rust
+Options:
+  -h, --help  Print help
 ```
 
 ## Command Structure
@@ -132,135 +125,6 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 - `fetch updates <subscription_id> [days]` - Fetch updates for a subscription for the last N days
 - `show updates <subscription_id> [limit]` - Show recent updates for a subscription with optional limit
-
-### Configuration
-
-- `config get <key>` - Get a configuration value (github_token, default_fetch_days, default_show_limit)
-- `config set <key> <value>` - Set a configuration value
-
-### System Commands
-
-- `help` - Show help message with available commands
-- `exit` or `quit` - Exit the REPL
-- `clear` - Clear the terminal screen
-
-## Configuration
-
-XiaoTian supports persistent configuration through the `config` command:
-
-```
-# Set GitHub API token
-xiaotian> config set github_token ghp_your_token_here
-
-# Configure default number of days for fetch updates
-xiaotian> config set default_fetch_days 14
-
-# Configure default limit for showing updates
-xiaotian> config set default_show_limit 20
-```
-
-## Examples
-
-### Managing Repositories and Subscriptions
-
-```
-# Add a GitHub repository
-xiaotian> add repository rust-lang rust
-Repository added: rust-lang/rust
-
-# Add a subscription to the repository
-xiaotian> add subscription rust-lang rust
-Subscription added for: rust-lang/rust (8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g)
-
-# List all repositories
-xiaotian> list repositories
-Repositories:
-- rust-lang/rust (Last updated: 2025-04-10)
-
-# List all subscriptions
-xiaotian> list subscriptions
-Subscriptions:
-- rust-lang/rust (8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g)
-```
-
-### Fetching and Viewing Updates
-
-```
-# Fetch recent updates (last 7 days)
-xiaotian> fetch updates 8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g 7
-Found 45 updates:
-
-Commits (20):
-  - [2025-04-01] Update dependencies
-  - [2025-03-30] Fix memory leak in compiler
-  ...
-
-Issues (15):
-  - [2025-04-02] ICE when using async traits with dyn
-  ...
-
-Pull Requests (8):
-  - [2025-04-02] #98765: Implement RFC 3456
-  - [2025-04-01] #98764: Fix regression in pattern matching
-  ...
-
-Releases (2):
-  - [2025-04-01] Rust 1.75.0
-  - [2025-03-28] Rust 1.74.1
-  ...
-
-# Show updates with limit
-xiaotian> show updates 8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g 10
-Showing 10 most recent updates for rust-lang/rust:
-
-1. [COMMIT] 2025-04-01: Update dependencies (a1b2c3d)
-2. [ISSUE] 2025-04-02: ICE when using async traits with dyn (#12345)
-3. [PR] 2025-04-02: Implement RFC 3456 (#98765)
-...
-```
-
-### Interactive Deletion Workflow
-
-```
-xiaotian> delete repository rust-lang rust
-This repository has 2 related subscriptions:
-- rust-lang/rust (8f3e8b42-1c3d-4a8e-9b9a-2b3c4d5e6f7g)
-- rust-lang/rust [Weekly] (9e2f8c53-2d4b-5a9e-8c0a-3b4c5d6e7f8g)
-
-Deleting this repository will also delete these subscriptions and their updates.
-Do you want to proceed? (y/N): y
-
-Repository rust-lang/rust deleted along with 2 subscriptions and 45 updates.
-```
-
-### Working with Multiple Repositories
-
-```
-# Add multiple repositories
-xiaotian> add repository microsoft vscode
-Repository added: microsoft/vscode
-
-xiaotian> add repository facebook react
-Repository added: facebook/react
-
-# Add subscriptions with different update frequencies
-xiaotian> add subscription microsoft vscode
-Subscription added for: microsoft/vscode (7a8b9c0d-1e2f-3g4h-5i6j-7k8l9m0n1o2p)
-
-xiaotian> add subscription facebook react
-Subscription added for: facebook/react (3e4f5g6h-7i8j-9k0l-1m2n-3o4p5q6r7s8t)
-
-# List all repositories
-xiaotian> list repositories
-Repositories:
-- microsoft/vscode (Last updated: 2025-04-12)
-- facebook/react (Last updated: 2025-04-11)
-- rust-lang/rust (Last updated: 2025-04-10)
-
-# Fetch updates for a specific subscription
-xiaotian> fetch updates 7a8b9c0d-1e2f-3g4h-5i6j-7k8l9m0n1o2p 3
-Found 28 updates for microsoft/vscode...
-```
 
 ## Development
 
@@ -321,43 +185,6 @@ XiaoTian follows a structured development roadmap:
 - Team collaboration features
 - Custom plugin system
 - Integration with CI/CD workflows
-
-## Contributing
-
-Contributions to XiaoTian are welcome! Here's how you can contribute:
-
-### Getting Started
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Commit your changes: `git commit -m 'Add some amazing feature'`
-5. Push to the branch: `git push origin feature/amazing-feature`
-6. Open a Pull Request
-
-### Development Guidelines
-
-- Follow the Rust style guide
-- Write tests for new features
-- Update documentation as needed
-- Add entries to the changelog for notable changes
-
-### Setting Up Development Environment
-
-```bash
-# Clone your fork
-git clone https://github.com/your-username/xiaotian.git
-cd xiaotian
-
-# Add the original repository as a remote
-git remote add upstream https://github.com/hedon954/xiaotian.git
-
-# Create a feature branch
-git checkout -b feature/your-feature-name
-
-# Install development dependencies
-cargo install --path .
-```
 
 ## License
 

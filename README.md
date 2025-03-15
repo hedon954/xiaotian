@@ -203,33 +203,42 @@ XiaoTian follows a structured development roadmap:
 
 ### Implemented Features (v0.3.0)
 
-- Use `cron_tab` library to implement scheduled tasks based on cron expressions
-- Create a standalone `cron` binary entry point for running scheduled tasks
-- Design and implement structured Markdown report generation
-- Organize reports by source type and repository, using the `reports/{source_type}/{owner}_{repo}_{since}_{until}.md` directory structure
-- Optimize report content, focusing on high-value information (Pull Requests, Issues, and Releases)
-- Refactor code architecture for better maintainability
+- Scheduled tasks using cron expressions
+- Standalone scheduler binary for continuous operation
+- Structured Markdown report generation
+- Organized report directory structure
+- Optimized high-value content
+- Improved code architecture
 
-### Upcoming Features (v0.4.0)
+### Coming Soon in v0.4.0: LLM Integration & Summaries
 
-- Add report sending functionality (e.g., Email, Webhook)
-- Implement task management commands (add, delete, view task status)
-- Support more source types for scheduled updates
-- Add persistent storage support
+The upcoming v0.4.0 release will feature:
 
-### Mid-term Goals (v0.4.0 - v0.5.0)
+- LLM utility for AI-powered content generation
+- Ollama integration for local AI processing
+- AI-generated summaries of repository updates
+- Enhanced report format with intelligent content organization
+- Support for dry-run mode to preview prompts
 
-- Notification system with multiple channels
-- Report generation in various formats
-- Advanced filtering capabilities
-- Integration with more developer platforms
+### Future Roadmap
 
-### Long-term Goals (v1.0.0+)
+#### v0.5.0: Notification System
 
-- Web interface with dashboard
-- Team collaboration features
-- Custom plugin system
-- Integration with CI/CD workflows
+- Multiple notification channels
+- Report delivery mechanisms
+- Scheduled notifications
+
+#### v0.6.0: MVP Release
+
+- Comprehensive testing
+- Complete documentation
+- Polished user experience
+
+#### v0.7.0: Enhanced Reports
+
+- Multiple report formats (Markdown, HTML, PDF)
+- Customizable report templates
+- Persistent storage support
 
 ## License
 

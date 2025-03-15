@@ -130,6 +130,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test is slow and need to send request to GitHub API"]
     async fn test_fetch_updates() {
         let client = Arc::new(Octocrab::builder().build().unwrap());
         let source = GitHubSource::new(

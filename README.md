@@ -166,16 +166,45 @@ Subscription #1:
   Status: Active
 ```
 
+### New in v0.2.7: Architecture Simplification
+
+Version 0.2.7 introduces major architectural simplifications:
+
+- Removed the Subscription concept, using direct Source management with custom fetch_update functions
+- Eliminated Update storage in favor of on-demand processing
+- Simplified command naming (repository→repo, repositories→repos)
+- Streamlined command interface for better user experience
+
+Example of the simplified command structure:
+
+```
+xiaotian> add repo rust-lang/rust
+Repository added with ID: 1
+
+xiaotian> fetch updates 1
+Fetching updates for rust-lang/rust...
+[Output of processed updates]
+```
+
+### Coming Soon in v0.3.0: Scheduled Updates & Reports
+
+The upcoming v0.3.0 release will feature:
+
+- Decoupled GitHub API operations with a dedicated GithubClient
+- Scheduled update tasks using cron expressions
+- Automatic report generation in markdown format
+- Enhanced update tracking with history
+
 ## Roadmap
 
 XiaoTian follows a structured development roadmap:
 
 ### Upcoming Features (v0.3.0)
 
-- Update tracking system
-- Incremental update mechanism
-- Scheduled update checks
-- Update status notifications
+- Dedicated GitHub client for better separation of concerns
+- Scheduled update checks with cron-based configuration
+- Automatic report generation in markdown format
+- Report storage with organized directory structure
 
 ### Mid-term Goals (v0.4.0 - v0.5.0)
 

@@ -290,13 +290,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "cron"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5877d3fbf742507b66bc2a1945106bd30dd8504019d596901ddd012a4dd01740"
+dependencies = [
+ "chrono",
+ "once_cell",
+ "winnow",
+]
+
+[[package]]
 name = "cron_tab"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9fbaa1e4401253283591c174ae8a16bc1f4659aab9a5a4402e9300aeda7dcf46"
 dependencies = [
  "chrono",
- "cron",
+ "cron 0.13.0",
  "crossbeam-channel",
  "futures",
  "thiserror 2.0.11",
@@ -2395,6 +2406,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
+name = "winnow"
+version = "0.6.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e90edd2ac1aa278a5c4599b1d89cf03074b610800f866d4026dc199d7929a28"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "wit-bindgen-rt"
 version = "0.33.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2424,6 +2444,7 @@ dependencies = [
  "chrono",
  "clap",
  "colored",
+ "cron 0.15.0",
  "cron_tab",
  "crossbeam-channel",
  "dashmap",

@@ -50,3 +50,4 @@ dirs = "6.0.0"
 crossbeam-channel = "0.5.14"
 oneshot = "0.1.11"
 cron_tab = { version = "0.2.2", features = ["async"] }
+cron = "0.15.0"

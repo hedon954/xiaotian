@@ -64,7 +64,6 @@ impl<S: Storage> FetchHandler<S> {
             .map_err(AppError::SourceError)?;
 
         // Group and count updates by type
-        let mut commit_count = 0;
         let mut issue_count = 0;
         let mut pr_count = 0;
         let mut release_count = 0;
@@ -78,10 +77,6 @@ impl<S: Storage> FetchHandler<S> {
         let mut tmp_result = String::new();
         for update in updates {
             let r#type = match update.event_type {
-                UpdateEventType::Commit => {
-                    commit_count += 1;
-                    "Commit".bright_blue()
-                }
                 UpdateEventType::Issue => {
                     issue_count += 1;
                     "Issue".bright_green()
@@ -94,6 +89,7 @@ impl<S: Storage> FetchHandler<S> {
                     release_count += 1;
                     "Release".bright_red()
                 }
+                _ => continue,
             };
             tmp_result.push_str(&format!(
                 "-[{}] [{}] {}\n",
@@ -101,10 +97,6 @@ impl<S: Storage> FetchHandler<S> {
                 update.event_date.format("%Y-%m-%d %H:%M:%S"),
                 update.title,
             ));
-        }
-
-        if commit_count > 0 {
-            result.push_str(&format!("- Commits: {}\n", commit_count));
         }
 
         if issue_count > 0 {

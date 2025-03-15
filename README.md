@@ -188,23 +188,34 @@ Fetching updates for rust-lang/rust...
 
 ### Coming Soon in v0.3.0: Scheduled Updates & Reports
 
-The upcoming v0.3.0 release will feature:
+XiaoTian v0.3.0 has implemented the following features:
 
-- Decoupled GitHub API operations with a dedicated GithubClient
-- Scheduled update tasks using cron expressions
-- Automatic report generation in markdown format
-- Enhanced update tracking with history
+- Use `cron_tab` library to implement scheduled tasks based on cron expressions
+- Create a standalone `cron` binary entry point for running scheduled tasks
+- Design and implement structured Markdown report generation
+- Organize reports by source type and repository, using the `reports/{source_type}/{owner}_{repo}_{since}_{until}.md` directory structure
+- Optimize report content, focusing on high-value information (Pull Requests, Issues, and Releases)
+- Refactor code architecture for better maintainability
 
 ## Roadmap
 
 XiaoTian follows a structured development roadmap:
 
-### Upcoming Features (v0.3.0)
+### Implemented Features (v0.3.0)
 
-- Dedicated GitHub client for better separation of concerns
-- Scheduled update checks with cron-based configuration
-- Automatic report generation in markdown format
-- Report storage with organized directory structure
+- Use `cron_tab` library to implement scheduled tasks based on cron expressions
+- Create a standalone `cron` binary entry point for running scheduled tasks
+- Design and implement structured Markdown report generation
+- Organize reports by source type and repository, using the `reports/{source_type}/{owner}_{repo}_{since}_{until}.md` directory structure
+- Optimize report content, focusing on high-value information (Pull Requests, Issues, and Releases)
+- Refactor code architecture for better maintainability
+
+### Upcoming Features (v0.4.0)
+
+- Add report sending functionality (e.g., Email, Webhook)
+- Implement task management commands (add, delete, view task status)
+- Support more source types for scheduled updates
+- Add persistent storage support
 
 ### Mid-term Goals (v0.4.0 - v0.5.0)
 

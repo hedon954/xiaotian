@@ -1,6 +1,6 @@
 [package]
 name = "xiaotian"
-version = "0.2.6"
+version = "0.3.0"
 edition = "2024"
 authors = ["Hedon <171725713@qq.com>"]
 description = "A CLI tool for monitoring GitHub repositories."
@@ -49,3 +49,4 @@ dashmap = "6.1.0"
 dirs = "6.0.0"
 crossbeam-channel = "0.5.14"
 oneshot = "0.1.11"
+cron_tab = { version = "0.2.2", features = ["async"] }

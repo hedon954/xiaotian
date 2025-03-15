@@ -1,41 +1,34 @@
 pub mod github;
 
-use std::sync::Arc;
-
 use async_trait::async_trait;
-use octocrab::Octocrab;
 
 use crate::{
     error::AppError,
     models::{Source, SourceConfig, SourceFactory, SourceType, source::SourceConfigParser},
+    utils::github_client::GithubClient,
 };
 
 pub use self::github::GitHubSource;
 
 /// Factory for creating source instances
 pub struct DefaultSourceFactory {
-    github_client: Arc<Octocrab>,
+    github_client: GithubClient,
 }
 
 impl DefaultSourceFactory {
     /// Create a new source factory
     pub fn new(github_token: Option<String>) -> Result<Self, AppError> {
         let github_client = if let Some(token) = github_token {
-            Octocrab::builder()
-                .personal_token(token)
-                .build()
-                .map_err(|e| {
-                    AppError::AnyError(anyhow::anyhow!("Failed to initialize GitHub client: {}", e))
-                })?
+            GithubClient::with_token(token).map_err(|e| {
+                AppError::AnyError(anyhow::anyhow!("Failed to initialize GitHub client: {}", e))
+            })?
         } else {
-            Octocrab::builder().build().map_err(|e| {
+            GithubClient::anonymous().map_err(|e| {
                 AppError::AnyError(anyhow::anyhow!("Failed to initialize GitHub client: {}", e))
             })?
         };
 
-        Ok(Self {
-            github_client: Arc::new(github_client),
-        })
+        Ok(Self { github_client })
     }
 }
 
@@ -53,7 +46,7 @@ impl SourceFactory for DefaultSourceFactory {
                     github_config.owner,
                     github_config.repo,
                     github_config.branch,
-                    Arc::clone(&self.github_client),
+                    self.github_client.get_octocrab(),
                     source_id,
                 );
                 Ok(Box::new(source))

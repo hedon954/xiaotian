@@ -6,7 +6,8 @@ use octocrab::Octocrab;
 use serde_json::json;
 
 use crate::models::source::{SourceMetadata, SourceType};
-use crate::models::{Source, SourceError, Update, UpdateEventType};
+use crate::models::{Source, SourceError, Update};
+use crate::utils::github_client::GithubClient;
 
 /// A source for GitHub repositories
 pub struct GitHubSource {
@@ -17,8 +18,8 @@ pub struct GitHubSource {
     /// Branch to track (defaults to main/master)
     branch: Option<String>,
     /// GitHub client
-    client: Arc<Octocrab>,
-    /// Cached repository ID
+    client: GithubClient,
+    /// Repository ID
     repo_id: i32,
 }
 
@@ -28,277 +29,16 @@ impl GitHubSource {
         owner: String,
         repo: String,
         branch: Option<String>,
-        client: Arc<Octocrab>,
+        octocrab_client: Arc<Octocrab>,
         repo_id: i32,
     ) -> Self {
         Self {
             owner,
             repo,
             branch,
-            client,
+            client: GithubClient::new(octocrab_client),
             repo_id,
         }
-    }
-
-    /// Convert GitHub API errors to SourceError
-    fn map_error<E: std::fmt::Debug>(err: E) -> SourceError {
-        SourceError::ApiError(format!("GitHub API error: {:?}", err))
-    }
-
-    /// Fetch commits from GitHub
-    async fn fetch_commits(
-        &self,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
-        let mut updates = Vec::new();
-
-        // Start with list_commits() builder
-        let repo = self.client.repos(&self.owner, &self.repo);
-        let mut commits_handler = repo.list_commits();
-
-        // Add since filter if provided
-        if let Some(since_time) = since {
-            commits_handler = commits_handler.since(since_time);
-        }
-
-        // If a branch is specified, filter by that branch
-        if let Some(branch) = &self.branch {
-            commits_handler = commits_handler.sha(branch);
-        }
-
-        // Execute the API call
-        let commits_page = commits_handler.send().await.map_err(Self::map_error)?;
-
-        // Convert each commit to an Update
-        for commit in commits_page.items {
-            let sha = commit.sha.clone();
-            let author_name = commit.author.as_ref().map(|a| a.login.clone());
-
-            // Get commit info from the first page
-            // NOTE: We can't get detailed commit info due to API limitations with octocrab
-            // We'll work with the basic info for now
-            let commit_msg = commit.commit.message.clone();
-            let title = commit_msg.lines().next().unwrap_or("").to_string();
-            let description = if commit_msg.lines().count() > 1 {
-                Some(commit_msg.lines().skip(1).collect::<Vec<&str>>().join("\n"))
-            } else {
-                None
-            };
-
-            let commit_date = match commit.commit.committer {
-                Some(committer) => committer.date,
-                None => None,
-            };
-            let commit_url = format!(
-                "https://github.com/{}/{}/commit/{}",
-                self.owner, self.repo, sha
-            );
-
-            // Store additional data as JSON
-            let additional_data = json!({
-                "sha": sha,
-                // We don't have stats in this payload, but we could fetch them if needed
-            });
-
-            let update = Update::with_data(
-                SourceType::GitHub,
-                self.repo_id,
-                UpdateEventType::Commit,
-                title,
-                description,
-                commit_url,
-                author_name,
-                commit_date.unwrap_or_else(Utc::now),
-                additional_data,
-            );
-
-            updates.push(update);
-        }
-
-        Ok(updates)
-    }
-
-    /// Fetch issues from GitHub
-    async fn fetch_issues(&self, since: Option<DateTime<Utc>>) -> Result<Vec<Update>, SourceError> {
-        let mut updates = Vec::new();
-
-        // Build the issues query
-        let issues = self.client.issues(&self.owner, &self.repo);
-        let mut issues_handler = issues.list().state(octocrab::params::State::All);
-
-        // Add since filter if provided
-        if let Some(since_time) = since {
-            issues_handler = issues_handler.since(since_time);
-        }
-
-        // Execute the API call
-        let issues_page = issues_handler.send().await.map_err(Self::map_error)?;
-
-        // Convert each issue to an Update
-        for issue in issues_page.items {
-            // Skip pull requests (they're handled separately)
-            if issue.pull_request.is_some() {
-                continue;
-            }
-
-            let issue_num = issue.number;
-            let issue_url = format!(
-                "https://github.com/{}/{}/issues/{}",
-                self.owner, self.repo, issue_num
-            );
-
-            // Store additional data as JSON
-            let additional_data = json!({
-                "issue_number": issue_num,
-                "state": format!("{:?}", issue.state),
-                "labels": issue.labels.iter().map(|l| &l.name).collect::<Vec<_>>(),
-                "comments": issue.comments,
-            });
-
-            let update = Update::with_data(
-                SourceType::GitHub,
-                self.repo_id,
-                UpdateEventType::Issue,
-                issue.title,
-                issue.body,
-                issue_url,
-                Some(issue.user.id.to_string()),
-                issue.updated_at,
-                additional_data,
-            );
-
-            updates.push(update);
-        }
-
-        Ok(updates)
-    }
-
-    /// Fetch pull requests from GitHub
-    async fn fetch_pull_requests(
-        &self,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
-        let mut updates = Vec::new();
-
-        // Get pull requests
-        let pulls_page = self
-            .client
-            .pulls(&self.owner, &self.repo)
-            .list()
-            .state(octocrab::params::State::All)
-            .sort(octocrab::params::pulls::Sort::Updated)
-            .direction(octocrab::params::Direction::Descending)
-            .send()
-            .await
-            .map_err(Self::map_error)?;
-
-        // Filter by date if needed
-        let pulls = if let Some(since_time) = since {
-            pulls_page
-                .items
-                .into_iter()
-                .filter(|pr| pr.updated_at.unwrap_or_else(Utc::now) >= since_time)
-                .collect::<Vec<_>>()
-        } else {
-            pulls_page.items
-        };
-
-        // Convert each PR to an Update
-        for pr in pulls {
-            let pr_num = pr.number;
-            let pr_url = format!(
-                "https://github.com/{}/{}/pull/{}",
-                self.owner, self.repo, pr_num
-            );
-
-            // Store additional data as JSON
-            let additional_data = json!({
-                "pr_number": pr_num,
-                "state": format!("{:?}", pr.state.unwrap_or(octocrab::models::IssueState::Open)),
-                "draft": pr.draft,
-                "mergeable": pr.mergeable,
-                "merged": pr.merged,
-                "comments": pr.comments,
-                "additions": pr.additions,
-                "deletions": pr.deletions,
-                "changed_files": pr.changed_files,
-            });
-
-            let update = Update::with_data(
-                SourceType::GitHub,
-                self.repo_id,
-                UpdateEventType::PullRequest,
-                pr.title.unwrap_or_else(|| format!("PR #{}", pr_num)),
-                pr.body,
-                pr_url,
-                pr.user.as_ref().map(|u| u.login.clone()),
-                pr.updated_at.unwrap_or_else(Utc::now),
-                additional_data,
-            );
-
-            updates.push(update);
-        }
-
-        Ok(updates)
-    }
-
-    /// Fetch releases from GitHub
-    async fn fetch_releases(
-        &self,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
-        let mut updates = Vec::new();
-
-        // Get releases
-        let releases = self
-            .client
-            .repos(&self.owner, &self.repo)
-            .releases()
-            .list()
-            .send()
-            .await
-            .map_err(Self::map_error)?;
-
-        // Filter by date if needed
-        let filtered_releases = if let Some(since_time) = since {
-            releases
-                .items
-                .into_iter()
-                .filter(|r| r.published_at.is_some_and(|d| d >= since_time))
-                .collect::<Vec<_>>()
-        } else {
-            releases.items
-        };
-
-        // Convert each release to an Update
-        for release in filtered_releases {
-            let tag_name = release.tag_name.clone();
-            let release_url = release.html_url.to_string();
-
-            // Store additional data as JSON
-            let additional_data = json!({
-                "tag_name": tag_name,
-                "prerelease": release.prerelease,
-                "draft": release.draft,
-                "assets_count": release.assets.len(),
-            });
-
-            let update = Update::with_data(
-                SourceType::GitHub,
-                self.repo_id,
-                UpdateEventType::Release,
-                format!("Release: {}", release.name.unwrap_or(tag_name.clone())),
-                release.body,
-                release_url,
-                release.author.as_ref().map(|a| a.login.clone()),
-                release.published_at.unwrap_or_else(Utc::now),
-                additional_data,
-            );
-
-            updates.push(update);
-        }
-
-        Ok(updates)
     }
 }
 
@@ -309,7 +49,7 @@ impl Source for GitHubSource {
     }
 
     fn get_id(&self) -> String {
-        self.repo_id.to_string()
+        format!("{}/{}", self.owner, self.repo)
     }
 
     fn get_name(&self) -> String {
@@ -317,7 +57,15 @@ impl Source for GitHubSource {
     }
 
     fn get_description(&self) -> Option<String> {
-        None
+        Some(format!(
+            "GitHub repository: {}/{}{}",
+            self.owner,
+            self.repo,
+            match &self.branch {
+                Some(branch) => format!(" (branch: {})", branch),
+                None => "".to_string(),
+            }
+        ))
     }
 
     fn get_url(&self) -> String {
@@ -328,30 +76,28 @@ impl Source for GitHubSource {
         &self,
         since: Option<DateTime<Utc>>,
     ) -> Result<Vec<Update>, SourceError> {
-        let mut updates = Vec::new();
-
-        // Fetch the different types of updates
-        let commits = self.fetch_commits(since).await?;
-        let issues = self.fetch_issues(since).await?;
-        let pull_requests = self.fetch_pull_requests(since).await?;
-        let releases = self.fetch_releases(since).await?;
-
-        updates.extend(commits);
-        updates.extend(issues);
-        updates.extend(pull_requests);
-        updates.extend(releases);
-
-        Ok(updates)
+        // Delegate to the GitHub client
+        self.client
+            .fetch_all_updates(
+                &self.owner,
+                &self.repo,
+                self.branch.as_deref(),
+                since,
+                self.repo_id,
+            )
+            .await
     }
 
     fn get_metadata(&self) -> SourceMetadata {
+        let data = json!({
+            "owner": self.owner,
+            "repo": self.repo,
+            "branch": self.branch,
+        });
+
         SourceMetadata {
             source_type: SourceType::GitHub,
-            data: json!({
-                "owner": self.owner,
-                "repo": self.repo,
-                "branch": self.branch,
-            }),
+            data,
         }
     }
 }
@@ -380,7 +126,7 @@ mod tests {
         assert_eq!(source.get_type().to_string(), "GitHub");
         assert_eq!(source.get_name(), "rust-lang/rust");
         assert_eq!(source.get_url(), "https://github.com/rust-lang/rust");
-        assert_eq!(source.get_id(), "123456");
+        assert_eq!(source.get_id(), "rust-lang/rust");
     }
 
     #[tokio::test]

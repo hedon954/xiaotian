@@ -5,5 +5,6 @@ pub mod process;
 pub mod repl;
 pub mod sources;
 pub mod storage;
+pub mod utils;
 
 pub use models::{Repository, Update};

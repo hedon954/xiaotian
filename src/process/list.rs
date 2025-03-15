@@ -48,46 +48,4 @@ impl<S: Storage> ListHandler<S> {
 
         Ok(result)
     }
-
-    /// List all subscriptions
-    pub async fn list_subscriptions(&self) -> Result<String, AppError> {
-        let subscriptions = self.storage.get_all_subscriptions().await?;
-
-        if subscriptions.is_empty() {
-            return Ok("No subscriptions found.".to_string());
-        }
-
-        let mut result = String::from("Subscriptions:\n");
-        for sub in subscriptions {
-            result.push_str(&format!(
-                "- {}: {} (source_id: {})\n",
-                sub.id.to_string().bright_blue(),
-                sub.name,
-                sub.source_id.to_string().bright_blue(),
-            ));
-        }
-
-        Ok(result)
-    }
-
-    /// List all updates
-    pub async fn list_updates(&self) -> Result<String, AppError> {
-        let updates = self.storage.get_all_updates().await?;
-
-        if updates.is_empty() {
-            return Ok("No updates found.".to_string());
-        }
-
-        let mut result = String::from("Updates:\n");
-        for update in updates {
-            result.push_str(&format!(
-                "- [{}] {} ({})\n",
-                update.event_date.format("%Y-%m-%d %H:%M:%S"),
-                update.title,
-                update.id.to_string().bright_blue()
-            ));
-        }
-
-        Ok(result)
-    }
 }

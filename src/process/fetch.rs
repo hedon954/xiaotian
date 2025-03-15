@@ -3,10 +3,11 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
+use reedline_repl_rs::yansi::Paint;
 
 use crate::error::AppError;
-use crate::models::UpdateEventType;
 use crate::models::source::SourceFactory;
+use crate::models::{SourceConfig, SourceType, UpdateEventType};
 use crate::storage::Storage;
 
 /// Handler for fetch commands
@@ -26,14 +27,14 @@ impl<S: Storage> FetchHandler<S> {
     }
 
     /// Fetch updates for a subscription
-    pub async fn fetch_updates(&self, subscription_id: i32, days: u32) -> Result<String, AppError> {
+    pub async fn fetch_updates(&self, source_id: i32, days: u32) -> Result<String, AppError> {
         // Get the subscription
-        let subscription = match self.storage.get_subscription(subscription_id).await? {
-            Some(sub) => sub,
+        let repository = match self.storage.get_repository(source_id).await? {
+            Some(repo) => repo,
             None => {
                 return Err(AppError::AnyError(anyhow::anyhow!(
-                    "Subscription with ID {} not found",
-                    subscription_id
+                    "Repository with ID {} not found",
+                    source_id
                 )));
             }
         };
@@ -44,7 +45,16 @@ impl<S: Storage> FetchHandler<S> {
         // Get the source
         let source = self
             .source_factory
-            .create_source(subscription.source_config, subscription.source_id)
+            .create_source(
+                SourceConfig {
+                    source_type: SourceType::GitHub,
+                    config: serde_json::json!({
+                        "owner": repository.owner,
+                        "repo": repository.name,
+                    }),
+                },
+                source_id,
+            )
             .await?;
 
         // Fetch updates from the source
@@ -53,27 +63,11 @@ impl<S: Storage> FetchHandler<S> {
             .await
             .map_err(AppError::SourceError)?;
 
-        // Save updates
-        for update in &updates {
-            self.storage.save_update(update.clone()).await?;
-        }
-
         // Group and count updates by type
         let mut commit_count = 0;
         let mut issue_count = 0;
         let mut pr_count = 0;
         let mut release_count = 0;
-        let mut other_count = 0;
-
-        for update in &updates {
-            match update.event_type {
-                UpdateEventType::Commit => commit_count += 1,
-                UpdateEventType::Issue => issue_count += 1,
-                UpdateEventType::PullRequest => pr_count += 1,
-                UpdateEventType::Release => release_count += 1,
-                _ => other_count += 1,
-            }
-        }
 
         // Format result message
         let mut result = format!(
@@ -81,6 +75,33 @@ impl<S: Storage> FetchHandler<S> {
             updates.len(),
             days
         );
+        let mut tmp_result = String::new();
+        for update in updates {
+            let r#type = match update.event_type {
+                UpdateEventType::Commit => {
+                    commit_count += 1;
+                    "Commit".bright_blue()
+                }
+                UpdateEventType::Issue => {
+                    issue_count += 1;
+                    "Issue".bright_green()
+                }
+                UpdateEventType::PullRequest => {
+                    pr_count += 1;
+                    "Pull Request".bright_yellow()
+                }
+                UpdateEventType::Release => {
+                    release_count += 1;
+                    "Release".bright_red()
+                }
+            };
+            tmp_result.push_str(&format!(
+                "-[{}] [{}] {}\n",
+                r#type,
+                update.event_date.format("%Y-%m-%d %H:%M:%S"),
+                update.title,
+            ));
+        }
 
         if commit_count > 0 {
             result.push_str(&format!("- Commits: {}\n", commit_count));
@@ -98,10 +119,7 @@ impl<S: Storage> FetchHandler<S> {
             result.push_str(&format!("- Releases: {}\n", release_count));
         }
 
-        if other_count > 0 {
-            result.push_str(&format!("- Other: {}\n", other_count));
-        }
-
+        result.push_str(&tmp_result);
         Ok(result)
     }
 }

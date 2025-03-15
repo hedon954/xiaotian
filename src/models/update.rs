@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use super::source::SourceType;
 
@@ -11,28 +10,15 @@ pub enum UpdateEventType {
     Commit,
     /// New pull request
     PullRequest,
-    /// Pull request update
-    PullRequestUpdate,
     /// New issue
     Issue,
-    /// Issue update
-    IssueUpdate,
     /// New release
     Release,
-    /// Generic article or post
-    Article,
-    /// Generic comment
-    Comment,
-    /// Other event types
-    Other,
 }
 
 /// Represents an update event from any source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Update {
-    /// Unique identifier for the update
-    pub id: Uuid,
-
     /// Source type (GitHub, HackerNews, etc.)
     pub source_type: SourceType,
 
@@ -57,9 +43,6 @@ pub struct Update {
     /// When the event occurred
     pub event_date: DateTime<Utc>,
 
-    /// When we fetched this event
-    pub fetched_at: DateTime<Utc>,
-
     /// Additional data in JSON format
     pub additional_data: Option<serde_json::Value>,
 }
@@ -78,7 +61,6 @@ impl Update {
         event_date: DateTime<Utc>,
     ) -> Self {
         Self {
-            id: Uuid::new_v4(),
             source_type,
             source_id,
             event_type,
@@ -87,7 +69,6 @@ impl Update {
             url,
             author,
             event_date,
-            fetched_at: Utc::now(),
             additional_data: None,
         }
     }
@@ -106,7 +87,6 @@ impl Update {
         additional_data: serde_json::Value,
     ) -> Self {
         Self {
-            id: Uuid::new_v4(),
             source_type,
             source_id,
             event_type,
@@ -115,7 +95,6 @@ impl Update {
             url,
             author,
             event_date,
-            fetched_at: Utc::now(),
             additional_data: Some(additional_data),
         }
     }

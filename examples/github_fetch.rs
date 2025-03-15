@@ -60,17 +60,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut issues = vec![];
             let mut prs = vec![];
             let mut releases = vec![];
-            let mut others = vec![];
 
             for update in &updates {
                 match update.event_type {
                     UpdateEventType::Commit => commits.push(update),
-                    UpdateEventType::Issue | UpdateEventType::IssueUpdate => issues.push(update),
-                    UpdateEventType::PullRequest | UpdateEventType::PullRequestUpdate => {
-                        prs.push(update)
-                    }
+                    UpdateEventType::Issue => issues.push(update),
+                    UpdateEventType::PullRequest => prs.push(update),
                     UpdateEventType::Release => releases.push(update),
-                    _ => others.push(update),
                 }
             }
 
@@ -104,17 +100,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     release.event_date.format("%Y-%m-%d"),
                     release.title
                 );
-            }
-
-            if !others.is_empty() {
-                println!("\nOther updates ({}):", others.len());
-                for other in others {
-                    println!(
-                        "  - {}: {}",
-                        other.event_date.format("%Y-%m-%d"),
-                        other.title
-                    );
-                }
             }
         }
         Err(e) => {

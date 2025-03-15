@@ -6,4 +6,4 @@ pub mod repl;
 pub mod sources;
 pub mod storage;
 
-pub use models::{Repository, Subscription, Update};
+pub use models::{Repository, Update};

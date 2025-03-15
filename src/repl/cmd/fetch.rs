@@ -16,7 +16,7 @@ pub enum FetchCommands {
 
 #[derive(Parser, Debug)]
 pub struct FetchUpdatesOpts {
-    /// ID of the subscription
+    /// ID of the source
     id: i32,
     /// Number of days to fetch updates for
     #[arg(short, long, default_value = "10")]

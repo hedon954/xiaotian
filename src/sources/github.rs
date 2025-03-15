@@ -147,12 +147,6 @@ impl GitHubSource {
                 self.owner, self.repo, issue_num
             );
 
-            // Determine if this is a new issue or an update
-            let event_type = match since {
-                Some(since_time) if issue.created_at > since_time => UpdateEventType::Issue,
-                _ => UpdateEventType::IssueUpdate,
-            };
-
             // Store additional data as JSON
             let additional_data = json!({
                 "issue_number": issue_num,
@@ -164,7 +158,7 @@ impl GitHubSource {
             let update = Update::with_data(
                 SourceType::GitHub,
                 self.repo_id,
-                event_type,
+                UpdateEventType::Issue,
                 issue.title,
                 issue.body,
                 issue_url,
@@ -217,14 +211,6 @@ impl GitHubSource {
                 self.owner, self.repo, pr_num
             );
 
-            // Determine if this is a new PR or an update
-            let event_type = match since {
-                Some(since_time) if pr.created_at.unwrap_or_else(Utc::now) > since_time => {
-                    UpdateEventType::PullRequest
-                }
-                _ => UpdateEventType::PullRequestUpdate,
-            };
-
             // Store additional data as JSON
             let additional_data = json!({
                 "pr_number": pr_num,
@@ -241,7 +227,7 @@ impl GitHubSource {
             let update = Update::with_data(
                 SourceType::GitHub,
                 self.repo_id,
-                event_type,
+                UpdateEventType::PullRequest,
                 pr.title.unwrap_or_else(|| format!("PR #{}", pr_num)),
                 pr.body,
                 pr_url,
@@ -366,74 +352,6 @@ impl Source for GitHubSource {
                 "repo": self.repo,
                 "branch": self.branch,
             }),
-        }
-    }
-
-    fn is_duplicate(&self, update1: &Update, update2: &Update) -> bool {
-        if update1.source_id != update2.source_id || update1.event_type != update2.event_type {
-            return false;
-        }
-
-        match update1.event_type {
-            UpdateEventType::Commit => {
-                if let (Some(data1), Some(data2)) =
-                    (&update1.additional_data, &update2.additional_data)
-                {
-                    if let (Some(sha1), Some(sha2)) = (
-                        data1.get("sha").and_then(|v| v.as_str()),
-                        data2.get("sha").and_then(|v| v.as_str()),
-                    ) {
-                        return sha1 == sha2;
-                    }
-                }
-                update1.title == update2.title && update1.event_date == update2.event_date
-            }
-            UpdateEventType::Issue | UpdateEventType::IssueUpdate => {
-                if let (Some(data1), Some(data2)) =
-                    (&update1.additional_data, &update2.additional_data)
-                {
-                    if let (Some(num1), Some(num2)) = (
-                        data1.get("number").and_then(|v| v.as_u64()),
-                        data2.get("number").and_then(|v| v.as_u64()),
-                    ) {
-                        return num1 == num2;
-                    }
-                }
-                update1.title == update2.title && update1.event_date == update2.event_date
-            }
-            UpdateEventType::PullRequest | UpdateEventType::PullRequestUpdate => {
-                if let (Some(data1), Some(data2)) =
-                    (&update1.additional_data, &update2.additional_data)
-                {
-                    if let (Some(num1), Some(num2)) = (
-                        data1.get("number").and_then(|v| v.as_u64()),
-                        data2.get("number").and_then(|v| v.as_u64()),
-                    ) {
-                        return num1 == num2;
-                    }
-                }
-                update1.title == update2.title && update1.event_date == update2.event_date
-            }
-            UpdateEventType::Release => {
-                if let (Some(data1), Some(data2)) =
-                    (&update1.additional_data, &update2.additional_data)
-                {
-                    if let (Some(id1), Some(id2)) = (
-                        data1.get("id").and_then(|v| v.as_u64()),
-                        data2.get("id").and_then(|v| v.as_u64()),
-                    ) {
-                        return id1 == id2;
-                    }
-                    if let (Some(tag1), Some(tag2)) = (
-                        data1.get("tag_name").and_then(|v| v.as_str()),
-                        data2.get("tag_name").and_then(|v| v.as_str()),
-                    ) {
-                        return tag1 == tag2;
-                    }
-                }
-                update1.title == update2.title && update1.event_date == update2.event_date
-            }
-            _ => update1.title == update2.title && update1.event_date == update2.event_date,
         }
     }
 }

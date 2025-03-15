@@ -2,22 +2,19 @@ mod add;
 mod delete;
 mod fetch;
 mod list;
-mod show;
 
 use clap::Parser;
 use enum_dispatch::enum_dispatch;
 
-pub use add::{AddCommands, AddRepoOpts, AddSubOpts};
-pub use delete::{DeleteCommands, DeleteRepoOpts, DeleteSubOpts};
+pub use add::{AddCommands, AddRepoOpts};
+pub use delete::{DeleteCommands, DeleteRepoOpts};
 pub use fetch::{FetchCommands, FetchUpdatesOpts};
-pub use list::{ListCommands, ListReposOpts, ListSubsOpts, ListUpdatesOpts};
-pub use show::{ShowCommands, ShowRepoOpts, ShowSubOpts, ShowUpdatesOpts};
+pub use list::{ListCommands, ListReposOpts};
 
 pub use add::add;
 pub use delete::delete;
 pub use fetch::fetch;
 pub use list::list;
-pub use show::show;
 
 /// Commands available in XiaoTian
 #[derive(Parser, Debug)]
@@ -30,10 +27,6 @@ pub enum ReplCommand {
     /// List repositories or subscriptions
     #[command(subcommand)]
     List(ListCommands),
-
-    /// Show details of a repository, subscription, or updates
-    #[command(subcommand)]
-    Show(ShowCommands),
 
     /// Delete a repository or subscription
     #[command(subcommand)]

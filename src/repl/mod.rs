@@ -25,7 +25,6 @@ fn get_callbacks() -> ReplCallbacks {
     let mut callbacks = CallBackMap::new();
     callbacks.insert("add".to_string(), cmd::add);
     callbacks.insert("list".to_string(), cmd::list);
-    callbacks.insert("show".to_string(), cmd::show);
     callbacks.insert("delete".to_string(), cmd::delete);
     callbacks.insert("fetch".to_string(), cmd::fetch);
     callbacks

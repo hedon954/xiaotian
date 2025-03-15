@@ -28,10 +28,6 @@ pub enum StorageError {
     #[error("Reference integrity error: {0}")]
     ReferenceIntegrityError(String),
 
-    /// Related entities exist
-    #[error("Cannot delete {0} with ID {1} because {3} {2} entities exist")]
-    HasRelated(String, String, String, usize),
-
     /// Other error
     #[error("Storage error: {0}")]
     Other(String),

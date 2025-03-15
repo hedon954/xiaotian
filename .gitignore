@@ -12,3 +12,6 @@
 
 # reports
 docs/reports/
+
+# config
+config.json

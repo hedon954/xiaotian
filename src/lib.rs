@@ -8,4 +8,5 @@ pub mod sources;
 pub mod storage;
 pub mod utils;
 
+pub use config::AppConfig;
 pub use models::{Repository, Update};

@@ -56,7 +56,6 @@ impl GithubClient {
         repo: &str,
         branch: Option<&str>,
         since: Option<DateTime<Utc>>,
-        source_id: i32,
     ) -> Result<Vec<Update>, SourceError> {
         let mut updates = Vec::new();
 
@@ -107,7 +106,6 @@ impl GithubClient {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                source_id,
                 UpdateEventType::Commit,
                 title,
                 description,
@@ -129,13 +127,12 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         since: Option<DateTime<Utc>>,
-        source_id: i32,
     ) -> Result<Vec<Update>, SourceError> {
         let mut updates = Vec::new();
 
         // Build the issues query
         let issues = self.client.issues(owner, repo);
-        let mut issues_handler = issues.list().state(octocrab::params::State::All);
+        let mut issues_handler = issues.list().state(octocrab::params::State::Closed);
 
         // Add since filter if provided
         if let Some(since_time) = since {
@@ -165,7 +162,6 @@ impl GithubClient {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                source_id,
                 UpdateEventType::Issue,
                 issue.title,
                 issue.body,
@@ -187,7 +183,6 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         since: Option<DateTime<Utc>>,
-        source_id: i32,
     ) -> Result<Vec<Update>, SourceError> {
         let mut updates = Vec::new();
 
@@ -196,7 +191,7 @@ impl GithubClient {
             .client
             .pulls(owner, repo)
             .list()
-            .state(octocrab::params::State::All)
+            .state(octocrab::params::State::Closed)
             .sort(octocrab::params::pulls::Sort::Updated)
             .direction(octocrab::params::Direction::Descending)
             .send()
@@ -234,7 +229,6 @@ impl GithubClient {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                source_id,
                 UpdateEventType::PullRequest,
                 pr.title.unwrap_or_else(|| format!("PR #{}", pr_num)),
                 pr.body,
@@ -256,7 +250,6 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         since: Option<DateTime<Utc>>,
-        source_id: i32,
     ) -> Result<Vec<Update>, SourceError> {
         let mut updates = Vec::new();
 
@@ -296,7 +289,6 @@ impl GithubClient {
 
             let update = Update::with_data(
                 SourceType::GitHub,
-                source_id,
                 UpdateEventType::Release,
                 release
                     .name
@@ -314,6 +306,39 @@ impl GithubClient {
         Ok(updates)
     }
 
+    pub async fn fetch_updates(
+        &self,
+        owner: &str,
+        repo: &str,
+        branch: Option<&str>,
+        since: Option<DateTime<Utc>>,
+        types: Vec<UpdateEventType>,
+    ) -> Result<Vec<Update>, SourceError> {
+        let mut all_updates = Vec::new();
+
+        if types.contains(&UpdateEventType::Commit) {
+            let commits = self.fetch_commits(owner, repo, branch, since).await?;
+            all_updates.extend(commits);
+        }
+
+        if types.contains(&UpdateEventType::Issue) {
+            let issues = self.fetch_issues(owner, repo, since).await?;
+            all_updates.extend(issues);
+        }
+
+        if types.contains(&UpdateEventType::PullRequest) {
+            let prs = self.fetch_pull_requests(owner, repo, since).await?;
+            all_updates.extend(prs);
+        }
+
+        if types.contains(&UpdateEventType::Release) {
+            let releases = self.fetch_releases(owner, repo, since).await?;
+            all_updates.extend(releases);
+        }
+
+        Ok(all_updates)
+    }
+
     /// Fetch all update types from GitHub
     pub async fn fetch_all_updates(
         &self,
@@ -321,28 +346,23 @@ impl GithubClient {
         repo: &str,
         branch: Option<&str>,
         since: Option<DateTime<Utc>>,
-        source_id: i32,
     ) -> Result<Vec<Update>, SourceError> {
         let mut all_updates = Vec::new();
 
         // Fetch commits
-        let commits = self
-            .fetch_commits(owner, repo, branch, since, source_id)
-            .await?;
+        let commits = self.fetch_commits(owner, repo, branch, since).await?;
         all_updates.extend(commits);
 
         // Fetch issues
-        let issues = self.fetch_issues(owner, repo, since, source_id).await?;
+        let issues = self.fetch_issues(owner, repo, since).await?;
         all_updates.extend(issues);
 
         // Fetch pull requests
-        let prs = self
-            .fetch_pull_requests(owner, repo, since, source_id)
-            .await?;
+        let prs = self.fetch_pull_requests(owner, repo, since).await?;
         all_updates.extend(prs);
 
         // Fetch releases
-        let releases = self.fetch_releases(owner, repo, since, source_id).await?;
+        let releases = self.fetch_releases(owner, repo, since).await?;
         all_updates.extend(releases);
 
         // Sort by date, newest first

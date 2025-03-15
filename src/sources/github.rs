@@ -6,7 +6,7 @@ use octocrab::Octocrab;
 use serde_json::json;
 
 use crate::models::source::{SourceMetadata, SourceType};
-use crate::models::{Source, SourceError, Update};
+use crate::models::{Source, SourceError, Update, UpdateEventType};
 use crate::utils::github_client::GithubClient;
 
 /// A source for GitHub repositories
@@ -19,8 +19,8 @@ pub struct GitHubSource {
     branch: Option<String>,
     /// GitHub client
     client: GithubClient,
-    /// Repository ID
-    repo_id: i32,
+    /// Source ID
+    _source_id: i32,
 }
 
 impl GitHubSource {
@@ -30,14 +30,14 @@ impl GitHubSource {
         repo: String,
         branch: Option<String>,
         octocrab_client: Arc<Octocrab>,
-        repo_id: i32,
+        source_id: i32,
     ) -> Self {
         Self {
             owner,
             repo,
             branch,
             client: GithubClient::new(octocrab_client),
-            repo_id,
+            _source_id: source_id,
         }
     }
 }
@@ -78,12 +78,12 @@ impl Source for GitHubSource {
     ) -> Result<Vec<Update>, SourceError> {
         // Delegate to the GitHub client
         self.client
-            .fetch_all_updates(
+            .fetch_updates(
                 &self.owner,
                 &self.repo,
                 self.branch.as_deref(),
                 since,
-                self.repo_id,
+                vec![UpdateEventType::Issue, UpdateEventType::PullRequest],
             )
             .await
     }
@@ -154,7 +154,6 @@ mod tests {
                 if !updates.is_empty() {
                     let update = &updates[0];
                     assert_eq!(update.source_type.to_string(), "GitHub");
-                    assert!(update.source_id > 0);
                     assert!(!update.title.is_empty());
                     assert!(!update.url.is_empty());
                 }

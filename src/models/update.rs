@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::source::SourceType;
 
 /// Type of update event
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum UpdateEventType {
     /// New commit
     Commit,
@@ -21,9 +21,6 @@ pub enum UpdateEventType {
 pub struct Update {
     /// Source type (GitHub, HackerNews, etc.)
     pub source_type: SourceType,
-
-    /// Source identifier (e.g., repository ID)
-    pub source_id: i32,
 
     /// Type of event
     pub event_type: UpdateEventType,
@@ -52,7 +49,6 @@ impl Update {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         source_type: SourceType,
-        source_id: i32,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,
@@ -62,7 +58,6 @@ impl Update {
     ) -> Self {
         Self {
             source_type,
-            source_id,
             event_type,
             title,
             description,
@@ -77,7 +72,6 @@ impl Update {
     #[allow(clippy::too_many_arguments)]
     pub fn with_data(
         source_type: SourceType,
-        source_id: i32,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,
@@ -88,7 +82,6 @@ impl Update {
     ) -> Self {
         Self {
             source_type,
-            source_id,
             event_type,
             title,
             description,

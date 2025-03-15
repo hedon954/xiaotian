@@ -5,7 +5,7 @@ mod ollama;
 mod prompt;
 
 pub use error::LLMError;
-pub use ollama::OllamaClient;
+pub use ollama::{OllamaClient, OllamaConfig};
 pub use prompt::PromptBuilder;
 
 use async_trait::async_trait;

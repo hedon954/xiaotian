@@ -21,6 +21,7 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 - Customizable update display with filtering options
 - Interactive confirmation for destructive operations
 - User-friendly REPL interface with history support
+- AI-powered update summaries with LLM integration
 
 ## Installation
 
@@ -28,6 +29,7 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 
 - Rust 1.70 or higher (for building from source)
 - GitHub Personal Access Token (optional, for higher API rate limits)
+- Ollama service (optional, for AI-powered summaries)
 
 ### Installation Options
 
@@ -81,7 +83,7 @@ xiaotian --version
 You should see output similar to:
 
 ```
-XiaoTian 0.2.6
+XiaoTian 0.4.0
 ```
 
 ## Usage
@@ -129,7 +131,7 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 ## Development
 
-XiaoTian is currently in version 0.2.6. Key features implemented:
+XiaoTian is currently in version 0.4.0. Key features implemented:
 
 - Core architecture and storage system (v0.1.0)
 - GitHub API integration (v0.2.0)
@@ -139,6 +141,9 @@ XiaoTian is currently in version 0.2.6. Key features implemented:
 - Enhanced REPL experience with reedline-repl-rs (v0.2.4)
 - Data relationship integrity and enhanced user experience (v0.2.5)
 - ID system simplification with intuitive integer IDs (v0.2.6)
+- Architecture simplification with streamlined data flow (v0.2.7)
+- Scheduled updates and structured report generation (v0.3.0)
+- LLM integration and AI-powered update summaries (v0.4.0)
 
 ### New in v0.2.6: ID System Simplification
 
@@ -186,7 +191,7 @@ Fetching updates for rust-lang/rust...
 [Output of processed updates]
 ```
 
-### Coming Soon in v0.3.0: Scheduled Updates & Reports
+### New in v0.3.0: Scheduled Updates & Reports
 
 XiaoTian v0.3.0 has implemented the following features:
 
@@ -196,6 +201,16 @@ XiaoTian v0.3.0 has implemented the following features:
 - Organize reports by source type and repository, using the `reports/{source_type}/{owner}_{repo}_{since}_{until}.md` directory structure
 - Optimize report content, focusing on high-value information (Pull Requests, Issues, and Releases)
 - Refactor code architecture for better maintainability
+
+### New in v0.4.0: LLM Integration & Summaries
+
+The upcoming v0.4.0 release will feature:
+
+- LLM utility for AI-powered content generation
+- Ollama integration for local AI processing
+- AI-generated summaries of repository updates
+- Enhanced report format with intelligent content organization
+- Support for dry-run mode to preview prompts
 
 ## Roadmap
 
@@ -210,19 +225,16 @@ XiaoTian follows a structured development roadmap:
 - Optimized high-value content
 - Improved code architecture
 
-### Coming Soon in v0.4.0: LLM Integration & Summaries
-
-The upcoming v0.4.0 release will feature:
+### Implemented Features (v0.4.0)
 
 - LLM utility for AI-powered content generation
 - Ollama integration for local AI processing
 - AI-generated summaries of repository updates
-- Enhanced report format with intelligent content organization
+- Enhanced report formats with both detailed and AI summary reports
 - Support for dry-run mode to preview prompts
+- Modular and maintainable code architecture
 
-### Future Roadmap
-
-#### v0.5.0: Notification System
+### Coming Soon in v0.5.0: Notification System
 
 - Multiple notification channels
 - Report delivery mechanisms

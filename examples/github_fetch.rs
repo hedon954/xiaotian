@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // create GitHub source
-    let source = GitHubSource::new(owner.clone(), repo.clone(), None, Arc::new(client), 0);
+    let source = GitHubSource::new(owner.clone(), repo.clone(), None, Arc::new(client), 123456);
 
     println!(
         "Fetching updates for {}/{} in the last {} days...",

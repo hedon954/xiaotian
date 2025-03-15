@@ -1,4 +1,4 @@
-//! Schedule command handler
+//! Cron scheduler handler
 
 use std::{path::PathBuf, sync::Arc};
 
@@ -7,20 +7,22 @@ use tokio::{
     fs::{File, create_dir_all},
     io::AsyncWriteExt,
 };
+use tracing::{error, info};
 
 use crate::{
+    llm::{LLMClient, PromptBuilder},
     models::{Source, SourceConfig, SourceFactory, SourceType, Update, UpdateEventType},
     storage::RepositoryStorage,
 };
 
 const DEFAULT_REPORT_DIR: &str = "docs/reports";
 
-/// 调度处理器
 #[derive(Clone)]
 pub struct ScheduleHandler<S: RepositoryStorage> {
     storage: Arc<S>,
     source_factory: Arc<dyn SourceFactory>,
     report_dir: PathBuf,
+    llm_client: Option<Arc<dyn LLMClient>>,
 }
 
 impl<S: RepositoryStorage> ScheduleHandler<S> {
@@ -34,14 +36,20 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             storage,
             source_factory,
             report_dir,
+            llm_client: None,
         }
     }
 
+    pub fn with_llm_client(mut self, llm_client: Arc<dyn LLMClient>) -> Self {
+        self.llm_client = Some(llm_client);
+        self
+    }
+
     pub async fn run(&self) {
-        println!("Running scheduled update for all repositories...");
+        info!("Running scheduled update for all repositories...");
         match self.update_all_repositories().await {
-            Ok(count) => println!("Successfully updated {} repositories", count),
-            Err(e) => println!("Error updating repositories: {}", e),
+            Ok(count) => info!("Successfully updated {} repositories", count),
+            Err(e) => error!("Error updating repositories: {}", e),
         }
     }
 
@@ -53,15 +61,15 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             .map_err(|e| format!("Failed to get repositories: {}", e))?;
 
         if repositories.is_empty() {
-            println!("No repositories found to update");
+            info!("No repositories found to update");
             return Ok(0);
         }
 
-        println!("Found {} repositories to update", repositories.len());
+        info!("Found {} repositories to update", repositories.len());
         let mut success_count = 0;
 
         for repo in repositories {
-            println!(
+            info!(
                 "Processing repository: {}/{} (ID: {})",
                 repo.owner, repo.name, repo.id
             );
@@ -75,20 +83,20 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             };
 
             match self.source_factory.create_source(config, repo.id).await {
-                Ok(source) => match self.fetch_and_report(source.as_ref(), repo.id).await {
-                    Ok(report_path) => {
-                        println!(
-                            "Generated report for {}/{}: {}",
-                            repo.owner, repo.name, report_path
+                Ok(source) => match self.fetch_and_summary(source.as_ref()).await {
+                    Ok(report_paths) => {
+                        info!(
+                            "Generated reports for {}/{}: {}",
+                            repo.owner, repo.name, report_paths
                         );
                         success_count += 1;
                     }
-                    Err(e) => println!(
-                        "Failed to generate report for {}/{}: {}",
+                    Err(e) => error!(
+                        "Failed to generate reports for {}/{}: {}",
                         repo.owner, repo.name, e
                     ),
                 },
-                Err(e) => println!(
+                Err(e) => error!(
                     "Failed to create source for {}/{}: {}",
                     repo.owner, repo.name, e
                 ),
@@ -98,11 +106,9 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         Ok(success_count)
     }
 
-    /// fetch updates and generate report
-    async fn fetch_and_report(&self, source: &dyn Source, repo_id: i32) -> Result<String, String> {
-        let source_type = source.get_type();
-        let source_name = source.get_name();
-
+    /// 获取更新并生成摘要
+    async fn fetch_and_summary(&self, source: &dyn Source) -> Result<String, String> {
+        // 获取7天内的更新
         let since = Utc::now() - chrono::Duration::days(7);
         let updates = source
             .fetch_updates(Some(since))
@@ -110,47 +116,179 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             .map_err(|e| format!("Failed to fetch updates: {}", e))?;
 
         if updates.is_empty() {
-            println!("No updates found for repository {}", repo_id);
+            info!("No updates found for source {}", source.get_name());
             return Ok("No updates found".to_string());
         }
 
-        // create report directory structure
-        // docs/reports/{source_type}/{owner}_{repo}_{since}_{until}.md
+        info!("Found {} updates for {}", updates.len(), source.get_name());
+
+        // 确保报告目录存在
+        let source_type = source.get_type();
         let source_type_dir = self.report_dir.join(source_type.to_string().to_lowercase());
         create_dir_all(&source_type_dir)
             .await
             .map_err(|e| format!("Failed to create source type directory: {}", e))?;
 
-        let since_str = since.format("%Y%m%d").to_string();
-        let until_str = Utc::now().format("%Y%m%d").to_string();
-        let safe_name = source_name.replace('/', "_");
-        let filename = format!(
-            "{}_{}_{}_{}.md",
-            source_type.to_string().to_lowercase(),
-            safe_name,
-            since_str,
-            until_str
-        );
-        let report_path = source_type_dir.join(filename);
+        // 为所有更新生成报告
+        let report_result = self
+            .save_and_summary(source, &updates, since, Utc::now())
+            .await?;
 
-        // generate report
-        let report_content = self
-            .generate_markdown_report(source, &updates, since, Utc::now())
-            .map_err(|e| format!("Failed to generate report: {}", e))?;
-
-        // write report to file
-        let mut file = File::create(&report_path)
-            .await
-            .map_err(|e| format!("Failed to create report file: {}", e))?;
-        file.write_all(report_content.as_bytes())
-            .await
-            .map_err(|e| format!("Failed to write report file: {}", e))?;
-
-        Ok(report_path.to_string_lossy().to_string())
+        Ok(report_result)
     }
 
-    /// generate markdown report
-    fn generate_markdown_report(
+    /// 保存原始信息并生成摘要
+    async fn save_and_summary(
+        &self,
+        source: &dyn Source,
+        updates: &[Update],
+        since: DateTime<Utc>,
+        until: DateTime<Utc>,
+    ) -> Result<String, String> {
+        let source_name = source.get_name();
+        let source_type = source.get_type();
+        let source_type_str = source_type.to_string().to_lowercase();
+        let since_str = since.format("%Y%m%d").to_string();
+        let until_str = until.format("%Y%m%d").to_string();
+        let safe_name = source_name.replace('/', "_");
+
+        // 1. 保存原始报告
+        let original_filename = format!(
+            "{}_{}_{}_{}.md",
+            source_type_str, safe_name, since_str, until_str
+        );
+
+        let source_type_dir = self.report_dir.join(&source_type_str);
+        let original_report_path = source_type_dir.join(&original_filename);
+        let original_report = self.generate_original_report(source, updates, since, until)?;
+
+        // 写入原始报告
+        self.save_report(&original_report_path, &original_report)
+            .await
+            .map_err(|e| format!("Failed to save original report: {}", e))?;
+
+        info!(
+            "Saved original report to {}",
+            original_report_path.display()
+        );
+
+        // 2. 如果有LLM客户端，生成AI摘要
+        let mut result = original_report_path.to_string_lossy().to_string();
+
+        if self.llm_client.is_some() {
+            match self
+                .summary_by_llm(source, updates, &original_filename, since, until)
+                .await
+            {
+                Ok(ai_report_path) => {
+                    info!("Saved AI summary report to {}", ai_report_path);
+                    result = format!("{} and {}", result, ai_report_path);
+                }
+                Err(e) => {
+                    error!("Failed to generate AI summary: {}", e);
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
+    /// 调用LLM生成摘要并保存
+    async fn summary_by_llm(
+        &self,
+        source: &dyn Source,
+        updates: &[Update],
+        original_filename: &str,
+        since: DateTime<Utc>,
+        until: DateTime<Utc>,
+    ) -> Result<String, String> {
+        // 获取LLM客户端
+        let llm_client = match &self.llm_client {
+            Some(client) => client,
+            None => return Err("No LLM client provided".to_string()),
+        };
+
+        // 1. 格式化更新内容为LLM输入
+        let updates_content = self.format_updates_for_llm(updates);
+
+        // 2. 构建提示词并调用LLM
+        let prompt = PromptBuilder::build_report_summary(&updates_content);
+        let summary = llm_client
+            .generate(&prompt, false)
+            .await
+            .map_err(|e| format!("Failed to generate AI summary: {}", e))?;
+
+        info!("Generated AI summary for {}", source.get_name());
+
+        // 3. 生成AI摘要报告
+        let source_type = source.get_type().to_string().to_lowercase();
+        let source_name = source.get_name().replace('/', "_");
+        let since_str = since.format("%Y%m%d").to_string();
+        let until_str = until.format("%Y%m%d").to_string();
+
+        let ai_report_filename = format!(
+            "{}_{}_{}_{}_report.md",
+            source_type, source_name, since_str, until_str
+        );
+
+        // 4. 生成AI摘要报告内容
+        let ai_report = self.generate_ai_report(source, &summary, original_filename, since, until);
+
+        // 5. 保存AI摘要报告
+        let source_type_dir = self.report_dir.join(&source_type);
+        let ai_report_path = source_type_dir.join(&ai_report_filename);
+
+        self.save_report(&ai_report_path, &ai_report)
+            .await
+            .map_err(|e| format!("Failed to save AI report: {}", e))?;
+
+        Ok(ai_report_path.to_string_lossy().to_string())
+    }
+
+    /// 格式化更新内容给LLM使用
+    fn format_updates_for_llm(&self, updates: &[Update]) -> String {
+        let mut updates_content = String::new();
+
+        for update in updates {
+            match update.event_type {
+                UpdateEventType::PullRequest => {
+                    updates_content.push_str(&format!("## PR: {}\n", update.title));
+                }
+                UpdateEventType::Issue => {
+                    updates_content.push_str(&format!("## Issue: {}\n", update.title));
+                }
+                _ => continue,
+            }
+
+            if let Some(desc) = &update.description {
+                updates_content.push_str(&format!("{}\n\n", desc));
+            }
+
+            if let Some(author) = &update.author {
+                updates_content.push_str(&format!("作者: {}\n", author));
+            }
+
+            updates_content.push_str(&format!("链接: {}\n\n", update.url));
+        }
+
+        updates_content
+    }
+
+    /// 保存报告内容到文件
+    async fn save_report(&self, path: &PathBuf, content: &str) -> Result<(), String> {
+        let mut file = File::create(path)
+            .await
+            .map_err(|e| format!("Failed to create file {}: {}", path.display(), e))?;
+
+        file.write_all(content.as_bytes())
+            .await
+            .map_err(|e| format!("Failed to write to file {}: {}", path.display(), e))?;
+
+        Ok(())
+    }
+
+    /// 生成原始报告内容
+    fn generate_original_report(
         &self,
         source: &dyn Source,
         updates: &[Update],
@@ -181,21 +319,18 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         report.push_str("## Summary\n\n");
         let mut prs = Vec::new();
         let mut issues = Vec::new();
-        let mut releases = Vec::new();
 
         for update in updates {
             match update.event_type {
                 UpdateEventType::PullRequest => prs.push(update),
                 UpdateEventType::Issue => issues.push(update),
-                UpdateEventType::Release => releases.push(update),
-                _ => (),
+                _ => continue,
             }
         }
 
         report.push_str(&format!("- **Total Updates**: {}\n", updates.len()));
         report.push_str(&format!("- **Pull Requests**: {}\n", prs.len()));
         report.push_str(&format!("- **Issues**: {}\n", issues.len()));
-        report.push_str(&format!("- **Releases**: {}\n", releases.len()));
         report.push('\n');
 
         // pull requests details
@@ -238,26 +373,6 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             }
         }
 
-        // releases details
-        if !releases.is_empty() {
-            report.push_str("## Releases\n\n");
-            for release in releases {
-                report.push_str(&format!("### {}\n\n", release.title));
-                report.push_str(&format!(
-                    "- **Date**: {}\n",
-                    release.event_date.format("%Y-%m-%d %H:%M:%S")
-                ));
-                if let Some(author) = &release.author {
-                    report.push_str(&format!("- **Author**: {}\n", author));
-                }
-                report.push_str(&format!("- **URL**: {}\n", release.url));
-                if let Some(desc) = &release.description {
-                    report.push_str(&format!("- **Description**:\n\n{}\n", desc));
-                }
-                report.push('\n');
-            }
-        }
-
         // footer
         report.push_str(&format!(
             "---\nGenerated by XiaoTian at {}\n",
@@ -265,5 +380,67 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         ));
 
         Ok(report)
+    }
+
+    /// 生成简洁的AI摘要报告
+    fn generate_ai_report(
+        &self,
+        source: &dyn Source,
+        ai_summary: &str,
+        original_report_filename: &str,
+        since: DateTime<Utc>,
+        until: DateTime<Utc>,
+    ) -> String {
+        let mut report = String::new();
+
+        // 标题
+        report.push_str(&format!("# AI Summary: {}\n\n", source.get_name()));
+        report.push_str(&format!(
+            "## Period: {} to {}\n\n",
+            since.format("%Y-%m-%d"),
+            until.format("%Y-%m-%d")
+        ));
+
+        // 源信息
+        report.push_str("## Source Information\n\n");
+        report.push_str(&format!("- **Type**: {}\n", source.get_type()));
+        report.push_str(&format!("- **Name**: {}\n", source.get_name()));
+        if let Some(desc) = source.get_description() {
+            report.push_str(&format!("- **Description**: {}\n", desc));
+        }
+        report.push_str(&format!("- **URL**: {}\n", source.get_url()));
+        report.push('\n');
+
+        // AI 摘要部分
+        report.push_str("## AI Generated Summary\n\n");
+        report.push_str(ai_summary);
+        report.push_str("\n\n");
+
+        // 元数据信息
+        report.push_str("## Report Metadata\n\n");
+        report.push_str(&format!(
+            "- **Generated At**: {}\n",
+            Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+        ));
+
+        if let Some(client) = &self.llm_client {
+            report.push_str(&format!("- **LLM Provider**: {}\n", client.get_name()));
+        }
+
+        // 添加原始报告的引用
+        report.push_str(&format!(
+            "- **Detailed Report**: [{}]({})\n",
+            original_report_filename, original_report_filename
+        ));
+
+        report.push('\n');
+
+        // 添加页脚
+        report.push_str(&format!(
+            "---\nGenerated by XiaoTian with AI assistance at {}\n",
+            Utc::now().format("%Y-%m-%d %H:%M:%S")
+        ));
+
+        report
     }
 }

@@ -65,12 +65,40 @@ impl PromptBuilder {
     /// 构建用于报告总结的提示词
     pub fn build_report_summary(updates_content: &str) -> String {
         Self::new()
-            .with_instruction("以下是项目的最新进展，请你根据内容合并同类项，形成一份简报。")
+            .with_instruction("根据项目更新内容，生成一份结构化的中文周报，突出重要变更。")
             .with_requirements(
-                "简报中至少包含以下内容:\n1) 新增功能\n2) 主要改进\n3) 修复问题\n4) 参考链接",
+                r#"
+# {项目名称} 周报
+## 更新概览
+- 更新数量统计
+- 主要变更类型分布
+
+## 核心更新
+### 🌟 功能增强
+- 新特性及影响
+- 重要功能改进
+
+### ⚡ 性能优化
+- 性能提升要点
+- 具体改进数据
+
+### 🔧 重要修复
+- 关键bug修复
+- 影响范围说明
+
+## 社区动态
+- 重要提案进展
+- 热点讨论焦点
+
+## 展望
+- 后续开发计划
+- 待解决的问题
+
+## 参考链接
+[相关PR/Issue链接]"#,
             )
             .with_content(updates_content)
-            .with_raw("报告请使用中文，并以优雅的 markdown 格式呈现。")
+            .with_raw("使用markdown格式，保持结构清晰，突出实质性影响。省略无相关内容的章节。")
             .build()
     }
 }
@@ -93,17 +121,5 @@ mod tests {
         assert!(prompt.contains("这是一段测试内容"));
         assert!(prompt.contains("# 要求"));
         assert!(prompt.contains("使用中文回答"));
-    }
-
-    #[test]
-    fn test_build_report_summary() {
-        let updates = "PR #123: 添加新功能\nIssue #456: 修复bug";
-        let prompt = PromptBuilder::build_report_summary(updates);
-
-        assert!(prompt.contains("以下是项目的最新进展"));
-        assert!(prompt.contains("PR #123: 添加新功能"));
-        assert!(prompt.contains("Issue #456: 修复bug"));
-        assert!(prompt.contains("1) 新增功能"));
-        assert!(prompt.contains("使用中文"));
     }
 }

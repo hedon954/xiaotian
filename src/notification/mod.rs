@@ -1,6 +1,12 @@
+mod config;
+mod email;
+
 use async_trait::async_trait;
 use std::collections::HashMap;
 use thiserror::Error;
+
+pub use config::NotificationManager;
+pub use email::{EmailConfig, EmailNotifier};
 
 /// 通知系统错误类型
 #[derive(Debug, Error)]
@@ -49,9 +55,3 @@ pub trait Notifier: Send + Sync {
     /// 发送通知
     async fn send(&self, message: &NotificationMessage) -> Result<(), NotificationError>;
 }
-
-mod config;
-mod email;
-
-pub use config::NotificationManager;
-pub use email::{EmailConfig, EmailNotifier};

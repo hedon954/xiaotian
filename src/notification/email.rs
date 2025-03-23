@@ -45,21 +45,14 @@ impl EmailNotifier {
 #[async_trait]
 impl Notifier for EmailNotifier {
     async fn send(&self, message: &NotificationMessage) -> Result<(), NotificationError> {
-        // 将Markdown转换为HTML
-        let html_content = self.markdown_to_html(&message.content);
-
-        // 解析收件人地址
-        let to: Vec<String> = self.config.to.clone();
-
-        // 构建邮件
         let email = MessageBuilder::new()
             .from(self.config.from.clone())
-            .to(to)
+            .to(self.config.to.clone())
             .subject(&message.subject)
-            .html_body(html_content); // 使用转换后的HTML内容
+            .html_body(self.markdown_to_html(&message.content));
 
         SmtpClientBuilder::new(self.config.smtp_server.clone(), self.config.smtp_port)
-            .implicit_tls(true)
+            .implicit_tls(self.config.use_tls)
             .credentials((self.config.username.clone(), self.config.password.clone()))
             .connect()
             .await

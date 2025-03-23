@@ -7,6 +7,7 @@ use tracing_subscriber::{Layer as _, fmt, layer::SubscriberExt, util::Subscriber
 use xiaotian::{
     AppConfig,
     llm::{OllamaClient, OllamaConfig},
+    notification::NotificationManager,
     process::Processor,
     sources::DefaultSourceFactory,
     storage::MemoryStorage,
@@ -18,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layer = fmt::layer().with_filter(LevelFilter::DEBUG);
     tracing_subscriber::registry().with(layer).init();
 
-    info!("Starting XiaoTian Scheduler v0.4.0 with LLM support");
+    info!("Starting XiaoTian Scheduler v0.5.0 with LLM support");
     let local_tz = Local::from_offset(&FixedOffset::east_opt(8 * 3600).unwrap());
     let mut cron = AsyncCron::new(local_tz);
 
@@ -40,15 +41,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn new_processor() -> anyhow::Result<Processor<MemoryStorage>> {
-    let config = AppConfig::load("config.json")?;
+    let config = AppConfig::load("config.toml")?;
     let storage = Arc::new(MemoryStorage::new());
-    let source_factory = Arc::new(DefaultSourceFactory::new(config.github.token)?);
+    let source_factory = Arc::new(DefaultSourceFactory::new(config.github.token.clone())?);
     let llm_client = init_llm_client().await?;
+
+    // 初始化通知管理器
+    let notification_manager = NotificationManager::from_config(&config);
+    let notification_manager = Arc::new(notification_manager);
 
     let mut processor = Processor::new(storage, source_factory);
     if let Some(client) = llm_client {
         info!("Configuring LLM client: {}", client.get_name());
-        processor.schedule_handler = processor.schedule_handler.with_llm_client(client);
+        processor.schedule_handler = processor
+            .schedule_handler
+            .with_llm_client(client)
+            .with_notification_manager(notification_manager);
     } else {
         warn!("No LLM client configured, AI summaries will be disabled");
     }

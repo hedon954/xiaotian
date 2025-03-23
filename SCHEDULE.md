@@ -20,11 +20,11 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 | v0.2.6    | ID System Simplification      | - Replace UUID with auto-increment integers<br>- Optimize model relationships with direct ID references<br>- Improve user experience with simpler IDs<br>- Enhance error handling                                      | - Simplified ID system<br>- More intuitive CLI interactions<br>- Reduced complexity<br>- Better error context                 |
 | v0.2.7    | Architecture Simplification   | - Remove subscription concept, use direct source management<br>- Eliminate Update storage, process updates on-demand<br>- Remove related commands for streamlined interface<br>- Simplify command naming for better UX | - Streamlined data model<br>- Simplified command interface<br>- Reduced complexity<br>- More focused architecture             |
 | v0.3.0 ✅ | Scheduled Updates & Reports   | - Implement scheduled tasks using cron_tab<br>- Generate and store markdown reports for update results<br>- Create organized report directory structure<br>- Optimize report content focused on high-value updates     | - Improved code architecture<br>- Automated update scheduling<br>- Persistent report generation<br>- Enhanced update tracking |
-| v0.4.0    | LLM Integration & Summaries   | - Create LLM utility for AI-powered content generation<br>- Implement Ollama integration<br>- Generate update summaries using LLM<br>- Create enhanced report format with AI summaries                                 | - LLM integration framework<br>- AI-powered update summaries<br>- Enhanced report quality<br>- Improved information density   |
-| v0.5.0    | Notification System           | - Implement notification system<br>- Add report management commands<br>- Support multiple notification channels<br>- Add delivery mechanisms for reports                                                               | - Notification system<br>- Report delivery<br>- Multiple notification channels                                                |
-| v0.6.0    | MVP Release                   | - Integration testing<br>- Bug fixes<br>- Documentation<br>- User experience improvements                                                                                                                              | - MVP release<br>- User documentation<br>- Developer documentation                                                            |
-| v0.7.0    | Enhanced Reports              | - Support multiple report formats (text, HTML, PDF)<br>- Add persistent storage support<br>- Implement report templates<br>- Add custom report configuration                                                           | - Multi-format reports<br>- Template system<br>- Persistent storage<br>- Customization options                                |
-| v0.8.0    | Storage & Optimization        | - Implement persistent storage backends<br>- Performance optimizations<br>- Resource usage improvements<br>- Configuration management                                                                                  | - Database storage implementation<br>- Optimized performance<br>- Advanced configuration options                              |
+| v0.4.0 ✅ | LLM Integration & Summaries   | - Create LLM utility for AI-powered content generation<br>- Implement Ollama integration<br>- Generate update summaries using LLM<br>- Create enhanced report format with AI summaries                                 | - LLM integration framework<br>- AI-powered update summaries<br>- Enhanced report quality<br>- Improved information density   |
+| v0.5.0 ✅ | Notification System           | - Implement notification system<br>- Add report management commands<br>- Support multiple notification channels<br>- Add delivery mechanisms for reports                                                               | - Notification system<br>- Report delivery<br>- Multiple notification channels                                                |
+| v0.6.0    | Testing & Documentation       | - Integration testing<br>- End-to-end testing<br>- Comprehensive documentation<br>- Code coverage improvements<br>- Performance benchmarks                                                                           | - Test suite<br>- Documentation updates<br>- Performance metrics<br>- Code quality improvements                               |
+| v0.7.0    | Enhanced Notifications        | - Support for Slack integration<br>- Discord webhook support<br>- Custom notification templates<br>- Notification preferences<br>- Message formatting options                                                         | - Multiple notification channels<br>- Template system<br>- User preferences<br>- Rich message formatting                      |
+| v0.8.0    | Storage & Optimization        | - SQLite storage backend<br>- Data migration tools<br>- Performance optimizations<br>- Resource usage improvements<br>- Configuration validation                                                                      | - Persistent storage<br>- Migration utilities<br>- Optimized performance<br>- Resource monitoring                             |
 
 ### Stable Release (v1.0.0)
 
@@ -36,7 +36,8 @@ Initial stable release with all MVP features properly tested and documented.
 | ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | v1.1.0  | Authorization    | - GitHub authentication<br>- Access token management<br>- Rate limit handling                                           |
 | v1.2.0  | User Interface   | - Web interface integration<br>- Dashboard for visualizing updates                                                      |
-| v1.3.0  | Integration      | - Additional notification channels (Email, Slack, Discord)<br>- Multi-user support<br>- API for third-party integration |
+| v1.3.0  | Integration      | - Additional notification channels (Telegram, Matrix)<br>- Multi-user support<br>- API for third-party integration      |
+| v1.4.0  | Analytics        | - Update statistics<br>- Trend analysis<br>- Custom reporting periods<br>- Data visualization                           |
 
 ## MVP Core Features (v0.5.0)
 
@@ -55,9 +56,11 @@ Initial stable release with all MVP features properly tested and documented.
 3. **Notification System**
 
    - Generate notifications for new updates
-   - Basic notification rules
+   - Support multiple notification channels (Email)
+   - Customizable notification rules
 
 4. **Report Generation**
    - Generate daily/weekly summaries
    - Support text and markdown formats
+   - AI-powered update summaries
    - Customizable report content

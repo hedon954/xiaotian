@@ -14,4 +14,4 @@
 docs/reports/
 
 # config
-config.json
+config.toml

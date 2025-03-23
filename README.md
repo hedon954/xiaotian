@@ -2,7 +2,7 @@
 
 ```
                  .--~~,__
-    :-....,-------`~~'._.'
+    :-....,-------`~~'._.\'
     `-,,,  ,_      ;'~U'
      _,-' ,'`-__; '--.     (XiaoTian)
     (_/'~~      ''''(;
@@ -18,10 +18,12 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 - GitHub API integration with token support
 - Update retrieval from GitHub repositories (commits, issues, pull requests, releases)
 - Configuration management with persistent settings
+- AI-powered update summaries with LLM integration (Ollama)
+- Email notification system for repository updates
 - Customizable update display with filtering options
 - Interactive confirmation for destructive operations
 - User-friendly REPL interface with history support
-- AI-powered update summaries with LLM integration
+- Scheduled updates and report generation
 
 ## Installation
 
@@ -30,6 +32,7 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 - Rust 1.70 or higher (for building from source)
 - GitHub Personal Access Token (optional, for higher API rate limits)
 - Ollama service (optional, for AI-powered summaries)
+- SMTP server access (optional, for email notifications)
 
 ### Installation Options
 
@@ -83,7 +86,31 @@ xiaotian --version
 You should see output similar to:
 
 ```
-XiaoTian 0.4.0
+XiaoTian 0.5.0
+```
+
+## Configuration
+
+### Basic Configuration
+
+Create a `config.toml` file in your XiaoTian configuration directory:
+
+```toml
+[github]
+token = "your-github-token"
+
+[notification]
+enabled = true
+default_channel = "email"
+
+[notification.email]
+smtp_server = "smtp.example.com"
+smtp_port = 587
+username = "your-email@example.com"
+password = "your-password"
+from = "XiaoTian <your-email@example.com>"
+to = ["recipient@example.com"]
+use_tls = true
 ```
 
 ## Usage
@@ -91,12 +118,11 @@ XiaoTian 0.4.0
 ```bash
 Commands available in XiaoTian
 
-Usage: [COMMAND]
+Usage: xiaotian [COMMAND]
 
 Commands:
   add     Add a repository or subscription
   list    List repositories or subscriptions
-  show    Show details of a repository, subscription, or updates
   delete  Delete a repository or subscription
   fetch   Fetch updates for subscriptions
   help    Print this message or the help of the given subcommand(s)
@@ -111,27 +137,17 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 ### Repository Management
 
-- `add repository <owner> <name>` - Add a GitHub repository
-- `list repositories` - List all repositories
-- `show repository <id>` - Show repository details
-- `delete repository <id>` - Delete a repository (with interactive confirmation)
-
-### Subscription Management
-
-- `add subscription <owner> <name>` - Subscribe to a repository
-- `subscribe <repository_id>` - Subscribe to a repository by ID
-- `list subscriptions` - List all subscriptions
-- `show subscription <id>` - Show subscription details
-- `delete subscription <id>` - Delete a subscription (with interactive confirmation)
+- `add repo <owner> <name>` - Add a GitHub repository
+- `list repos` - List all repositories
+- `delete repo <id>` - Delete a repository (with interactive confirmation)
 
 ### Update Operations
 
-- `fetch updates <subscription_id> [days]` - Fetch updates for a subscription for the last N days
-- `show updates <subscription_id> [limit]` - Show recent updates for a subscription with optional limit
+- `fetch updates <repository_id> [days]` - Fetch updates for a repository for the last N days
 
 ## Development
 
-XiaoTian is currently in version 0.4.0. Key features implemented:
+XiaoTian is currently in version 0.5.0. Key features implemented:
 
 - Core architecture and storage system (v0.1.0)
 - GitHub API integration (v0.2.0)
@@ -144,113 +160,51 @@ XiaoTian is currently in version 0.4.0. Key features implemented:
 - Architecture simplification with streamlined data flow (v0.2.7)
 - Scheduled updates and structured report generation (v0.3.0)
 - LLM integration and AI-powered update summaries (v0.4.0)
+- Email notification system for updates (v0.5.0)
 
-### New in v0.2.6: ID System Simplification
+### New in v0.5.0: Notification System
 
-Version 0.2.6 focuses on improving the ID system, making it more intuitive and user-friendly:
+Version 0.5.0 introduces a comprehensive notification system:
 
-- Replaced UUID with auto-increment integers for repositories and subscriptions
-- Optimized model relationships with direct ID references
-- Enhanced error handling with more specific context information
-- Simplified command line interaction with easy-to-type integer IDs
-- Added `subscribe <repository_id>` command for direct repository subscription
+- Email notification support with SMTP integration
+- Markdown to HTML conversion for rich email content
+- Flexible notification configuration
+- TLS support for secure email communication
+- Support for multiple recipients
+- Customizable notification templates
 
-Example of the new ID system in action:
+Example configuration for email notifications:
 
+```toml
+[notification]
+enabled = true
+default_channel = "email"
+
+[notification.email]
+smtp_server = "smtp.example.com"
+smtp_port = 587
+username = "your-email@example.com"
+password = "your-password"
+from = "XiaoTian <your-email@example.com>"
+to = ["recipient@example.com"]
+use_tls = true
 ```
-xiaotian> add repo rust-lang/rust
-Repository added with ID: 1
-
-xiaotian> subscribe 1
-Subscription created with ID: 1
-
-xiaotian> show subscription 1
-Subscription #1:
-  Repository: rust-lang/rust (ID: 1)
-  Last checked: Never
-  Status: Active
-```
-
-### New in v0.2.7: Architecture Simplification
-
-Version 0.2.7 introduces major architectural simplifications:
-
-- Removed the Subscription concept, using direct Source management with custom fetch_update functions
-- Eliminated Update storage in favor of on-demand processing
-- Simplified command naming (repository→repo, repositories→repos)
-- Streamlined command interface for better user experience
-
-Example of the simplified command structure:
-
-```
-xiaotian> add repo rust-lang/rust
-Repository added with ID: 1
-
-xiaotian> fetch updates 1
-Fetching updates for rust-lang/rust...
-[Output of processed updates]
-```
-
-### New in v0.3.0: Scheduled Updates & Reports
-
-XiaoTian v0.3.0 has implemented the following features:
-
-- Use `cron_tab` library to implement scheduled tasks based on cron expressions
-- Create a standalone `cron` binary entry point for running scheduled tasks
-- Design and implement structured Markdown report generation
-- Organize reports by source type and repository, using the `reports/{source_type}/{owner}_{repo}_{since}_{until}.md` directory structure
-- Optimize report content, focusing on high-value information (Pull Requests, Issues, and Releases)
-- Refactor code architecture for better maintainability
-
-### New in v0.4.0: LLM Integration & Summaries
-
-The upcoming v0.4.0 release will feature:
-
-- LLM utility for AI-powered content generation
-- Ollama integration for local AI processing
-- AI-generated summaries of repository updates
-- Enhanced report format with intelligent content organization
-- Support for dry-run mode to preview prompts
 
 ## Roadmap
 
-XiaoTian follows a structured development roadmap:
+### Coming Soon in v0.6.0: Testing & Documentation
 
-### Implemented Features (v0.3.0)
+- Comprehensive integration testing
+- End-to-end testing
+- Documentation improvements
+- Code coverage enhancements
+- Performance benchmarks
 
-- Scheduled tasks using cron expressions
-- Standalone scheduler binary for continuous operation
-- Structured Markdown report generation
-- Organized report directory structure
-- Optimized high-value content
-- Improved code architecture
+### Future Versions
 
-### Implemented Features (v0.4.0)
-
-- LLM utility for AI-powered content generation
-- Ollama integration for local AI processing
-- AI-generated summaries of repository updates
-- Enhanced report formats with both detailed and AI summary reports
-- Support for dry-run mode to preview prompts
-- Modular and maintainable code architecture
-
-### Coming Soon in v0.5.0: Notification System
-
-- Multiple notification channels
-- Report delivery mechanisms
-- Scheduled notifications
-
-#### v0.6.0: MVP Release
-
-- Comprehensive testing
-- Complete documentation
-- Polished user experience
-
-#### v0.7.0: Enhanced Reports
-
-- Multiple report formats (Markdown, HTML, PDF)
-- Customizable report templates
-- Persistent storage support
+- v0.7.0: Enhanced notifications (Slack, Discord)
+- v0.8.0: Persistent storage and optimization
+- v1.0.0: Stable release with all MVP features
 
 ## License
 
@@ -261,4 +215,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Octocrab](https://github.com/XAMPPRocky/octocrab) for GitHub API integration
 - [Clap](https://github.com/clap-rs/clap) for command-line argument parsing
 - [reedline-repl-rs](https://github.com/kurtlawrence/reedline-repl-rs) for the interactive REPL interface
+- [Ollama](https://github.com/ollama/ollama) for local LLM integration
+- [mail-send](https://github.com/stalwartlabs/mail-send) for SMTP email support
 - All contributors who have helped shape and improve this project

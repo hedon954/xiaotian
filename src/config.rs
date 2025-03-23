@@ -1,11 +1,17 @@
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::path::PathBuf;
+
+use crate::notification::EmailConfig;
 
 /// Application configuration
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
     /// GitHub configuration
     pub github: GitHubConfig,
+    /// 通知系统配置
+    #[serde(default)]
+    pub notification: NotificationConfig,
 }
 
 /// GitHub API configuration
@@ -17,6 +23,37 @@ pub struct GitHubConfig {
     pub api_url: Option<String>,
 }
 
+/// 通知系统配置
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationConfig {
+    /// 是否启用通知
+    #[serde(default = "default_notification_enabled")]
+    pub enabled: bool,
+    /// 默认通知渠道
+    #[serde(default = "default_notification_channel")]
+    pub default_channel: String,
+    /// 邮件通知配置
+    pub email: Option<EmailConfig>,
+}
+
+fn default_notification_enabled() -> bool {
+    false
+}
+
+fn default_notification_channel() -> String {
+    "email".to_string()
+}
+
+impl Default for NotificationConfig {
+    fn default() -> Self {
+        Self {
+            enabled: default_notification_enabled(),
+            default_channel: default_notification_channel(),
+            email: None,
+        }
+    }
+}
+
 impl AppConfig {
     /// Load config from file
     pub fn load(path: impl Into<PathBuf>) -> anyhow::Result<Self> {
@@ -25,8 +62,8 @@ impl AppConfig {
             anyhow::bail!("Config file not found");
         }
 
-        let contents = std::fs::read_to_string(path)?;
-        let config = serde_json::from_str(&contents)?;
+        let contents = fs::read_to_string(path)?;
+        let config = toml::from_str(&contents)?;
         Ok(config)
     }
 

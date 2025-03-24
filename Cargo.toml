@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["xiaotian"]
+members = ["xiaotian", "xiaotian-py-binding"]
 
 [workspace.dependencies]
 xiaotian = { path = "./xiaotian" }
+
+# Async runtime
+tokio = { version = "1.44.0", features = ["full"] }
+async-trait = "0.1"

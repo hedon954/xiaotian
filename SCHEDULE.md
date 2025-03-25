@@ -22,9 +22,11 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 | v0.3.0 ✅ | Scheduled Updates & Reports   | - Implement scheduled tasks using cron_tab<br>- Generate and store markdown reports for update results<br>- Create organized report directory structure<br>- Optimize report content focused on high-value updates     | - Improved code architecture<br>- Automated update scheduling<br>- Persistent report generation<br>- Enhanced update tracking |
 | v0.4.0 ✅ | LLM Integration & Summaries   | - Create LLM utility for AI-powered content generation<br>- Implement Ollama integration<br>- Generate update summaries using LLM<br>- Create enhanced report format with AI summaries                                 | - LLM integration framework<br>- AI-powered update summaries<br>- Enhanced report quality<br>- Improved information density   |
 | v0.5.0 ✅ | Notification System           | - Implement notification system<br>- Add report management commands<br>- Support multiple notification channels<br>- Add delivery mechanisms for reports                                                               | - Notification system<br>- Report delivery<br>- Multiple notification channels                                                |
-| v0.6.0    | Testing & Documentation       | - Integration testing<br>- End-to-end testing<br>- Comprehensive documentation<br>- Code coverage improvements<br>- Performance benchmarks                                                                           | - Test suite<br>- Documentation updates<br>- Performance metrics<br>- Code quality improvements                               |
-| v0.7.0    | Enhanced Notifications        | - Support for Slack integration<br>- Discord webhook support<br>- Custom notification templates<br>- Notification preferences<br>- Message formatting options                                                         | - Multiple notification channels<br>- Template system<br>- User preferences<br>- Rich message formatting                      |
-| v0.8.0    | Storage & Optimization        | - SQLite storage backend<br>- Data migration tools<br>- Performance optimizations<br>- Resource usage improvements<br>- Configuration validation                                                                      | - Persistent storage<br>- Migration utilities<br>- Optimized performance<br>- Resource monitoring                             |
+| v0.6.0    | Gradio Web Interface          | - Create frontend-gradio directory<br>- Implement Gradio UI components<br>- Add placeholder functions<br>- Set up Python environment<br>- Create mock data for testing                                                 | - Web interface with Gradio<br>- Python environment setup<br>- Mock functionality<br>- Basic UI testing                       |
+| v0.7.0    | Python-Rust FFI Integration   | - Implement PyO3 bindings<br>- Create Python package structure<br>- Bridge Rust core functionality<br>- Add error handling<br>- Integration testing                                                                    | - Python-Rust integration<br>- Complete functionality<br>- Error handling<br>- Integration tests                              |
+| v0.8.0    | Testing & Documentation       | - Integration testing<br>- End-to-end testing<br>- Comprehensive documentation<br>- Code coverage improvements<br>- Performance benchmarks                                                                             | - Test suite<br>- Documentation updates<br>- Performance metrics<br>- Code quality improvements                               |
+| v0.9.0    | Enhanced Notifications        | - Support for Slack integration<br>- Discord webhook support<br>- Custom notification templates<br>- Notification preferences<br>- Message formatting options                                                          | - Multiple notification channels<br>- Template system<br>- User preferences<br>- Rich message formatting                      |
+| v1.0.0    | Storage & Optimization        | - SQLite storage backend<br>- Data migration tools<br>- Performance optimizations<br>- Resource usage improvements<br>- Configuration validation                                                                       | - Persistent storage<br>- Migration utilities<br>- Optimized performance<br>- Resource monitoring                             |
 
 ### Stable Release (v1.0.0)
 
@@ -32,12 +34,12 @@ Initial stable release with all MVP features properly tested and documented.
 
 ### Future Versions
 
-| Version | Feature Category | Potential Features                                                                                                      |
-| ------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| v1.1.0  | Authorization    | - GitHub authentication<br>- Access token management<br>- Rate limit handling                                           |
-| v1.2.0  | User Interface   | - Web interface integration<br>- Dashboard for visualizing updates                                                      |
-| v1.3.0  | Integration      | - Additional notification channels (Telegram, Matrix)<br>- Multi-user support<br>- API for third-party integration      |
-| v1.4.0  | Analytics        | - Update statistics<br>- Trend analysis<br>- Custom reporting periods<br>- Data visualization                           |
+| Version | Feature Category | Potential Features                                                                                                 |
+| ------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
+| v1.1.0  | Authorization    | - GitHub authentication<br>- Access token management<br>- Rate limit handling                                      |
+| v1.2.0  | User Interface   | - Web interface integration<br>- Dashboard for visualizing updates                                                 |
+| v1.3.0  | Integration      | - Additional notification channels (Telegram, Matrix)<br>- Multi-user support<br>- API for third-party integration |
+| v1.4.0  | Analytics        | - Update statistics<br>- Trend analysis<br>- Custom reporting periods<br>- Data visualization                      |
 
 ## MVP Core Features (v0.5.0)
 

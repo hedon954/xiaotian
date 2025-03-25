@@ -51,7 +51,7 @@ async fn init_llm_client() -> anyhow::Result<Option<Arc<dyn LLMClient>>> {
     let config = OllamaConfig {
         host: "http://localhost".to_string(),
         port: 11434,
-        model: "llama3.2".to_string(),
+        model: "llama3.3".to_string(),
         temperature: 0.3,
         top_p: 0.3,
     };

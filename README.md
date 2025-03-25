@@ -147,7 +147,7 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 ## Development
 
-XiaoTian is currently in version 0.5.0. Key features implemented:
+XiaoTian is currently in version 0.6.0. Key features implemented:
 
 - Core architecture and storage system (v0.1.0)
 - GitHub API integration (v0.2.0)
@@ -161,34 +161,33 @@ XiaoTian is currently in version 0.5.0. Key features implemented:
 - Scheduled updates and structured report generation (v0.3.0)
 - LLM integration and AI-powered update summaries (v0.4.0)
 - Email notification system for updates (v0.5.0)
+- Gradio web interface for easy interaction (v0.6.0)
 
-### New in v0.5.0: Notification System
+### New in v0.6.0: Gradio Web Interface
 
-Version 0.5.0 introduces a comprehensive notification system:
+Version 0.6.0 introduces a user-friendly web interface using Gradio:
 
-- Email notification support with SMTP integration
-- Markdown to HTML conversion for rich email content
-- Flexible notification configuration
-- TLS support for secure email communication
-- Support for multiple recipients
-- Customizable notification templates
+- Interactive web UI for repository updates and summaries
+- Model selection for different LLM versions
+- Source type and repository input
+- Markdown display for original and generated content
+- Email notification configuration
+- Download and send functionality
 
-Example configuration for email notifications:
+Example usage of the Gradio interface:
 
-```toml
-[notification]
-enabled = true
-default_channel = "email"
+```bash
+# Navigate to the frontend directory
+cd frontend-gradio
 
-[notification.email]
-smtp_server = "smtp.example.com"
-smtp_port = 587
-username = "your-email@example.com"
-password = "your-password"
-from = "XiaoTian <your-email@example.com>"
-to = ["recipient@example.com"]
-use_tls = true
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the Gradio interface
+python src/app.py
 ```
+
+The web interface will be available at `http://localhost:7860` by default.
 
 ## Roadmap
 

@@ -16,6 +16,25 @@ pub enum SourceType {
     // etc.
 }
 
+impl From<SourceType> for i8 {
+    fn from(source_type: SourceType) -> Self {
+        match source_type {
+            SourceType::GitHub => 1,
+        }
+    }
+}
+
+impl TryFrom<i8> for SourceType {
+    type Error = String;
+
+    fn try_from(source_type: i8) -> Result<Self, Self::Error> {
+        match source_type {
+            1 => Ok(SourceType::GitHub),
+            _ => Err(format!("Invalid source type: {}", source_type)),
+        }
+    }
+}
+
 impl std::fmt::Display for SourceType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

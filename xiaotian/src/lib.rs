@@ -20,8 +20,7 @@ use sources::DefaultSourceFactory;
 use storage::MemoryStorage;
 use tracing::{info, warn};
 
-pub async fn default_processor() -> anyhow::Result<Processor<MemoryStorage>> {
-    let config = AppConfig::load("config.toml")?;
+pub async fn default_processor(config: &AppConfig) -> anyhow::Result<Processor<MemoryStorage>> {
     let storage = Arc::new(MemoryStorage::new());
     let source_factory = Arc::new(DefaultSourceFactory::new(config.github.token.clone())?);
     let llm_client = init_llm_client().await?;

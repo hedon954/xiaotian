@@ -7,7 +7,7 @@ use super::{EmailNotifier, NotificationError, NotificationMessage, Notifier};
 
 /// 通知管理器
 pub struct NotificationManager {
-    config: NotificationConfig,
+    pub config: NotificationConfig,
     email_notifier: Option<Arc<EmailNotifier>>,
 }
 
@@ -30,14 +30,18 @@ impl NotificationManager {
     }
 
     /// 发送通知
-    pub async fn send(&self, message: &NotificationMessage) -> Result<(), NotificationError> {
+    pub async fn send(
+        &self,
+        message: &NotificationMessage,
+        to_emails: Vec<String>,
+    ) -> Result<(), NotificationError> {
         if !self.config.enabled {
             info!("Notification is disabled, skipping");
             return Ok(());
         }
 
         match self.config.default_channel.as_str() {
-            "email" => self.send_email(message).await,
+            "email" => self.send_email(message, to_emails).await,
             _ => Err(NotificationError::Config(format!(
                 "Unknown notification channel: {}",
                 self.config.default_channel
@@ -46,9 +50,13 @@ impl NotificationManager {
     }
 
     /// 发送邮件通知
-    async fn send_email(&self, message: &NotificationMessage) -> Result<(), NotificationError> {
+    async fn send_email(
+        &self,
+        message: &NotificationMessage,
+        to_emails: Vec<String>,
+    ) -> Result<(), NotificationError> {
         if let Some(notifier) = &self.email_notifier {
-            notifier.send(message).await
+            notifier.send(message, to_emails).await
         } else {
             Err(NotificationError::ChannelUnavailable(
                 "Email notifier is not available".to_string(),

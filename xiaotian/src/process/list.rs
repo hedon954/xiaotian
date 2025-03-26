@@ -48,4 +48,9 @@ impl<S: Storage> ListHandler<S> {
 
         Ok(result)
     }
+
+    pub async fn get_all_repositories(&self) -> Result<Vec<crate::models::Repository>, AppError> {
+        let repositories = self.storage.get_all_repositories().await?;
+        Ok(repositories)
+    }
 }

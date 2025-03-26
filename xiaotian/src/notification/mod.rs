@@ -53,5 +53,9 @@ impl NotificationMessage {
 #[async_trait]
 pub trait Notifier: Send + Sync {
     /// 发送通知
-    async fn send(&self, message: &NotificationMessage) -> Result<(), NotificationError>;
+    async fn send(
+        &self,
+        message: &NotificationMessage,
+        to: Vec<String>,
+    ) -> Result<(), NotificationError>;
 }

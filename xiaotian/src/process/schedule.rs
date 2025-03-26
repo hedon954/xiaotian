@@ -10,10 +10,11 @@ use tokio::{
 use tracing::{error, info};
 
 use crate::{
+    error::AppError,
     llm::{LLMClient, PromptBuilder},
     models::{Source, SourceConfig, SourceFactory, SourceType, Update, UpdateEventType},
     notification::{NotificationManager, NotificationMessage},
-    storage::RepositoryStorage,
+    storage::{RepositoryStorage, StorageError},
 };
 
 const DEFAULT_REPORT_DIR: &str = "docs/reports";
@@ -29,7 +30,7 @@ pub struct ScheduleHandler<S: RepositoryStorage> {
     storage: Arc<S>,
     source_factory: Arc<dyn SourceFactory>,
     report_dir: PathBuf,
-    llm_client: Option<Arc<dyn LLMClient>>,
+    llm_client: Vec<Arc<dyn LLMClient>>,
     notification_manager: Option<Arc<NotificationManager>>,
 }
 
@@ -44,14 +45,27 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             storage,
             source_factory,
             report_dir,
-            llm_client: None,
+            llm_client: Vec::new(),
             notification_manager: None,
         }
     }
 
     pub fn with_llm_client(mut self, llm_client: Arc<dyn LLMClient>) -> Self {
-        self.llm_client = Some(llm_client);
+        self.llm_client.push(llm_client);
         self
+    }
+
+    pub fn get_llm_client(&self, model: &str) -> Option<&Arc<dyn LLMClient>> {
+        self.llm_client
+            .iter()
+            .find(|client| client.get_name() == model)
+    }
+
+    pub fn available_models(&self) -> Vec<String> {
+        self.llm_client
+            .iter()
+            .map(|client| client.get_name().to_string())
+            .collect()
     }
 
     pub fn with_notification_manager(
@@ -62,15 +76,42 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         self
     }
 
-    pub async fn run(&self) {
+    pub async fn run_single(
+        &self,
+        source_type: SourceType,
+        source_id: i32,
+        model: String,
+        to_emails: Vec<String>,
+    ) -> Result<(String, String), AppError> {
+        info!(
+            "Running scheduled update for source_type: {}, source_id: {}, using model: {}",
+            source_type, source_id, model
+        );
+
+        let repository = self.storage.get_repository(source_id).await?;
+        if repository.is_none() {
+            return Err(
+                StorageError::NotFound(source_type.to_string(), source_id.to_string()).into(),
+            );
+        }
+
+        self.run(Some(&model), to_emails).await;
+        Ok(("original".to_string(), "ai_report_path".to_string()))
+    }
+
+    pub async fn run(&self, model: Option<&str>, to_emails: Vec<String>) {
         info!("Running scheduled update for all repositories...");
-        match self.update_all_repositories().await {
+        match self.update_all_repositories(model, to_emails).await {
             Ok(count) => info!("Successfully updated {} repositories", count),
             Err(e) => error!("Error updating repositories: {}", e),
         }
     }
 
-    async fn update_all_repositories(&self) -> Result<usize, String> {
+    async fn update_all_repositories(
+        &self,
+        model: Option<&str>,
+        to_emails: Vec<String>,
+    ) -> Result<usize, String> {
         let repositories = self
             .storage
             .get_all_repositories()
@@ -100,7 +141,7 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             };
 
             match self.source_factory.create_source(config, repo.id).await {
-                Ok(source) => match self.fetch_and_summary(source.as_ref()).await {
+                Ok(source) => match self.fetch_and_summary(source.as_ref(), model).await {
                     Ok(report_result) => {
                         info!(
                             "Generated reports for {}/{}: {}",
@@ -110,7 +151,12 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
                         // 如果有AI摘要报告，发送通知
                         if let Some(ai_report_path) = &report_result.ai_report_path {
                             if let Err(e) = self
-                                .send_notification(&repo.owner, &repo.name, ai_report_path)
+                                .send_notification(
+                                    &repo.owner,
+                                    &repo.name,
+                                    ai_report_path,
+                                    to_emails.clone(),
+                                )
                                 .await
                             {
                                 error!(
@@ -143,6 +189,7 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         owner: &str,
         repo: &str,
         report_path: &str,
+        to_emails: Vec<String>,
     ) -> Result<(), String> {
         if let Some(notification_manager) = &self.notification_manager {
             // 读取报告内容
@@ -156,7 +203,7 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             let message = NotificationMessage::new(subject, report_content);
 
             // 发送通知
-            match notification_manager.send(&message).await {
+            match notification_manager.send(&message, to_emails).await {
                 Ok(_) => {
                     info!("Notification sent successfully for {}/{}", owner, repo);
                     Ok(())
@@ -170,7 +217,11 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
     }
 
     /// 获取更新并生成摘要
-    async fn fetch_and_summary(&self, source: &dyn Source) -> Result<ReportResult, String> {
+    async fn fetch_and_summary(
+        &self,
+        source: &dyn Source,
+        model: Option<&str>,
+    ) -> Result<ReportResult, String> {
         // 获取7天内的更新
         let since = Utc::now() - chrono::Duration::days(7);
         let updates = source
@@ -197,7 +248,7 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
 
         // 为所有更新生成报告
         let report_result = self
-            .save_and_summary(source, &updates, since, Utc::now())
+            .save_and_summary(source, &updates, since, Utc::now(), model)
             .await?;
 
         Ok(report_result)
@@ -210,6 +261,7 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         updates: &[Update],
         since: DateTime<Utc>,
         until: DateTime<Utc>,
+        model: Option<&str>,
     ) -> Result<ReportResult, String> {
         let source_name = source.get_name();
         let source_type = source.get_type();
@@ -244,9 +296,10 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             ai_report_path: None,
         };
 
-        if self.llm_client.is_some() {
+        let model = model.unwrap_or("llama3.2");
+        if let Some(client) = self.get_llm_client(model) {
             match self
-                .summary_by_llm(source, updates, &original_filename, since, until)
+                .summary_by_llm(source, updates, &original_filename, since, until, client)
                 .await
             {
                 Ok(ai_report_path) => {
@@ -271,13 +324,8 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         original_filename: &str,
         since: DateTime<Utc>,
         until: DateTime<Utc>,
+        llm_client: &Arc<dyn LLMClient>,
     ) -> Result<String, String> {
-        // 获取LLM客户端
-        let llm_client = match &self.llm_client {
-            Some(client) => client,
-            None => return Err("No LLM client provided".to_string()),
-        };
-
         // 1. 格式化更新内容为LLM输入
         let updates_content = self.format_updates_for_llm(updates);
 
@@ -302,7 +350,14 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         );
 
         // 4. 生成AI摘要报告内容
-        let ai_report = self.generate_ai_report(source, &summary, original_filename, since, until);
+        let ai_report = self.generate_ai_report(
+            source,
+            &summary,
+            original_filename,
+            since,
+            until,
+            Some(llm_client.get_name()),
+        );
 
         // 5. 保存AI摘要报告
         let source_type_dir = self.report_dir.join(&source_type);
@@ -460,6 +515,7 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
         original_report_filename: &str,
         since: DateTime<Utc>,
         until: DateTime<Utc>,
+        model: Option<&str>,
     ) -> String {
         let mut report = String::new();
 
@@ -493,8 +549,8 @@ impl<S: RepositoryStorage> ScheduleHandler<S> {
             Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
         ));
 
-        if let Some(client) = &self.llm_client {
-            report.push_str(&format!("- **LLM Provider**: {}\n", client.get_name()));
+        if let Some(model) = model {
+            report.push_str(&format!("- **LLM Provider**: {}\n", model));
         }
 
         // 添加原始报告的引用

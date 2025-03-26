@@ -110,7 +110,7 @@ impl LLMClient for OllamaClient {
     }
 
     fn get_name(&self) -> &str {
-        "Ollama"
+        &self.config.model
     }
 }
 

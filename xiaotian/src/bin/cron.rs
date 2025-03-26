@@ -1,14 +1,12 @@
 use chrono::{FixedOffset, Local, TimeZone};
 use cron_tab::AsyncCron;
-use tracing::{info, level_filters::LevelFilter};
-use tracing_subscriber::{Layer as _, fmt, layer::SubscriberExt, util::SubscriberInitExt};
-use xiaotian::{AppConfig, default_processor};
+use tracing::{error, info};
+use xiaotian::{AppConfig, default_processor, log::init_logger};
 
 /// 定时任务入口
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let layer = fmt::layer().with_filter(LevelFilter::DEBUG);
-    tracing_subscriber::registry().with(layer).init();
+    init_logger();
 
     info!("Starting XiaoTian Scheduler v0.5.0 with LLM support");
     let local_tz = Local::from_offset(&FixedOffset::east_opt(8 * 3600).unwrap());
@@ -20,9 +18,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let processor = processor.schedule_handler.clone();
         let config = config.clone();
         async move {
-            processor
-                .run(Some("llama3.2"), config.notification.email.unwrap().to)
-                .await;
+            let _ = processor
+                .run("llama3.2", config.notification.email.unwrap().to)
+                .await
+                .map_err(|e| error!("Error running processor: {}", e));
         }
     })
     .await?;

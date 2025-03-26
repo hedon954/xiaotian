@@ -16,3 +16,5 @@ docs/reports/
 # config
 config.toml
 **/docs/reports/**/
+
+**/logs/**

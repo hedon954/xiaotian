@@ -24,6 +24,7 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 - Interactive confirmation for destructive operations
 - User-friendly REPL interface with history support
 - Scheduled updates and report generation
+- Web interface using Gradio for easy interaction
 
 ## Installation
 
@@ -147,7 +148,7 @@ XiaoTian uses a hierarchical command structure with the following main commands:
 
 ## Development
 
-XiaoTian is currently in version 0.6.0. Key features implemented:
+XiaoTian is currently in version 0.6.0, with version 0.6.1 in development. Key features implemented:
 
 - Core architecture and storage system (v0.1.0)
 - GitHub API integration (v0.2.0)
@@ -184,26 +185,30 @@ cd frontend-gradio
 pip install -r requirements.txt
 
 # Start the Gradio interface
-python src/app.py
+python run.py
 ```
 
 The web interface will be available at `http://localhost:7860` by default.
 
+### Upcoming in v0.6.1: Python-Rust FFI Integration
+
+Version 0.6.1 will integrate the Gradio frontend with the Rust backend via PyO3:
+
+- Python FFI bindings for core Rust functionality
+- Live data fetching from GitHub repositories
+- Real-time LLM processing of updates
+- Email notification directly from the web interface
+- Download functionality for generated reports
+
 ## Roadmap
 
-### Coming Soon in v0.6.0: Testing & Documentation
+### Coming Soon
 
-- Comprehensive integration testing
-- End-to-end testing
-- Documentation improvements
-- Code coverage enhancements
-- Performance benchmarks
-
-### Future Versions
-
-- v0.7.0: Enhanced notifications (Slack, Discord)
-- v0.8.0: Persistent storage and optimization
-- v1.0.0: Stable release with all MVP features
+- v0.6.1: Python-Rust FFI Integration (In Progress)
+- v0.7.0: Advanced UI & FFI Features
+- v0.8.0: Testing & Documentation
+- v0.9.0: Enhanced Notifications (Slack, Discord)
+- v1.0.0: Persistent Storage & Optimization
 
 ## License
 

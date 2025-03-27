@@ -38,11 +38,8 @@ fn add_repo(args: &ArgMatches, ctx: &mut ReplContext) -> ReplResult {
 
 impl CmdExector for AddRepoOpts {
     async fn execute<T: Storage>(self, processor: &mut Processor<T>) -> anyhow::Result<String> {
-        let ret = processor
-            .add_handler
-            .add_repository(self.owner, self.name)
-            .await?;
-        Ok(ret)
+        let ret = processor.add_repository(self.owner, self.name).await?;
+        Ok(ret.to_string())
     }
 }
 

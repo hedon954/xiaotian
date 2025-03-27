@@ -42,12 +42,11 @@ impl CmdExector for DeleteRepoOpts {
         processor: &mut Processor<T>,
     ) -> anyhow::Result<String> {
         let repo = match processor
-            .list_handler
             .get_repository_by_name(&self.owner, &self.name)
             .await
         {
-            Ok(repo) => repo,
-            Err(_) => {
+            Ok(Some(repo)) => repo,
+            _ => {
                 return Err(anyhow::anyhow!(
                     "Repository {}/{} not found",
                     self.owner,
@@ -56,8 +55,8 @@ impl CmdExector for DeleteRepoOpts {
             }
         };
 
-        let ret = processor.delete_handler.delete_repository(repo.id).await?;
-        Ok(ret)
+        processor.delete_repository(repo.id).await?;
+        Ok(format!("Repository {} deleted successfully", repo.id))
     }
 }
 

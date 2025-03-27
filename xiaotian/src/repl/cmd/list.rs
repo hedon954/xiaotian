@@ -34,7 +34,11 @@ impl CmdExector for ListReposOpts {
         self,
         processor: &mut Processor<T>,
     ) -> anyhow::Result<String> {
-        let ret = processor.list_handler.list_repositories().await?;
-        Ok(ret)
+        let repos = processor.list_repositories().await?;
+        let mut result = String::new();
+        for repo in repos {
+            result.push_str(&format!("{} {}\n", repo.id, repo.name));
+        }
+        Ok(result)
     }
 }

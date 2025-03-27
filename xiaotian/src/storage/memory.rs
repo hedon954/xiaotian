@@ -63,14 +63,13 @@ impl RepositoryStorage for MemoryStorage {
         &self,
         owner: &str,
         name: &str,
-    ) -> Result<Repository, StorageError> {
-        self.repositories
+    ) -> Result<Option<Repository>, StorageError> {
+        let repo = self
+            .repositories
             .iter()
             .find(|r| r.owner == owner && r.name == name)
-            .map(|r| r.clone())
-            .ok_or_else(|| {
-                StorageError::NotFound("Repository".to_string(), format!("{}/{}", owner, name))
-            })
+            .map(|r| r.clone());
+        Ok(repo)
     }
 
     async fn save_repository(
@@ -98,4 +97,9 @@ impl RepositoryStorage for MemoryStorage {
     }
 }
 
-impl Storage for MemoryStorage {}
+#[async_trait]
+impl Storage for MemoryStorage {
+    async fn generate_id(&self) -> Result<i32, StorageError> {
+        Ok(self.next_repository_id())
+    }
+}

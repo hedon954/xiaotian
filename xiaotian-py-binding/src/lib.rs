@@ -34,8 +34,7 @@ impl PyProcessor {
     fn get_source_list(&self) -> PyResult<Vec<(i64, String)>> {
         let res: Vec<(i64, String)> = self.runtime.block_on(async move {
             self.processor
-                .list_handler
-                .get_all_repositories()
+                .list_repositories()
                 .await
                 .unwrap_or_default()
                 .iter()

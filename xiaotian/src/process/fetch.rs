@@ -2,12 +2,14 @@
 
 use std::sync::Arc;
 
-use chrono::{Duration, Utc};
+use chrono::{Duration, Local, Utc};
+use enum_dispatch::enum_dispatch;
 use reedline_repl_rs::yansi::Paint;
 
+use crate::Repository;
 use crate::error::AppError;
 use crate::models::source::SourceFactory;
-use crate::models::{SourceConfig, SourceType, UpdateEventType};
+use crate::models::{Fetcher, Source, SourceConfig, SourceType, SourceV2, UpdateEventType};
 use crate::storage::Storage;
 
 /// Handler for fetch commands
@@ -24,6 +26,12 @@ impl<S: Storage> FetchHandler<S> {
             storage,
             source_factory,
         }
+    }
+
+    pub async fn fetch_updates_v2(&self, source: SourceV2, days: u32) -> Result<String, AppError> {
+        let start_date = Local::now() - Duration::days(days as i64);
+        let end_date = Local::now();
+        source.fetch_updates(start_date, end_date).await
     }
 
     /// Fetch updates for a subscription

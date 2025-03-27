@@ -22,7 +22,7 @@ pub trait RepositoryStorage {
         &self,
         owner: &str,
         name: &str,
-    ) -> Result<Repository, StorageError>;
+    ) -> Result<Option<Repository>, StorageError>;
 
     /// Save a repository
     async fn save_repository(&self, repository: Repository) -> Result<Repository, StorageError>;
@@ -33,4 +33,6 @@ pub trait RepositoryStorage {
 
 /// Combined storage interface
 #[async_trait]
-pub trait Storage: RepositoryStorage + Send + Sync + 'static {}
+pub trait Storage: RepositoryStorage + Send + Sync + 'static {
+    async fn generate_id(&self) -> Result<i32, StorageError>;
+}

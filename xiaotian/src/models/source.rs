@@ -1,8 +1,11 @@
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
+use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 
 use crate::{error::AppError, models::Update};
+
+use super::{Fetcher, Repository};
 
 /// Represents the type of content source
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

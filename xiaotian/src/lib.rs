@@ -60,7 +60,7 @@ async fn init_llm_client() -> anyhow::Result<Arc<dyn LLMClient>> {
 async fn init_task(processor: &mut Processor<MemoryStorage>) -> anyhow::Result<()> {
     let repos = vec![("golang".to_string(), "go".to_string())];
     for repo in repos {
-        processor.add_handler.add_repository(repo.0, repo.1).await?;
+        processor.add_repository(repo.0, repo.1).await?;
     }
     Ok(())
 }

@@ -1,8 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::source::SourceType;
-
 /// Type of update event
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum UpdateEventType {
@@ -19,9 +17,6 @@ pub enum UpdateEventType {
 /// Represents an update event from any source
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Update {
-    /// Source type (GitHub, HackerNews, etc.)
-    pub source_type: SourceType,
-
     /// Type of event
     pub event_type: UpdateEventType,
 
@@ -48,7 +43,6 @@ impl Update {
     /// Create a new update
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        source_type: SourceType,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,
@@ -57,7 +51,6 @@ impl Update {
         event_date: DateTime<Utc>,
     ) -> Self {
         Self {
-            source_type,
             event_type,
             title,
             description,
@@ -71,7 +64,6 @@ impl Update {
     /// Create a new update with additional data
     #[allow(clippy::too_many_arguments)]
     pub fn with_data(
-        source_type: SourceType,
         event_type: UpdateEventType,
         title: String,
         description: Option<String>,
@@ -81,7 +73,6 @@ impl Update {
         additional_data: serde_json::Value,
     ) -> Self {
         Self {
-            source_type,
             event_type,
             title,
             description,

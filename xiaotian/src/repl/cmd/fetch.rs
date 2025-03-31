@@ -2,6 +2,7 @@ use clap::{ArgMatches, Parser};
 use enum_dispatch::enum_dispatch;
 
 use crate::{
+    models::SourceType,
     process::Processor,
     repl::{CmdExector, ReplContext, ReplResult, context::ReplMsg},
 };
@@ -40,10 +41,19 @@ impl CmdExector for FetchUpdatesOpts {
         processor: &mut Processor<T>,
     ) -> anyhow::Result<String> {
         let ret = processor
-            .fetch_handler
-            .fetch_updates(self.id, self.days)
+            .schedule_handler
+            .run_single(
+                SourceType::GitHub,
+                self.id,
+                "gpt-4o-mini".to_string(),
+                vec![],
+            )
             .await?;
-        Ok(ret)
+        let mut res = String::new();
+        res.push_str(&ret.0);
+        res.push('\n');
+        res.push_str(&ret.1);
+        Ok(res)
     }
 }
 

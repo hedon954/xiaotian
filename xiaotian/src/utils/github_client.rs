@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
 use octocrab::Octocrab;
 use serde_json::json;
 
-use crate::models::{SourceError, Update, UpdateEventType, source::SourceType};
+use crate::models::{Update, UpdateEventType};
+
+use super::UtilsError;
 
 /// Client for interacting with the GitHub API
 pub struct GithubClient {
@@ -13,13 +15,8 @@ pub struct GithubClient {
 }
 
 impl GithubClient {
-    /// Create a new GitHub client
-    pub fn new(client: Arc<Octocrab>) -> Self {
-        Self { client }
-    }
-
     /// Create a new GitHub client with a token
-    pub fn with_token(token: String) -> Result<Self, SourceError> {
+    pub fn with_token(token: String) -> Result<Self, UtilsError> {
         let client = Octocrab::builder()
             .personal_token(token)
             .build()
@@ -31,7 +28,7 @@ impl GithubClient {
     }
 
     /// Create a new GitHub client without a token (anonymous)
-    pub fn anonymous() -> Result<Self, SourceError> {
+    pub fn anonymous() -> Result<Self, UtilsError> {
         let client = Octocrab::builder().build().map_err(Self::map_error)?;
 
         Ok(Self {
@@ -39,14 +36,9 @@ impl GithubClient {
         })
     }
 
-    /// Get a reference to the internal Octocrab client
-    pub fn get_octocrab(&self) -> Arc<Octocrab> {
-        Arc::clone(&self.client)
-    }
-
     /// Convert GitHub API errors to SourceError
-    fn map_error<E: std::fmt::Debug>(err: E) -> SourceError {
-        SourceError::ApiError(format!("GitHub API error: {:?}", err))
+    fn map_error<E: std::fmt::Debug>(err: E) -> UtilsError {
+        UtilsError::GithubError(format!("GitHub API error: {:?}", err))
     }
 
     /// Fetch commits from GitHub
@@ -55,8 +47,8 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         branch: Option<&str>,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
+        since: DateTime<Local>,
+    ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
         // Start with list_commits() builder
@@ -64,9 +56,7 @@ impl GithubClient {
         let mut commits_handler = repo_handler.list_commits();
 
         // Add since filter if provided
-        if let Some(since_time) = since {
-            commits_handler = commits_handler.since(since_time);
-        }
+        commits_handler = commits_handler.since(since.to_utc());
 
         // If a branch is specified, filter by that branch
         if let Some(branch_name) = branch {
@@ -105,7 +95,6 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
-                SourceType::GitHub,
                 UpdateEventType::Commit,
                 title,
                 description,
@@ -126,8 +115,8 @@ impl GithubClient {
         &self,
         owner: &str,
         repo: &str,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
+        since: DateTime<Local>,
+    ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
         // Build the issues query
@@ -135,9 +124,7 @@ impl GithubClient {
         let mut issues_handler = issues.list().state(octocrab::params::State::Closed);
 
         // Add since filter if provided
-        if let Some(since_time) = since {
-            issues_handler = issues_handler.since(since_time);
-        }
+        issues_handler = issues_handler.since(since);
 
         // Execute the API call
         let issues_page = issues_handler.send().await.map_err(Self::map_error)?;
@@ -161,7 +148,6 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
-                SourceType::GitHub,
                 UpdateEventType::Issue,
                 issue.title,
                 issue.body,
@@ -182,8 +168,8 @@ impl GithubClient {
         &self,
         owner: &str,
         repo: &str,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
+        since: DateTime<Local>,
+    ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
         // Get pull requests
@@ -199,15 +185,11 @@ impl GithubClient {
             .map_err(Self::map_error)?;
 
         // Filter by date if needed
-        let pulls = if let Some(since_time) = since {
-            pulls_page
-                .items
-                .into_iter()
-                .filter(|pr| pr.updated_at.unwrap_or_else(Utc::now) >= since_time)
-                .collect::<Vec<_>>()
-        } else {
-            pulls_page.items
-        };
+        let pulls = pulls_page
+            .items
+            .into_iter()
+            .filter(|pr| pr.updated_at.unwrap_or_else(Utc::now) >= since)
+            .collect::<Vec<_>>();
 
         // Convert each PR to an Update
         for pr in pulls {
@@ -228,7 +210,6 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
-                SourceType::GitHub,
                 UpdateEventType::PullRequest,
                 pr.title.unwrap_or_else(|| format!("PR #{}", pr_num)),
                 pr.body,
@@ -249,8 +230,8 @@ impl GithubClient {
         &self,
         owner: &str,
         repo: &str,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
+        since: DateTime<Local>,
+    ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
         // Get releases
@@ -264,15 +245,11 @@ impl GithubClient {
             .map_err(Self::map_error)?;
 
         // Filter by date if needed
-        let releases = if let Some(since_time) = since {
-            releases_page
-                .items
-                .into_iter()
-                .filter(|release| release.published_at.unwrap_or_else(Utc::now) >= since_time)
-                .collect::<Vec<_>>()
-        } else {
-            releases_page.items
-        };
+        let releases = releases_page
+            .items
+            .into_iter()
+            .filter(|release| release.published_at.unwrap_or_else(Utc::now) >= since)
+            .collect::<Vec<_>>();
 
         // Convert each release to an Update
         for release in releases {
@@ -288,7 +265,6 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
-                SourceType::GitHub,
                 UpdateEventType::Release,
                 release
                     .name
@@ -311,9 +287,9 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         branch: Option<&str>,
-        since: Option<DateTime<Utc>>,
+        since: DateTime<Local>,
         types: Vec<UpdateEventType>,
-    ) -> Result<Vec<Update>, SourceError> {
+    ) -> Result<Vec<Update>, UtilsError> {
         let mut all_updates = Vec::new();
 
         if types.contains(&UpdateEventType::Commit) {
@@ -345,8 +321,8 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         branch: Option<&str>,
-        since: Option<DateTime<Utc>>,
-    ) -> Result<Vec<Update>, SourceError> {
+        since: DateTime<Local>,
+    ) -> Result<Vec<Update>, UtilsError> {
         let mut all_updates = Vec::new();
 
         // Fetch commits

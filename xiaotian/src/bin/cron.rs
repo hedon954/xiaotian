@@ -15,11 +15,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = AppConfig::load("config.toml")?;
     let processor = default_processor(&config).await?;
     cron.add_fn("0 * * * * *", move || {
-        let processor = processor.schedule_handler.clone();
+        let processor = processor.clone();
         let config = config.clone();
         async move {
             let _ = processor
-                .run("llama3.2", config.notification.email.unwrap().to)
+                .run_all(
+                    "llama3.2".to_string(),
+                    config.notification.email.unwrap().to,
+                )
                 .await
                 .map_err(|e| error!("Error running processor: {}", e));
         }

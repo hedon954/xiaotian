@@ -1,32 +1,26 @@
 //! Command handlers module
 
-pub mod fetch;
 pub mod schedule;
 
 use std::sync::Arc;
 
-use async_trait::async_trait;
-use chrono::{DateTime, Local, Offset, Utc};
-use enum_dispatch::enum_dispatch;
+use crate::{Repository, error::AppError, models::SourceType, storage::Storage};
 
-use crate::{Repository, error::AppError, models::source::SourceFactory, storage::Storage};
-
-use self::{fetch::FetchHandler, schedule::ScheduleHandler};
+use self::schedule::ScheduleHandler;
 
 /// Processor for handling commands
+#[derive(Clone)]
 pub struct Processor<S: Storage> {
     storage: Arc<S>,
-    pub fetch_handler: FetchHandler<S>,
     pub schedule_handler: ScheduleHandler<S>,
 }
 
 impl<S: Storage> Processor<S> {
     /// Create a new processor
-    pub fn new(storage: Arc<S>, source_factory: Arc<dyn SourceFactory>) -> Self {
+    pub fn new(storage: Arc<S>) -> Self {
         Self {
             storage: storage.clone(),
-            fetch_handler: FetchHandler::new(storage.clone(), source_factory.clone()),
-            schedule_handler: ScheduleHandler::new(storage.clone(), source_factory, None),
+            schedule_handler: ScheduleHandler::new(storage.clone(), None),
         }
     }
 
@@ -59,5 +53,26 @@ impl<S: Storage> Processor<S> {
     ) -> Result<Option<Repository>, AppError> {
         let repo = self.storage.get_repository_by_name(owner, name).await?;
         Ok(repo)
+    }
+
+    pub async fn run_all(&self, model: String, to_emails: Vec<String>) -> Result<(), AppError> {
+        self.run_all_github(model.clone(), to_emails.clone())
+            .await?;
+        Ok(())
+    }
+
+    async fn run_all_github(&self, model: String, to_emails: Vec<String>) -> Result<(), AppError> {
+        let repos = self.storage.get_all_repositories().await?;
+        for repo in repos {
+            self.schedule_handler
+                .run_single(
+                    SourceType::GitHub,
+                    repo.id,
+                    model.clone(),
+                    to_emails.clone(),
+                )
+                .await?;
+        }
+        Ok(())
     }
 }

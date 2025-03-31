@@ -6,7 +6,6 @@ use crossbeam_channel as mpsc;
 use tokio::runtime::Runtime;
 
 use crate::process::Processor;
-use crate::sources::DefaultSourceFactory;
 use crate::storage::MemoryStorage;
 
 use super::CmdExector;
@@ -27,8 +26,7 @@ impl ReplContext {
         let rt = Runtime::new().expect("Failed to create tokio runtime");
 
         let storage = Arc::new(MemoryStorage::new());
-        let source_factory = Arc::new(DefaultSourceFactory::new(None).unwrap());
-        let mut processor = Processor::new(storage, source_factory);
+        let mut processor = Processor::new(storage);
 
         thread::Builder::new()
             .name("ReplBackend".to_string())

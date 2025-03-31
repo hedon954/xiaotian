@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use crate::{
-    llm::LLMError, models::SourceError, notification::NotificationError, storage::StorageError,
+    llm::LLMError, notification::NotificationError, storage::StorageError, utils::UtilsError,
 };
 
 #[derive(Debug, Error)]
@@ -12,12 +12,12 @@ pub enum AppError {
     #[error("Storage error: {0}")]
     StorageError(#[from] StorageError),
 
-    #[error("Source error: {0}")]
-    SourceError(#[from] SourceError),
-
     #[error("Notification error: {0}")]
     NotificationError(#[from] NotificationError),
 
     #[error("LLM error: {0}")]
     LLMError(#[from] LLMError),
+
+    #[error("Utils error: {0}")]
+    UtilsError(#[from] UtilsError),
 }

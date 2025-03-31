@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicI32, Ordering};
 
 use super::error::StorageError;
 use super::{RepositoryStorage, Storage};
-use crate::models::Repository;
+use crate::models::{Repository, SourceType};
 
 /// In-memory implementation of Storage using DashMap
 #[derive(Debug)]
@@ -85,10 +85,7 @@ impl RepositoryStorage for MemoryStorage {
 
     async fn delete_repository(&self, id: i32) -> Result<(), StorageError> {
         if !self.repositories.contains_key(&id) {
-            return Err(StorageError::NotFound(
-                "Repository".to_string(),
-                id.to_string(),
-            ));
+            return Err(StorageError::NotFound(SourceType::GitHub, id));
         }
 
         // delete the repository

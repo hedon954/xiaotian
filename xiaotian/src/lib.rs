@@ -6,7 +6,6 @@ pub mod models;
 pub mod notification;
 pub mod process;
 pub mod repl;
-pub mod sources;
 pub mod storage;
 pub mod utils;
 
@@ -17,20 +16,18 @@ use llm::{LLMClient, OllamaClient, OllamaConfig};
 pub use models::{Repository, Update};
 use notification::NotificationManager;
 use process::Processor;
-use sources::DefaultSourceFactory;
 use storage::MemoryStorage;
 use tracing::info;
 
 pub async fn default_processor(config: &AppConfig) -> anyhow::Result<Processor<MemoryStorage>> {
     let storage = Arc::new(MemoryStorage::new());
-    let source_factory = Arc::new(DefaultSourceFactory::new(config.github.token.clone())?);
     let llm_client = init_llm_client().await?;
 
     // 初始化通知管理器
     let notification_manager = NotificationManager::from_config(config);
     let notification_manager = Arc::new(notification_manager);
 
-    let mut processor = Processor::new(storage, source_factory);
+    let mut processor = Processor::new(storage);
     processor.schedule_handler = processor
         .schedule_handler
         .with_llm_client(llm_client)

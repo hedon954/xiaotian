@@ -65,7 +65,7 @@ MOCK_GENERATED_CONTENT = """
 
 
 def get_mock_data():
-    """获取模拟数据"""
+    """Get mock data"""
     return {
         "original_data": MOCK_ORIGINAL_DATA.strip(),
         "generated_content": MOCK_GENERATED_CONTENT.strip(),
@@ -73,10 +73,10 @@ def get_mock_data():
 
 
 def get_mock_models():
-    """获取可用的模型列表"""
+    """Get available model list"""
     return ["llama3.2", "llama2", "gpt-4"]
 
 
 def get_mock_source_types():
-    """获取可用的源类型"""
+    """Get available source types"""
     return ["github", "gitlab", "bitbucket"]

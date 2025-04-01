@@ -3,7 +3,6 @@ use cron_tab::AsyncCron;
 use tracing::{error, info};
 use xiaotian::{AppConfig, default_processor, log::init_logger};
 
-/// 定时任务入口
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_logger();

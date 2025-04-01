@@ -5,26 +5,26 @@ use serde::{Deserialize, Serialize};
 use super::{NotificationError, NotificationMessage, Notifier};
 use async_trait::async_trait;
 
-/// 邮件配置
+/// Email configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmailConfig {
-    /// SMTP服务器地址
+    /// SMTP server address
     pub smtp_server: String,
-    /// SMTP服务器端口
+    /// SMTP server port
     pub smtp_port: u16,
-    /// SMTP用户名
+    /// SMTP username
     pub username: String,
-    /// SMTP密码
+    /// SMTP password
     pub password: String,
-    /// 发件人地址
+    /// sender address
     pub from: String,
-    /// 收件人地址列表
+    /// recipient addresses
     pub to: Vec<String>,
-    /// 是否使用TLS
+    /// whether to use TLS
     pub use_tls: bool,
 }
 
-/// 邮件通知器
+/// Email notifier
 pub struct EmailNotifier {
     config: EmailConfig,
 }

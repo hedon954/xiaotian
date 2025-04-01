@@ -10,21 +10,21 @@ pub use prompt::PromptBuilder;
 
 use async_trait::async_trait;
 
-/// LLM 客户端接口，定义了与大语言模型交互的通用方法
+/// LLM client interface, defines common methods for interacting with large language models
 #[async_trait]
 pub trait LLMClient: Send + Sync {
-    /// 生成内容
+    /// Generate content
     ///
-    /// # 参数
+    /// # Parameters
     ///
-    /// * `prompt` - 输入提示词
-    /// * `dry_run` - 是否为干运行模式。在干运行模式下，只返回处理后的提示词，不实际请求 LLM
+    /// * `prompt` - input prompt
+    /// * `dry_run` - whether to run in dry run mode. In dry run mode, only return the processed prompt, not the actual LLM request
     ///
-    /// # 返回
+    /// # Returns
     ///
-    /// 成功时返回生成的内容，失败时返回错误
+    /// Returns the generated content, or an error if it fails
     async fn generate(&self, prompt: &str, dry_run: bool) -> Result<String, LLMError>;
 
-    /// 获取客户端类型名称
+    /// Get the client type name
     fn get_name(&self) -> &str;
 }

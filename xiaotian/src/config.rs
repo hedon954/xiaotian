@@ -23,16 +23,16 @@ pub struct GitHubConfig {
     pub api_url: Option<String>,
 }
 
-/// 通知系统配置
+/// Notification system configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NotificationConfig {
-    /// 是否启用通知
+    /// whether to enable notifications
     #[serde(default = "default_notification_enabled")]
     pub enabled: bool,
-    /// 默认通知渠道
+    /// default notification channel
     #[serde(default = "default_notification_channel")]
     pub default_channel: String,
-    /// 邮件通知配置
+    /// email notification configuration
     pub email: Option<EmailConfig>,
 }
 

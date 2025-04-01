@@ -8,7 +8,6 @@ use thiserror::Error;
 pub use config::NotificationManager;
 pub use email::{EmailConfig, EmailNotifier};
 
-/// 通知系统错误类型
 #[derive(Debug, Error)]
 pub enum NotificationError {
     #[error("Config error: {0}")]
@@ -21,19 +20,19 @@ pub enum NotificationError {
     ChannelUnavailable(String),
 }
 
-/// 通知消息
+/// The notification message
 #[derive(Debug, Clone)]
 pub struct NotificationMessage {
-    /// 通知主题
+    /// The subject of the notification
     pub subject: String,
-    /// 通知内容
+    /// The content of the notification
     pub content: String,
-    /// 元数据，用于存储额外信息
+    /// The metadata, for storing additional information
     pub metadata: HashMap<String, String>,
 }
 
 impl NotificationMessage {
-    /// 创建新的通知消息
+    /// Create a new notification message
     pub fn new(subject: impl Into<String>, content: impl Into<String>) -> Self {
         Self {
             subject: subject.into(),
@@ -42,17 +41,17 @@ impl NotificationMessage {
         }
     }
 
-    /// 添加元数据
+    /// Add metadata
     pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
     }
 }
 
-/// 通知发送器特征
+/// The notification sender trait
 #[async_trait]
 pub trait Notifier: Send + Sync {
-    /// 发送通知
+    /// Send notification
     async fn send(
         &self,
         message: &NotificationMessage,

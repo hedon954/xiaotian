@@ -23,7 +23,6 @@ pub async fn default_processor(config: &AppConfig) -> anyhow::Result<Processor<M
     let storage = Arc::new(MemoryStorage::new());
     let llm_client = init_llm_client().await?;
 
-    // 初始化通知管理器
     let notification_manager = NotificationManager::from_config(config);
     let notification_manager = Arc::new(notification_manager);
 
@@ -37,9 +36,7 @@ pub async fn default_processor(config: &AppConfig) -> anyhow::Result<Processor<M
     Ok(processor)
 }
 
-/// 初始化 LLM 客户端
 async fn init_llm_client() -> anyhow::Result<Arc<dyn LLMClient>> {
-    // 尝试创建 Ollama 客户端
     let config = OllamaConfig {
         host: "http://localhost".to_string(),
         port: 11434,

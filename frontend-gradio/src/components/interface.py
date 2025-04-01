@@ -1,54 +1,54 @@
 """
-Gradio 界面组件
+Gradio interface component
 """
 import gradio as gr
 import time
 import tempfile
 import os
 
-# 尝试导入 Python 绑定并初始化处理器
+# try to import Python binding and initialize processor
 from xiaotian_py_binding._lowlevel import Processor, get_source_type_list
 
-# 创建全局处理器实例 - 如果失败，将会抛出异常并终止程序
+# create a global processor instance - if failed, it will raise an exception and terminate the program
 processor = Processor()
-print("成功初始化 Processor")
+print("successfully initialized Processor")
 
 
 def create_interface():
-    """创建 Gradio 界面"""
+    """create Gradio interface"""
 
     def get_available_models():
-        """获取可用的 LLM 模型列表"""
+        """get available LLM model list"""
         try:
             return processor.get_model_list()
         except Exception as e:
-            print(f"获取模型列表失败: {e}")
-            return ["llama3.2"]  # 默认值
+            print(f"get model list failed: {e}")
+            return ["llama3.2"]  # default value
 
     def get_available_source_types():
-        """获取可用的源类型列表"""
+        """get available source type list"""
         try:
-            # 将整数类型映射为字符串
+            # map integer type to string
             source_types = get_source_type_list()
-            # 目前只有 GitHub (1)
+            # currently only GitHub (1)
             source_type_map = {1: "github"}
             return [source_type_map.get(st, "unknown") for st in source_types]
         except Exception as e:
-            print(f"获取源类型列表失败: {e}")
-            return ["github"]  # 默认值
+            print(f"get source type list failed: {e}")
+            return ["github"]  # default value
 
     def get_available_sources():
-        """获取可用的源列表"""
+        """get available source list"""
         try:
-            # 返回 (id, name) 的列表，我们只需要名称
+            # return (id, name) list, we only need name
             sources = processor.get_source_list()
             return [name for _, name in sources]
         except Exception as e:
-            print(f"获取源列表失败: {e}")
-            return ["golang/go"]  # 默认值
+            print(f"get source list failed: {e}")
+            return ["golang/go"]  # default value
 
     def get_source_id_by_name(name):
-        """根据源名称获取源 ID"""
+        """get source id by source name"""
         try:
             sources = processor.get_source_list()
             for source_id, source_name in sources:
@@ -56,59 +56,59 @@ def create_interface():
                     return source_id
             return None
         except Exception as e:
-            print(f"获取源 ID 失败: {e}")
+            print(f"get source id failed: {e}")
             return None
 
     def fetch_updates_with_progress(
         model, source_type, source, emails="", progress=gr.Progress()
     ):
-        """带有进度显示的更新获取函数"""
+        """fetch updates with progress"""
         try:
-            # 初始状态
+            # initial state
             yield "", "", "<span class='info-message'>⏳ 初始化...</span>"
-            time.sleep(0.5)  # 添加短暂延时使状态可见
+            time.sleep(0.5)  # add a short delay to make the state visible
             progress(0.2, desc="准备获取仓库更新...")
 
-            # 准备阶段
+            # prepare stage
             yield "", "", "<span class='info-message'>⏳ 准备获取仓库更新...</span>"
-            time.sleep(0.5)  # 添加短暂延时使状态可见
+            time.sleep(0.5)  # add a short delay to make the state visible
             source_type_map = {"github": 1}
             source_type_id = source_type_map.get(source_type.lower(), 1)
 
-            # 查找源ID
+            # find source id
             yield "", "", "<span class='info-message'>⏳ 正在查找源ID...</span>"
-            time.sleep(0.5)  # 添加短暂延时使状态可见
+            time.sleep(0.5)  # add a short delay to make the state visible
             progress(0.3, desc="查找源ID...")
             source_id = get_source_id_by_name(source)
             if source_id is None:
                 yield "", "", "<span class='error-message'>✗ 未找到源</span>"
                 raise ValueError(f"未找到源: {source}")
 
-            # 处理邮箱列表
+            # process email list
             email_list = []
             if emails and emails.strip():
                 email_list = [e.strip() for e in emails.split("\n") if e.strip()]
                 yield "", "", f"<span class='info-message'>⏳ 将发送更新到: {', '.join(email_list)}</span>"
-                time.sleep(0.5)  # 添加短暂延时使状态可见
+                time.sleep(0.5)  # add a short delay to make the state visible
 
-            # 获取更新
+            # fetch updates
             yield "", "", f"<span class='info-message'>⏳ 正在获取「{source}」的更新...</span>"
             progress(0.5, desc=f"正在获取「{source}」的更新...")
 
-            # 调用后端处理
+            # call backend to process
             original_data, generated_content = processor.fetch_updates(
                 source_type_id, int(source_id), model, email_list
             )
 
-            time.sleep(0.5)  # 添加短暂延时使状态可见
-            # 完成
+            time.sleep(0.5)  # add a short delay to make the state visible
+            # complete
             yield original_data, generated_content, "<span class='success-message'>✓ 更新获取成功!</span>"
 
         except Exception as e:
             yield "", "", f"<span class='error-message'>✗ 获取失败: {str(e)}</span>"
 
     def download_markdown_with_progress(content, progress=gr.Progress()):
-        """带有进度显示的下载函数"""
+        """download with progress"""
         if not content:
             return None
 
@@ -116,27 +116,27 @@ def create_interface():
         try:
             progress(0.3, desc="创建临时文件...")
 
-            # 获取当前时间戳
+            # get current timestamp
             current_time = int(time.time())
 
-            # 创建文件名（这里使用默认值，因为无法获取当前选择的source_type和source）
+            # create filename (use default value, because we cannot get current selected source_type and source)
             filename = f"github_golang_go_{current_time}.md"
 
-            # 创建临时文件
+            # create temporary file
             fd, temp_path = tempfile.mkstemp(suffix=".md")
 
             progress(0.6, desc="写入内容...")
 
-            # 写入内容
+            # write content
             with os.fdopen(fd, "w") as f:
                 f.write(content)
 
             progress(0.9, desc="准备下载...")
-            time.sleep(0.3)  # 短暂延时让进度可见
+            time.sleep(0.3)  # add a short delay to make the progress visible
 
             progress(1.0, desc="文件已准备就绪")
 
-            # 返回单个文件路径而不是元组
+            # return single file path instead of tuple
             return temp_path
 
         except Exception as e:
@@ -145,14 +145,14 @@ def create_interface():
             return None
 
     def send_email_with_progress(content, emails, progress=gr.Progress()):
-        """带有进度显示的邮件发送函数"""
+        """send email with progress"""
         progress(0, desc="准备发送邮件...")
 
         if not emails or not emails.strip():
             progress(1.0, desc="未提供邮箱地址")
             return "请至少提供一个邮箱地址"
 
-        # 解析邮箱列表
+        # parse email list
         email_list = [e.strip() for e in emails.split("\n") if e.strip()]
         if not email_list:
             progress(1.0, desc="未提供有效邮箱地址")
@@ -161,24 +161,29 @@ def create_interface():
         try:
             progress(0.3, desc="正在连接邮件服务器...")
 
-            # 获取当前选择的源和模型（从UI中）
-            # 这部分可能需要改进，因为现在无法获取当前UI选择的值
+            # get current selected source and model (from UI)
+            # this part may need to be improved, because we cannot get the current UI selected value now
 
-            # 源类型映射
-            source_type_id = 1  # 假设当前是 GitHub
+            # source type mapping
+            source_type_id = 1  # assume current is GitHub
 
-            # TODO: 获取当前选中的源ID
-            source_id = 1  # 这个需要改进，从UI获取当前选择的源ID
+            # TODO: get current selected source id
+            source_id = (
+                1  # this needs to be improved, get current selected source id from UI
+            )
 
-            # 获取当前选择的模型
-            model = "llama3.2"  # 这个也需要改进
+            # get current selected model
+            model = "llama3.2"  # this needs to be improved, get current selected model from UI
 
             progress(0.5, desc=f"正在发送邮件到 {', '.join(email_list)}...")
 
-            # 调用绑定发送邮件
-            # 这里我们重用 fetch_updates 方法，但传递邮箱地址
+            # call binding to send email
+            # here we reuse fetch_updates method, but pass email list
             processor.fetch_updates(
-                source_type_id, source_id, model, email_list  # 这里传递实际的邮箱列表
+                source_type_id,
+                source_id,
+                model,
+                email_list,  # pass actual email list here
             )
 
             progress(1.0, desc="邮件已发送")
@@ -189,7 +194,7 @@ def create_interface():
             return f"<span class='error-message'>✗ 发送失败: {str(e)}</span>"
 
     def validate_emails(emails_str):
-        """验证邮箱地址格式"""
+        """validate email address format"""
         if not emails_str or not emails_str.strip():
             return "请输入至少一个邮箱地址"
 
@@ -197,7 +202,7 @@ def create_interface():
         invalid_emails = []
 
         for email in email_list:
-            # 简单的邮箱格式验证
+            # simple email format validation
             if "@" not in email or "." not in email:
                 invalid_emails.append(email)
 
@@ -205,12 +210,12 @@ def create_interface():
             return f"<span class='error-message'>以下邮箱格式无效：{', '.join(invalid_emails)}</span>"
         return f"<span class='success-message'>已添加 {len(email_list)} 个邮箱地址</span>"
 
-    # 获取选项数据
+    # get options data
     models = get_available_models()
     source_types = get_available_source_types()
     sources = get_available_sources()
 
-    # 创建界面
+    # create interface
     with gr.Blocks(
         css="""
         .input-container {
@@ -263,13 +268,13 @@ def create_interface():
         }
     """
     ) as interface:
-        # 状态指示组件
+        # status indicator component
         status_indicator = gr.Markdown(visible=False)
 
         with gr.Row():
-            # 左侧面板
+            # left panel
             with gr.Column(scale=1):
-                # 输入区域
+                # input area
                 with gr.Column(elem_classes="input-container"):
                     with gr.Row():
                         gr.Markdown("model")
@@ -307,9 +312,9 @@ def create_interface():
                 with gr.Column(elem_classes="content-container-left"):
                     original_data = gr.Markdown()
 
-            # 右侧面板
+            # right panel
             with gr.Column(scale=1):
-                # 输入区域
+                # input area
                 with gr.Column(elem_classes="input-container"):
                     gr.Markdown("email (one per line)")
                     emails = gr.Textbox(
@@ -333,40 +338,40 @@ def create_interface():
                 with gr.Column(elem_classes="content-container-right"):
                     generated_content = gr.Markdown()
 
-        # 事件处理
+        # event handling
         def update_sources(source_type):
-            """更新源列表"""
-            # 目前 API 不支持按源类型过滤，返回所有源
+            """update source list"""
+            # currently API does not support filtering by source type, return all sources
             return gr.Dropdown.update(choices=get_available_sources())
 
-        # 源类型变更时更新源列表
+        # update source list when source type changes
         source_type.change(fn=update_sources, inputs=[source_type], outputs=[source])
 
-        # 获取更新事件
+        # get updates event
         fetch_btn.click(
             fn=fetch_updates_with_progress,
             inputs=[model, source_type, source, emails],
             outputs=[original_data, generated_content, fetch_status],
-            queue=True,  # 启用队列以支持中间状态更新
+            queue=True,  # enable queue to support intermediate state updates
         )
 
-        # 发送邮件事件
+        # send email event
         send_btn.click(
             fn=send_email_with_progress,
             inputs=[generated_content, emails],
             outputs=[result_message],
-            queue=True,  # 启用队列以支持中间状态更新
+            queue=True,  # enable queue to support intermediate state updates
         )
 
-        # 下载功能
+        # download feature
         download_btn.click(
             fn=download_markdown_with_progress,
             inputs=[generated_content],
-            outputs=gr.File(label="下载文件"),  # 修改输出组件
+            outputs=gr.File(label="下载文件"),  # modify output component
             queue=True,
         )
 
-        # 添加邮箱验证事件
+        # add email validation event
         emails.change(fn=validate_emails, inputs=[emails], outputs=[result_message])
 
     return interface

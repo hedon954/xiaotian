@@ -1,7 +1,7 @@
 """
-Xiaotian API 接口
+Xiaotian API interface
 
-该模块通过 PyO3 与 Rust 后端交互，提供实际数据处理功能
+This module interacts with the Rust backend through PyO3, providing actual data processing functions
 """
 import os
 import tempfile
@@ -16,12 +16,12 @@ except ImportError:
     XIAOTIAN_AVAILABLE = False
     from src.utils.mock import get_mock_data, get_mock_models, get_mock_source_types
 
-# 全局变量，存储处理器实例
+# global variable, store processor instance
 _processor = None
 
 
 def _get_processor():
-    """获取或初始化处理器实例"""
+    """Get or initialize processor instance"""
     global _processor
     if XIAOTIAN_AVAILABLE and _processor is None:
         try:
@@ -33,7 +33,6 @@ def _get_processor():
 
 
 def get_available_models() -> List[str]:
-    """获取可用的 LLM 模型列表"""
     if not XIAOTIAN_AVAILABLE:
         return get_mock_models()
 
@@ -49,23 +48,21 @@ def get_available_models() -> List[str]:
 
 
 def get_available_source_types() -> List[str]:
-    """获取可用的源类型列表"""
     if not XIAOTIAN_AVAILABLE:
         return get_mock_source_types()
 
     try:
-        # 将整数类型映射为字符串
+        # map integer type to string
         source_types = _lowlevel.get_source_type_list()
-        # 目前只有 GitHub (1)
+        # currently only GitHub (1)
         source_type_map = {1: "github"}
         return [source_type_map.get(st, "unknown") for st in source_types]
     except Exception as e:
-        print(f"获取源类型列表失败: {e}")
+        print(f"get source type list failed: {e}")
         return get_mock_source_types()
 
 
 def get_available_sources() -> List[str]:
-    """获取可用的源列表"""
     if not XIAOTIAN_AVAILABLE:
         return ["golang/go", "rust-lang/rust", "python/cpython"]
 
@@ -74,18 +71,17 @@ def get_available_sources() -> List[str]:
         return ["golang/go", "rust-lang/rust", "python/cpython"]
 
     try:
-        # 返回 (id, name) 的列表，我们只需要名称
+        # return (id, name) list, we only need name
         sources = processor.get_source_list()
         return [name for _, name in sources]
     except Exception as e:
-        print(f"获取源列表失败: {e}")
+        print(f"get source list failed: {e}")
         return ["golang/go", "rust-lang/rust", "python/cpython"]
 
 
 def get_source_id_by_name(name: str) -> Optional[int]:
-    """根据源名称获取源 ID"""
     if not XIAOTIAN_AVAILABLE:
-        # 模拟数据，返回一个假 ID
+        # mock data, return a fake ID
         return 1
 
     processor = _get_processor()
@@ -99,21 +95,21 @@ def get_source_id_by_name(name: str) -> Optional[int]:
                 return source_id
         return None
     except Exception as e:
-        print(f"获取源 ID 失败: {e}")
+        print(f"get source id failed: {e}")
         return None
 
 
 def fetch_updates(model: str, source_type: str, source: str) -> Dict[str, str]:
     """
-    获取更新内容
+    Get update content
 
     Args:
-        model: 使用的 LLM 模型名称
-        source_type: 源类型，如 "github"
-        source: 源名称，如 "golang/go"
+        model: the name of the LLM model
+        source_type: the type of the source, e.g. "github"
+        source: the name of the source, e.g. "golang/go"
 
     Returns:
-        包含原始数据和生成内容的字典
+        a dictionary containing the original data and generated content
     """
     if not XIAOTIAN_AVAILABLE:
         from src.utils.mock import get_mock_data
@@ -127,11 +123,11 @@ def fetch_updates(model: str, source_type: str, source: str) -> Dict[str, str]:
         return get_mock_data()
 
     try:
-        # 源类型映射
-        source_type_map = {"github": 1}  # 目前只支持 GitHub
+        # source type mapping
+        source_type_map = {"github": 1}  # currently only GitHub
         source_type_id = source_type_map.get(source_type.lower(), 1)
 
-        # 获取源 ID
+        # get source id
         source_id = get_source_id_by_name(source)
         if source_id is None:
             print(f"未找到源: {source}")
@@ -139,18 +135,18 @@ def fetch_updates(model: str, source_type: str, source: str) -> Dict[str, str]:
 
             return get_mock_data()
 
-        # 调用后端进行更新获取
-        # 由于当前后端实现限制，这里不传递邮箱列表
+        # call backend to fetch updates
+        # due to the current backend implementation, we don't pass the email list here
         result = processor.fetch_updates(source_type_id, source_id, model, [])
 
-        # TODO: 从结果中解析出原始数据和生成内容
-        # 当前 fetch_updates 只返回了状态字符串，需要从文件或其他地方获取实际内容
-        # 这里暂时使用模拟数据
+        # TODO: parse the original data and generated content from the result
+        # currently fetch_updates only returns the status string, we need to get the actual content from the file or other places
+        # here we use mock data temporarily
         from src.utils.mock import get_mock_data
 
         return get_mock_data()
     except Exception as e:
-        print(f"获取更新失败: {e}")
+        print(f"get updates failed: {e}")
         from src.utils.mock import get_mock_data
 
         return get_mock_data()
@@ -158,61 +154,69 @@ def fetch_updates(model: str, source_type: str, source: str) -> Dict[str, str]:
 
 def send_email(content: str, emails: str) -> str:
     """
-    发送邮件
+    Send email
 
     Args:
-        content: 要发送的内容
-        emails: 邮箱地址，多个邮箱用换行分隔
+        content: the content to send
+        emails: the email addresses, multiple emails separated by newlines
 
     Returns:
-        发送结果消息
+        the result message of sending email
     """
     if not XIAOTIAN_AVAILABLE:
         email_list = [e.strip() for e in emails.split("\n") if e.strip()]
-        return f"模拟发送邮件到: {', '.join(email_list)}" if email_list else "请至少提供一个邮箱地址"
+        return (
+            f"mock send email to: {', '.join(email_list)}"
+            if email_list
+            else "please provide at least one email address"
+        )
 
     processor = _get_processor()
     if processor is None:
         email_list = [e.strip() for e in emails.split("\n") if e.strip()]
-        return f"模拟发送邮件到: {', '.join(email_list)}" if email_list else "请至少提供一个邮箱地址"
+        return (
+            f"mock send email to: {', '.join(email_list)}"
+            if email_list
+            else "please provide at least one email address"
+        )
 
     try:
-        # 解析邮箱列表
+        # parse email list
         email_list = [e.strip() for e in emails.split("\n") if e.strip()]
         if not email_list:
-            return "请至少提供一个邮箱地址"
+            return "please provide at least one email address"
 
-        # TODO: 实现通过 Rust 后端发送邮件的功能
-        # 当前 PyO3 绑定中没有直接提供发送邮件的方法，需要扩展
-        return f"已尝试发送邮件到: {', '.join(email_list)}"
+        # TODO: implement the function to send email through Rust backend
+        # currently the PyO3 binding does not provide a direct method to send email, we need to extend it
+        return f"tried to send email to: {', '.join(email_list)}"
     except Exception as e:
-        print(f"发送邮件失败: {e}")
-        return f"发送邮件失败: {str(e)}"
+        print(f"send email failed: {e}")
+        return f"send email failed: {str(e)}"
 
 
 def download_content(content: str, format: str = "md") -> str:
     """
-    将内容转换为可下载的文件
+    Convert content to a downloadable file
 
     Args:
-        content: 要下载的内容
-        format: 文件格式，目前仅支持 md
+        content: the content to download
+        format: the file format, currently only md is supported
 
     Returns:
-        临时文件路径
+        the path of the temporary file
     """
     if not content:
         return None
 
     try:
-        # 创建临时文件
+        # create a temporary file
         fd, temp_path = tempfile.mkstemp(suffix=f".{format}")
 
-        # 写入内容
+        # write content to the file
         with os.fdopen(fd, "w") as f:
             f.write(content)
 
         return temp_path
     except Exception as e:
-        print(f"创建下载文件失败: {e}")
+        print(f"create download file failed: {e}")
         return None

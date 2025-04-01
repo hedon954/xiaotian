@@ -7,18 +7,18 @@ from src.components.interface import create_interface
 
 
 def main():
-    """主函数"""
-    # 加载环境变量
+    """Main function"""
+    # load environment variables
     load_dotenv()
 
-    # 创建界面
+    # create interface
     interface = create_interface()
 
-    # 启动应用
+    # launch application
     interface.launch(
-        server_name="localhost",  # 允许外部访问
-        server_port=int(os.getenv("PORT", 7860)),  # 默认端口 7860
-        share=bool(os.getenv("SHARE", False)),  # 是否创建公开链接
+        server_name="localhost",  # allow external access
+        server_port=int(os.getenv("PORT", 7860)),  # default port 7860
+        share=bool(os.getenv("SHARE", False)),  # whether to create a public link
     )
 
 

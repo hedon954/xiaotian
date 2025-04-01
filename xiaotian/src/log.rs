@@ -7,7 +7,6 @@ pub fn init_logger() {
     let debug = tracing_appender::rolling::daily("logs", "debug.log").with_max_level(Level::DEBUG);
 
     tracing_subscriber::fmt()
-        // TODO: Investigate why the background program does not work when using with_writer(stdout)
         .with_writer(info)
         .with_writer(error)
         .with_writer(debug)

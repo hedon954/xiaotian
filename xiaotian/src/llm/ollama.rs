@@ -1,4 +1,4 @@
-//! Ollama LLM 客户端实现
+//! Ollama LLM client implementation
 
 use crate::llm::{LLMClient, LLMError};
 use async_trait::async_trait;
@@ -16,7 +16,7 @@ const DEFAULT_MODEL: &str = "llama3";
 const DEFAULT_HOST: &str = "http://localhost";
 const DEFAULT_PORT: u16 = 11434;
 
-/// Ollama 客户端配置
+/// Ollama client configuration
 #[derive(Debug, Clone)]
 pub struct OllamaConfig {
     /// the host of the ollama server
@@ -43,7 +43,6 @@ impl Default for OllamaConfig {
     }
 }
 
-/// Ollama LLM 客户端
 #[derive(Debug, Clone)]
 pub struct OllamaClient {
     config: OllamaConfig,

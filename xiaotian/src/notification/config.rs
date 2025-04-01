@@ -5,21 +5,21 @@ use crate::config::{AppConfig, NotificationConfig};
 
 use super::{EmailNotifier, NotificationError, NotificationMessage, Notifier};
 
-/// 通知管理器
+/// Notification manager
 pub struct NotificationManager {
     pub config: NotificationConfig,
     email_notifier: Option<Arc<EmailNotifier>>,
 }
 
 impl NotificationManager {
-    /// 从应用配置创建通知管理器
+    /// Create notification manager from app config
     pub fn from_config(config: &AppConfig) -> Self {
         let mut manager = Self {
             config: config.notification.clone(),
             email_notifier: None,
         };
 
-        // 初始化邮件通知器
+        // initialize email notifier
         if let Some(email_config) = &config.notification.email {
             let email_nofitier = EmailNotifier::new(email_config.clone());
             manager.email_notifier = Some(Arc::new(email_nofitier));
@@ -29,7 +29,7 @@ impl NotificationManager {
         manager
     }
 
-    /// 发送通知
+    /// Send notification
     pub async fn send(
         &self,
         message: &NotificationMessage,
@@ -49,7 +49,7 @@ impl NotificationManager {
         }
     }
 
-    /// 发送邮件通知
+    /// Send email notification
     async fn send_email(
         &self,
         message: &NotificationMessage,

@@ -1,50 +1,43 @@
-//! 提示词构建工具
+//! Prompt builder tool
 
-/// 提示词构建器，帮助构建结构化的提示词
+/// Prompt builder, helps build structured prompts
 #[derive(Debug, Clone, Default)]
 pub struct PromptBuilder {
     parts: Vec<String>,
 }
 
 impl PromptBuilder {
-    /// 创建一个新的提示词构建器
     pub fn new() -> Self {
         Self { parts: Vec::new() }
     }
 
-    /// 添加指令部分
     pub fn with_instruction(mut self, instruction: impl AsRef<str>) -> Self {
         self.parts
             .push(format!("# 指令\n{}\n", instruction.as_ref()));
         self
     }
 
-    /// 添加上下文部分
     pub fn with_context(mut self, context: impl AsRef<str>) -> Self {
         self.parts.push(format!("# 上下文\n{}\n", context.as_ref()));
         self
     }
 
-    /// 添加内容部分
     pub fn with_content(mut self, content: impl AsRef<str>) -> Self {
         self.parts.push(format!("# 内容\n{}\n", content.as_ref()));
         self
     }
 
-    /// 添加要求部分
     pub fn with_requirements(mut self, requirements: impl AsRef<str>) -> Self {
         self.parts
             .push(format!("# 要求\n{}\n", requirements.as_ref()));
         self
     }
 
-    /// 添加示例部分
     pub fn with_examples(mut self, examples: impl AsRef<str>) -> Self {
         self.parts.push(format!("# 示例\n{}\n", examples.as_ref()));
         self
     }
 
-    /// 添加自定义部分
     pub fn with_custom(mut self, title: impl AsRef<str>, content: impl AsRef<str>) -> Self {
         self.parts
             .push(format!("# {}\n{}\n", title.as_ref(), content.as_ref()));

@@ -1,18 +1,18 @@
 //! Command handlers module
 
-pub mod schedule;
+pub mod reporter;
 
 use std::sync::Arc;
 
 use crate::{Repository, error::AppError, models::SourceType, storage::Storage};
 
-use self::schedule::ScheduleHandler;
+use self::reporter::Reporter;
 
 /// Processor for handling commands
 #[derive(Clone)]
 pub struct Processor<S: Storage> {
     storage: Arc<S>,
-    pub schedule_handler: ScheduleHandler<S>,
+    pub schedule_handler: Reporter<S>,
 }
 
 impl<S: Storage> Processor<S> {
@@ -20,7 +20,7 @@ impl<S: Storage> Processor<S> {
     pub fn new(storage: Arc<S>) -> Self {
         Self {
             storage: storage.clone(),
-            schedule_handler: ScheduleHandler::new(storage.clone(), None),
+            schedule_handler: Reporter::new(storage.clone(), None),
         }
     }
 

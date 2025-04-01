@@ -14,7 +14,7 @@ use crate::{
     llm::{LLMClient, PromptBuilder},
     models::{Fetcher, Source, SourceType},
     notification::{NotificationManager, NotificationMessage},
-    storage::{RepositoryStorage, StorageError},
+    storage::{Storage, StorageError},
 };
 
 const DEFAULT_REPORT_DIR: &str = "docs/reports";
@@ -28,14 +28,14 @@ struct ReportResult {
 }
 
 #[derive(Clone)]
-pub struct ScheduleHandler<S: RepositoryStorage> {
+pub struct Reporter<S: Storage> {
     storage: Arc<S>,
     report_dir: PathBuf,
     llm_client: Vec<Arc<dyn LLMClient>>,
     notification_manager: Option<Arc<NotificationManager>>,
 }
 
-impl<S: RepositoryStorage> ScheduleHandler<S> {
+impl<S: Storage> Reporter<S> {
     pub fn new(storage: Arc<S>, report_dir: Option<PathBuf>) -> Self {
         let report_dir = report_dir.unwrap_or_else(|| PathBuf::from(DEFAULT_REPORT_DIR));
         Self {

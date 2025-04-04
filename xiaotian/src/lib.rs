@@ -16,10 +16,18 @@ use models::HackerNewsFeedType;
 pub use models::{Repository, Update};
 use notification::NotificationManager;
 use process::Processor;
-use storage::MemoryStorage;
+use storage::{MemoryStorage, MySQLStorage, Storage};
 
-pub async fn default_processor(config: &AppConfig) -> anyhow::Result<Processor<MemoryStorage>> {
-    let storage = Arc::new(MemoryStorage::new());
+pub async fn memory_processor(config: &AppConfig) -> anyhow::Result<Processor<MemoryStorage>> {
+    new_processor(config, MemoryStorage::new()).await
+}
+
+pub async fn mysql_processor(config: &AppConfig) -> anyhow::Result<Processor<MySQLStorage>> {
+    new_processor(config, MySQLStorage::with_config(&config.mysql).await?).await
+}
+
+pub async fn new_processor<S: Storage>(config: &AppConfig, s: S) -> anyhow::Result<Processor<S>> {
+    let storage = Arc::new(s);
 
     let notification_manager = NotificationManager::from_config(config);
     let notification_manager = Arc::new(notification_manager);
@@ -31,11 +39,12 @@ pub async fn default_processor(config: &AppConfig) -> anyhow::Result<Processor<M
         .with_llm_client(Arc::new(config.deepseek_client().await?))
         .with_notification_manager(notification_manager);
 
-    init_task(&mut processor).await?;
+    // init_task(&mut processor).await?;
     Ok(processor)
 }
 
-async fn init_task(processor: &mut Processor<MemoryStorage>) -> anyhow::Result<()> {
+#[allow(dead_code)]
+async fn init_task<S: Storage>(processor: &mut Processor<S>) -> anyhow::Result<()> {
     let repos = vec![("golang".to_string(), "go".to_string())];
     for repo in repos {
         processor.add_repository(repo.0, repo.1).await?;

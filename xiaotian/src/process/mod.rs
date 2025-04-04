@@ -30,10 +30,9 @@ impl<S: Storage> Processor<S> {
     }
 
     pub async fn add_repository(&self, owner: String, name: String) -> Result<i32, AppError> {
-        let id = self.storage.generate_id().await?;
-        let repo = Repository::new(id, owner, name);
-        self.storage.save_repository(repo).await?;
-        Ok(id)
+        let repo = Repository::new(0, owner, name);
+        let repo = self.storage.save_repository(repo).await?;
+        Ok(repo.id)
     }
 
     pub async fn delete_repository(&self, id: i32) -> Result<(), AppError> {
@@ -61,10 +60,9 @@ impl<S: Storage> Processor<S> {
     }
 
     pub async fn add_hacker_news(&self, feed_type: HackerNewsFeedType) -> Result<i32, AppError> {
-        let id = self.storage.generate_id().await?;
-        let hn = HackerNews::new(id, feed_type, 100, 20);
-        self.storage.save_hacker_news(hn).await?;
-        Ok(id)
+        let hn = HackerNews::new(0, feed_type, 100, 20);
+        let hn = self.storage.save_hacker_news(hn).await?;
+        Ok(hn.id)
     }
 
     pub async fn delete_hacker_news(&self, id: i32) -> Result<(), AppError> {

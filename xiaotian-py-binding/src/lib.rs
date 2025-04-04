@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use pyo3::{exceptions::PyTypeError, prelude::*};
-use xiaotian::{log::init_logger, models::SourceType, process::Processor, storage::MemoryStorage};
+use xiaotian::{log::init_logger, models::SourceType, process::Processor, storage::MySQLStorage};
 
 #[pyfunction]
 fn get_source_type_list() -> PyResult<Vec<i8>> {
@@ -13,7 +13,7 @@ fn get_source_type_list() -> PyResult<Vec<i8>> {
 
 #[pyclass(name = "Processor")]
 pub struct PyProcessor {
-    processor: Arc<Processor<MemoryStorage>>,
+    processor: Arc<Processor<MySQLStorage>>,
     runtime: Arc<tokio::runtime::Runtime>,
 }
 
@@ -26,7 +26,7 @@ impl PyProcessor {
 
         let runtime = Arc::new(tokio::runtime::Runtime::new().unwrap());
         runtime.clone().block_on(async move {
-            let processor = xiaotian::default_processor(&config).await.unwrap();
+            let processor = xiaotian::mysql_processor(&config).await.unwrap();
             Ok(Self {
                 processor: Arc::new(processor),
                 runtime,

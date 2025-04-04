@@ -1,7 +1,7 @@
 use chrono::{FixedOffset, Local, TimeZone};
 use cron_tab::AsyncCron;
 use tracing::{error, info};
-use xiaotian::{AppConfig, default_processor, log::init_logger};
+use xiaotian::{AppConfig, log::init_logger, mysql_processor};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut cron = AsyncCron::new(local_tz);
 
     let config = AppConfig::load("config.toml")?;
-    let processor = default_processor(&config).await?;
+    let processor = mysql_processor(&config).await?;
     cron.add_fn("0 * * * * *", move || {
         let processor = processor.clone();
         let config = config.clone();

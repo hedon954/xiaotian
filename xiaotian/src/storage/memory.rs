@@ -130,9 +130,4 @@ impl HackerNewsStorage for MemoryStorage {
     }
 }
 
-#[async_trait]
-impl Storage for MemoryStorage {
-    async fn generate_id(&self) -> Result<i32, StorageError> {
-        Ok(self.next_source_id())
-    }
-}
+impl Storage for MemoryStorage {}

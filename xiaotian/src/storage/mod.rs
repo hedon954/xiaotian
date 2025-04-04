@@ -1,8 +1,10 @@
 pub mod error;
 pub mod memory;
+pub mod mysql;
 
 pub use error::StorageError;
 pub use memory::MemoryStorage;
+pub use mysql::MySQLStorage;
 
 use async_trait::async_trait;
 
@@ -49,6 +51,4 @@ pub trait HackerNewsStorage {
 
 /// Combined storage interface
 #[async_trait]
-pub trait Storage: RepositoryStorage + HackerNewsStorage + Send + Sync + 'static {
-    async fn generate_id(&self) -> Result<i32, StorageError>;
-}
+pub trait Storage: RepositoryStorage + HackerNewsStorage + Send + Sync + 'static {}

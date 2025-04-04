@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use crate::llm::{DeepSeekClient, DeepSeekConfig, LLMError, OllamaClient, OllamaConfig};
 use crate::notification::EmailConfig;
+use crate::storage::mysql::MySQLConfig;
 
 /// Application configuration
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -18,6 +19,8 @@ pub struct AppConfig {
     pub ollama: OllamaConfig,
     /// deepseek configuration
     pub deepseek: DeepSeekConfig,
+    /// mysql configuration
+    pub mysql: MySQLConfig,
 }
 
 /// GitHub API configuration

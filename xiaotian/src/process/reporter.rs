@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use tokio::{
     fs::{File, create_dir_all},
     io::AsyncWriteExt,
@@ -116,6 +116,13 @@ impl<S: Storage> Reporter<S> {
                     Err(StorageError::NotFound(source_type, source_id).into())
                 }
             }
+            SourceType::HackerNews => {
+                if let Some(hn) = self.storage.get_hacker_news(source_id).await? {
+                    Ok(Source::HackerNews(hn))
+                } else {
+                    Err(StorageError::NotFound(source_type, source_id).into())
+                }
+            }
         }
     }
 
@@ -149,7 +156,7 @@ impl<S: Storage> Reporter<S> {
         model: &str,
     ) -> Result<ReportResult, AppError> {
         // fetch updates from 7 days ago to now
-        let since = Local::now() - chrono::Duration::days(7);
+        let since = Utc::now() - chrono::Duration::days(7);
         let updates = source.fetch_updates(since).await?;
         if updates.is_empty() {
             info!("No updates found for source {}", source.get_name());
@@ -182,14 +189,14 @@ impl<S: Storage> Reporter<S> {
         &self,
         source: &Source,
         report: &str,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
         model: &str,
     ) -> Result<ReportResult, AppError> {
         let source_name = source.get_name();
         let source_type = source.get_type();
         let source_type_str = source_type.to_string().to_lowercase();
         let since_str = since.format("%Y%m%d").to_string();
-        let until_str = Local::now().format("%Y%m%d").to_string();
+        let until_str = Utc::now().format("%Y%m%d").to_string();
         let safe_name = source_name.replace('/', "_");
 
         // 1. save original report
@@ -240,7 +247,7 @@ impl<S: Storage> Reporter<S> {
         source: &Source,
         report: &str,
         original_filename: &str,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
         llm_client: &Arc<dyn LLMClient>,
     ) -> Result<(String, String), AppError> {
         // 1. format updates content to llm input
@@ -256,7 +263,7 @@ impl<S: Storage> Reporter<S> {
         let source_type = source.get_type().to_string().to_lowercase();
         let source_name = source.get_name().replace('/', "_");
         let since_str = since.format("%Y%m%d").to_string();
-        let until_str = Local::now().format("%Y%m%d").to_string();
+        let until_str = Utc::now().format("%Y%m%d").to_string();
 
         let ai_report_filename = format!(
             "{}_{}_{}_{}_report.md",
@@ -300,7 +307,7 @@ impl<S: Storage> Reporter<S> {
         source: &Source,
         ai_summary: &str,
         original_report_filename: &str,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
         model: Option<&str>,
     ) -> String {
         let mut report = String::new();
@@ -310,7 +317,7 @@ impl<S: Storage> Reporter<S> {
         report.push_str(&format!(
             "## Period: {} to {}\n\n",
             since.format("%Y-%m-%d"),
-            Local::now().format("%Y-%m-%d")
+            Utc::now().format("%Y-%m-%d")
         ));
 
         // source information
@@ -328,7 +335,7 @@ impl<S: Storage> Reporter<S> {
         report.push_str("## Report Metadata\n\n");
         report.push_str(&format!(
             "- **Generated At**: {}\n",
-            Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+            Utc::now().format("%Y-%m-%d %H:%M:%S")
         ));
 
         if let Some(model) = model {

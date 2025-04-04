@@ -17,6 +17,9 @@ pub enum FetchCommands {
 
 #[derive(Parser, Debug)]
 pub struct FetchUpdatesOpts {
+    /// Source type
+    #[arg(short, long)]
+    source_type: SourceType,
     /// ID of the source
     id: i32,
     /// Number of days to fetch updates for
@@ -42,12 +45,7 @@ impl CmdExector for FetchUpdatesOpts {
     ) -> anyhow::Result<String> {
         let ret = processor
             .schedule_handler
-            .run_single(
-                SourceType::GitHub,
-                self.id,
-                "gpt-4o-mini".to_string(),
-                vec![],
-            )
+            .run_single(SourceType::GitHub, self.id, "llama3.2".to_string(), vec![])
             .await?;
         let mut res = String::new();
         res.push_str(&ret.0);
@@ -60,9 +58,11 @@ impl CmdExector for FetchUpdatesOpts {
 impl From<&ArgMatches> for FetchUpdatesOpts {
     fn from(args: &ArgMatches) -> Self {
         let id = args.get_one::<i32>("id").unwrap();
+        let source_type = args.get_one::<SourceType>("source_type").unwrap();
         let days = args.get_one::<u32>("days").unwrap();
         Self {
             id: *id,
+            source_type: *source_type,
             days: *days,
         }
     }

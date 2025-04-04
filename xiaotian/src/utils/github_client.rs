@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use octocrab::Octocrab;
 use serde_json::json;
 
-use crate::models::{Update, UpdateEventType};
+use crate::models::{SourceType, Update, UpdateEventType};
 
 use super::UtilsError;
 
@@ -47,7 +47,7 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         branch: Option<&str>,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
     ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
@@ -69,7 +69,11 @@ impl GithubClient {
         // Convert each commit to an Update
         for commit in commits_page.items {
             let sha = commit.sha.clone();
-            let author_name = commit.author.as_ref().map(|a| a.login.clone());
+            let author_name = commit
+                .author
+                .as_ref()
+                .map(|a| a.login.clone())
+                .unwrap_or_default();
 
             // Get commit info from the first page
             // NOTE: We can't get detailed commit info due to API limitations with octocrab
@@ -77,14 +81,14 @@ impl GithubClient {
             let commit_msg = commit.commit.message.clone();
             let title = commit_msg.lines().next().unwrap_or("").to_string();
             let description = if commit_msg.lines().count() > 1 {
-                Some(commit_msg.lines().skip(1).collect::<Vec<&str>>().join("\n"))
+                commit_msg.lines().skip(1).collect::<Vec<&str>>().join("\n")
             } else {
-                None
+                "no description".to_string()
             };
 
             let commit_date = match commit.commit.committer {
-                Some(committer) => committer.date,
-                None => None,
+                Some(committer) => committer.date.unwrap_or_default(),
+                _ => Utc::now(),
             };
             let commit_url = format!("https://github.com/{}/{}/commit/{}", owner, repo, sha);
 
@@ -95,13 +99,14 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
+                SourceType::GitHub,
                 UpdateEventType::Commit,
                 title,
                 description,
                 commit_url,
                 author_name,
-                commit_date.unwrap_or_else(Utc::now),
-                additional_data,
+                commit_date,
+                additional_data.to_string(),
             );
 
             updates.push(update);
@@ -115,7 +120,7 @@ impl GithubClient {
         &self,
         owner: &str,
         repo: &str,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
     ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
@@ -148,13 +153,14 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
+                SourceType::GitHub,
                 UpdateEventType::Issue,
                 issue.title,
-                issue.body,
+                issue.body.unwrap_or_default(),
                 issue_url,
-                Some(issue.user.login),
+                issue.user.login,
                 issue.updated_at,
-                additional_data,
+                additional_data.to_string(),
             );
 
             updates.push(update);
@@ -168,7 +174,7 @@ impl GithubClient {
         &self,
         owner: &str,
         repo: &str,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
     ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
@@ -210,13 +216,17 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
+                SourceType::GitHub,
                 UpdateEventType::PullRequest,
                 pr.title.unwrap_or_else(|| format!("PR #{}", pr_num)),
-                pr.body,
+                pr.body.unwrap_or_default(),
                 pr_url,
-                pr.user.as_ref().map(|u| u.login.clone()),
+                pr.user
+                    .as_ref()
+                    .map(|u| u.login.clone())
+                    .unwrap_or_default(),
                 pr.updated_at.unwrap_or_else(Utc::now),
-                additional_data,
+                additional_data.to_string(),
             );
 
             updates.push(update);
@@ -230,7 +240,7 @@ impl GithubClient {
         &self,
         owner: &str,
         repo: &str,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
     ) -> Result<Vec<Update>, UtilsError> {
         let mut updates = Vec::new();
 
@@ -265,15 +275,16 @@ impl GithubClient {
             });
 
             let update = Update::with_data(
+                SourceType::GitHub,
                 UpdateEventType::Release,
                 release
                     .name
                     .unwrap_or_else(|| "Unnamed release".to_string()),
-                release.body,
+                release.body.unwrap_or_default(),
                 release_url,
-                release.author.map(|a| a.login),
+                release.author.map(|a| a.login).unwrap_or_default(),
                 release.published_at.unwrap_or_else(Utc::now),
-                additional_data,
+                additional_data.to_string(),
             );
 
             updates.push(update);
@@ -287,7 +298,7 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         branch: Option<&str>,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
         types: Vec<UpdateEventType>,
     ) -> Result<Vec<Update>, UtilsError> {
         let mut all_updates = Vec::new();
@@ -321,7 +332,7 @@ impl GithubClient {
         owner: &str,
         repo: &str,
         branch: Option<&str>,
-        since: DateTime<Local>,
+        since: DateTime<Utc>,
     ) -> Result<Vec<Update>, UtilsError> {
         let mut all_updates = Vec::new();
 

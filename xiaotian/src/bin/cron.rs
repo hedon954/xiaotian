@@ -7,7 +7,7 @@ use xiaotian::{AppConfig, default_processor, log::init_logger};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_logger();
 
-    info!("Starting XiaoTian Scheduler v0.5.0 with LLM support");
+    info!("Starting XiaoTian Scheduler v0.8.0 with LLM support");
     let local_tz = Local::from_offset(&FixedOffset::east_opt(8 * 3600).unwrap());
     let mut cron = AsyncCron::new(local_tz);
 

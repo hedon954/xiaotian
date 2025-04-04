@@ -1,6 +1,6 @@
 use std::env;
 
-use chrono::{Duration, Local};
+use chrono::{Duration, Utc};
 use xiaotian::{
     Repository,
     models::{Fetcher, Source},
@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // get updates
-    let since = Local::now() - Duration::days(days);
+    let since = Utc::now() - Duration::days(days);
     match source.fetch_updates(since).await {
         Ok(updates) => {
             println!(

@@ -13,6 +13,7 @@ use std::sync::Arc;
 
 pub use config::AppConfig;
 use llm::{LLMClient, OllamaClient, OllamaConfig};
+use models::HackerNewsFeedType;
 pub use models::{Repository, Update};
 use notification::NotificationManager;
 use process::Processor;
@@ -55,6 +56,19 @@ async fn init_task(processor: &mut Processor<MemoryStorage>) -> anyhow::Result<(
     let repos = vec![("golang".to_string(), "go".to_string())];
     for repo in repos {
         processor.add_repository(repo.0, repo.1).await?;
+    }
+
+    let hns = vec![
+        HackerNewsFeedType::FrontPage,
+        HackerNewsFeedType::Newest,
+        HackerNewsFeedType::Ask,
+        HackerNewsFeedType::Show,
+        HackerNewsFeedType::Jobs,
+        HackerNewsFeedType::Best,
+        HackerNewsFeedType::Best,
+    ];
+    for hn in hns {
+        processor.add_hacker_news(hn).await?;
     }
     Ok(())
 }

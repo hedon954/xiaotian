@@ -10,14 +10,14 @@
 
 > XiaoTian (哮天犬) is named after the legendary "Howling Celestial Dog" in Chinese mythology, known for its keen sense of smell and ability to track down anything. Just like its namesake, this tool is designed to "sniff out" the latest updates from various sources and generate AI-powered summaries.
 
-XiaoTian is a flexible monitoring system designed to track, summarize, and notify about updates from multiple data sources. With a modular architecture, it supports various data sources, storage engines, and LLM providers. Interact through a web interface powered by Gradio, CLI, or REPL.
+XiaoTian is a flexible monitoring system designed to track, summarize, and notify about updates from multiple data sources. With a modular architecture, it supports various data sources, storage engines, and LLM providers. Interact through a web interface powered by Gradio, REPL, or CRON.
 
 ## Key Features
 
 - **Multiple Data Sources**: GitHub repositories, HackerNews, and more
 - **Multiple LLM Integrations**: Ollama, DeepSeek, and others
 - **Flexible Storage Options**: In-memory, MySQL, and expandable
-- **Multiple Interfaces**: Web UI (Gradio), CLI, REPL
+- **Multiple Interfaces**: Web UI (Gradio), REPL, CRON
 - **Notification System**: Email alerts with rich, AI-powered summaries
 - **Modular Architecture**: Easily extend with new data sources, storage engines, or LLM providers
 
@@ -38,7 +38,7 @@ git clone https://github.com/hedon954/xiaotian.git
 cd xiaotian
 ```
 
-### Use CLI
+### Use REPL
 
 ```bash
 cd xiaotian
@@ -46,7 +46,7 @@ cargo run --bin xiaotian help
 cargo build --bin xiaotian --release
 ```
 
-### Run Cron
+### Run in Cron
 
 ```bash
 cd xiaotian
@@ -122,7 +122,7 @@ dsn = "mysql://root:root@localhost:3306/xiaotian"
 ## Interfaces
 
 1. **Web UI**: Intuitive Gradio interface at http://localhost:7860
-2. **CLI**: Powerful command line for automation and scripting
+2. **CRON**: Run XiaoTian in the background to periodically check for updates
 3. **REPL**: Interactive shell for exploration and debugging
 
 ## Community & Contributing

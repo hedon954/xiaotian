@@ -13,6 +13,9 @@ from xiaotian_py_binding._lowlevel import Processor, get_source_type_list
 processor = Processor()
 print("successfully initialized Processor")
 
+# 全局变量，用于存储 source_name -> source_id 的映射
+source_id_map = {}
+
 
 def create_interface():
     """create Gradio interface"""
@@ -22,41 +25,83 @@ def create_interface():
         try:
             return processor.get_model_list()
         except Exception as e:
-            print(f"get model list failed: {e}")
-            return ["llama3.2"]  # default value
+            print(f"获取模型列表失败: {e}")
+            return []  # 返回空列表而不是默认值
 
     def get_available_source_types():
         """get available source type list"""
         try:
             # map integer type to string
             source_types = get_source_type_list()
-            # currently only GitHub (1)
-            source_type_map = {1: "github"}
+            # 支持 GitHub (1) 和 HackerNews (2)
+            source_type_map = {1: "github", 2: "hackernews"}
             return [source_type_map.get(st, "unknown") for st in source_types]
         except Exception as e:
-            print(f"get source type list failed: {e}")
-            return ["github"]  # default value
+            print(f"获取源类型列表失败: {e}")
+            return []  # 返回空列表而不是默认值
 
-    def get_available_sources():
+    def get_available_sources(source_type=None):
         """get available source list"""
+        global source_id_map
         try:
-            # return (id, name) list, we only need name
-            sources = processor.get_source_list()
-            return [name for _, name in sources]
+            # 将 source_type 字符串转换为对应的 ID
+            source_type_id = None
+            if source_type:
+                source_type_map = {"github": 1, "hackernews": 2}
+                source_type_id = source_type_map.get(source_type.lower(), 0)
+                if source_type_id == 0:
+                    print(f"无效的源类型: {source_type}")
+                    return []
+
+            # 调试日志
+            print(f"获取源列表，类型: {source_type}，类型ID: {source_type_id}")
+
+            # 将 source_type_id 传递给 processor.get_source_list()
+            sources = processor.get_source_list(source_type_id)
+
+            # 调试日志
+            print(f"获取到源列表: {sources}")
+
+            # 清除并更新 source_id_map
+            source_id_map.clear()
+
+            # 提取名称列表并同时更新映射
+            names = []
+            for source_id, name in sources:
+                names.append(name)
+                source_id_map[name] = source_id
+
+            # 调试日志
+            print(f"处理后的名称列表: {names}")
+            print(f"更新后的ID映射: {source_id_map}")
+
+            return names
         except Exception as e:
-            print(f"get source list failed: {e}")
-            return ["golang/go"]  # default value
+            print(f"获取源列表失败: {e}")
+            # 清除映射
+            source_id_map.clear()
+            return []  # 返回空列表而不是默认值
 
     def get_source_id_by_name(name):
         """get source id by source name"""
+        global source_id_map
         try:
-            sources = processor.get_source_list()
+            # 从映射中获取 ID
+            if name in source_id_map:
+                return source_id_map[name]
+
+            # 如果映射中没有，则查询完整列表
+            sources = processor.get_source_list(None)  # 获取所有源
             for source_id, source_name in sources:
                 if source_name == name:
+                    # 更新映射
+                    source_id_map[name] = source_id
                     return source_id
+
+            print(f"未找到源 {name} 的 ID")
             return None
         except Exception as e:
-            print(f"get source id failed: {e}")
+            print(f"获取源ID失败: {e}")
             return None
 
     def fetch_updates_with_progress(
@@ -64,16 +109,33 @@ def create_interface():
     ):
         """fetch updates with progress"""
         try:
+            # 检查是否选择了必要的项目
+            if not model:
+                yield "", "", "<span class='error-message'>✗ 请选择模型</span>"
+                return
+
+            if not source_type:
+                yield "", "", "<span class='error-message'>✗ 请选择源类型</span>"
+                return
+
+            if not source:
+                yield "", "", "<span class='error-message'>✗ 请选择源</span>"
+                return
+
             # initial state
             yield "", "", "<span class='info-message'>⏳ 初始化...</span>"
             time.sleep(0.5)  # add a short delay to make the state visible
-            progress(0.2, desc="准备获取仓库更新...")
+            progress(0.2, desc="准备获取更新...")
 
             # prepare stage
-            yield "", "", "<span class='info-message'>⏳ 准备获取仓库更新...</span>"
+            yield "", "", "<span class='info-message'>⏳ 准备获取更新...</span>"
             time.sleep(0.5)  # add a short delay to make the state visible
-            source_type_map = {"github": 1}
-            source_type_id = source_type_map.get(source_type.lower(), 1)
+            source_type_map = {"github": 1, "hackernews": 2}
+            source_type_id = source_type_map.get(source_type.lower(), 0)
+
+            if source_type_id == 0:
+                yield "", "", f"<span class='error-message'>✗ 无效的源类型: {source_type}</span>"
+                return
 
             # find source id
             yield "", "", "<span class='info-message'>⏳ 正在查找源ID...</span>"
@@ -81,8 +143,12 @@ def create_interface():
             progress(0.3, desc="查找源ID...")
             source_id = get_source_id_by_name(source)
             if source_id is None:
-                yield "", "", "<span class='error-message'>✗ 未找到源</span>"
-                raise ValueError(f"未找到源: {source}")
+                yield "", "", f"<span class='error-message'>✗ 未找到源: {source}</span>"
+                return
+
+            # 显示找到的源ID（调试用，可选）
+            yield "", "", f"<span class='info-message'>⏳ 已找到源ID: {source_id}</span>"
+            time.sleep(0.5)  # add a short delay to make the state visible
 
             # process email list
             email_list = []
@@ -96,16 +162,18 @@ def create_interface():
             progress(0.5, desc=f"正在获取「{source}」的更新...")
 
             # call backend to process
-            original_data, generated_content = processor.fetch_updates(
-                source_type_id, int(source_id), model, email_list
-            )
-
-            time.sleep(0.5)  # add a short delay to make the state visible
-            # complete
-            yield original_data, generated_content, "<span class='success-message'>✓ 更新获取成功!</span>"
+            try:
+                original_data, generated_content = processor.fetch_updates(
+                    source_type_id, int(source_id), model, email_list
+                )
+                time.sleep(0.5)  # add a short delay to make the state visible
+                # complete
+                yield original_data, generated_content, "<span class='success-message'>✓ 更新获取成功!</span>"
+            except Exception as e:
+                yield "", "", f"<span class='error-message'>✗ 获取更新失败: {str(e)}</span>"
 
         except Exception as e:
-            yield "", "", f"<span class='error-message'>✗ 获取失败: {str(e)}</span>"
+            yield "", "", f"<span class='error-message'>✗ 操作失败: {str(e)}</span>"
 
     def download_markdown_with_progress(content, progress=gr.Progress()):
         """download with progress"""
@@ -213,7 +281,11 @@ def create_interface():
     # get options data
     models = get_available_models()
     source_types = get_available_source_types()
-    sources = get_available_sources()
+    default_source_type = source_types[0] if source_types else None
+    sources = get_available_sources(default_source_type)
+
+    # 确保有默认值，并且默认值在选项列表中存在
+    default_source = sources[0] if sources else None
 
     # create interface
     with gr.Blocks(
@@ -291,15 +363,16 @@ def create_interface():
                         )
                         source_type = gr.Dropdown(
                             choices=source_types,
-                            value=source_types[0] if source_types else None,
+                            value=default_source_type,
                             interactive=True,
                             show_label=False,
                             scale=1,
                         )
                         source = gr.Dropdown(
                             choices=sources,
-                            value=sources[0] if sources else None,
+                            value=default_source,
                             interactive=True,
+                            allow_custom_value=False,  # 不允许自定义值
                             show_label=False,
                             scale=1,
                         )
@@ -339,13 +412,30 @@ def create_interface():
                     generated_content = gr.Markdown()
 
         # event handling
-        def update_sources(source_type):
-            """update source list"""
-            # currently API does not support filtering by source type, return all sources
-            return gr.Dropdown.update(choices=get_available_sources())
+        def update_source_choices(source_type):
+            """更新源下拉列表的选项"""
+            print(f"更新源列表，类型: {source_type}")
 
-        # update source list when source type changes
-        source_type.change(fn=update_sources, inputs=[source_type], outputs=[source])
+            try:
+                # 获取指定类型的源列表
+                new_sources = get_available_sources(source_type)
+                print(f"新的源列表: {new_sources}")
+
+                if not new_sources:
+                    print("源列表为空")
+                    return gr.update(choices=[], value=None)
+
+                # 返回更新信息（同时更新选项和默认值）
+                print(f"更新下拉列表，选项: {new_sources}，默认值: {new_sources[0]}")
+                return gr.update(choices=new_sources, value=new_sources[0])
+            except Exception as e:
+                print(f"更新源列表失败: {e}")
+                return gr.update(choices=[], value=None)
+
+        # 更新源类型时更新源下拉列表
+        source_type.change(
+            fn=update_source_choices, inputs=[source_type], outputs=[source]
+        )
 
         # get updates event
         fetch_btn.click(

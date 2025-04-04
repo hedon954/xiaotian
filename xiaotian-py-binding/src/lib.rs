@@ -5,7 +5,10 @@ use xiaotian::{log::init_logger, models::SourceType, process::Processor, storage
 
 #[pyfunction]
 fn get_source_type_list() -> PyResult<Vec<i8>> {
-    Ok(vec![SourceType::GitHub.into()])
+    Ok(vec![
+        SourceType::GitHub.into(),
+        SourceType::HackerNews.into(),
+    ])
 }
 
 #[pyclass(name = "Processor")]
@@ -31,21 +34,33 @@ impl PyProcessor {
         })
     }
 
-    fn get_source_list(&self) -> PyResult<Vec<(i64, String)>> {
+    fn get_source_list(&self, source_type: i8) -> PyResult<Vec<(i64, String)>> {
+        let source_type = SourceType::try_from(source_type).map_err(PyTypeError::new_err)?;
         let res: Vec<(i64, String)> = self.runtime.block_on(async move {
-            self.processor
-                .list_repositories()
-                .await
-                .unwrap_or_default()
-                .iter()
-                .map(|repo| (repo.id as i64, repo.full_name()))
-                .collect()
+            match source_type {
+                SourceType::GitHub => self
+                    .processor
+                    .list_repositories()
+                    .await
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|repo| (repo.id as i64, repo.full_name()))
+                    .collect(),
+                SourceType::HackerNews => self
+                    .processor
+                    .list_hacker_news()
+                    .await
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|hn| (hn.id as i64, hn.feed_type.to_string()))
+                    .collect(),
+            }
         });
         Ok(res)
     }
 
     fn get_model_list(&self) -> PyResult<Vec<String>> {
-        Ok(vec!["llama3.2".to_string()])
+        Ok(vec!["llama3.2".to_string(), "deepseek-chat".to_string()])
     }
 
     fn fetch_updates(

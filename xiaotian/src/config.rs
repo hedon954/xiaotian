@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::llm::{DeepSeekClient, DeepSeekConfig, LLMError, OllamaClient, OllamaConfig};
 use crate::notification::EmailConfig;
 
 /// Application configuration
@@ -12,6 +13,11 @@ pub struct AppConfig {
     /// 通知系统配置
     #[serde(default)]
     pub notification: NotificationConfig,
+    /// ollama configuration
+    #[serde(default)]
+    pub ollama: OllamaConfig,
+    /// deepseek configuration
+    pub deepseek: DeepSeekConfig,
 }
 
 /// GitHub API configuration
@@ -70,5 +76,17 @@ impl AppConfig {
     /// Get GitHub token
     pub fn github_token(&self) -> Option<String> {
         self.github.token.clone()
+    }
+
+    pub async fn ollama_client(&self) -> Result<OllamaClient, LLMError> {
+        let config = self.ollama.clone();
+        let client = OllamaClient::with_config(config).await?;
+        Ok(client)
+    }
+
+    pub async fn deepseek_client(&self) -> Result<DeepSeekClient, LLMError> {
+        let config = self.deepseek.clone();
+        let client = DeepSeekClient::with_config(config).await?;
+        Ok(client)
     }
 }

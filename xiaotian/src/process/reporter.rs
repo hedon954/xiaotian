@@ -54,6 +54,12 @@ impl<S: Storage> Reporter<S> {
             .find(|client| client.get_name() == model)
     }
 
+    fn model_exists(&self, model: &str) -> bool {
+        self.llm_client
+            .iter()
+            .any(|client| client.get_name() == model)
+    }
+
     pub fn available_models(&self) -> Vec<String> {
         self.llm_client
             .iter()
@@ -83,6 +89,13 @@ impl<S: Storage> Reporter<S> {
             model,
             to_emails.join(", ")
         );
+
+        if !self.model_exists(&model) {
+            return Err(AppError::AnyError(anyhow::anyhow!(
+                "Model {} not found",
+                model
+            )));
+        }
 
         let source = self.build_source(source_type, source_id).await?;
         let source_name = source.get_name();

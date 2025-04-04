@@ -3,14 +3,6 @@ use std::sync::Arc;
 use pyo3::{exceptions::PyTypeError, prelude::*};
 use xiaotian::{log::init_logger, models::SourceType, process::Processor, storage::MemoryStorage};
 
-#[pyfunction]
-fn get_source_type_list() -> PyResult<Vec<i8>> {
-    Ok(vec![
-        SourceType::GitHub.into(),
-        SourceType::HackerNews.into(),
-    ])
-}
-
 #[pyclass(name = "Processor")]
 pub struct PyProcessor {
     processor: Arc<Processor<MemoryStorage>>,
@@ -60,7 +52,7 @@ impl PyProcessor {
     }
 
     fn get_model_list(&self) -> PyResult<Vec<String>> {
-        Ok(vec!["llama3.2".to_string(), "deepseek-chat".to_string()])
+        Ok(self.processor.schedule_handler.available_models())
     }
 
     fn fetch_updates(
@@ -88,6 +80,5 @@ impl PyProcessor {
 #[pymodule]
 fn _lowlevel(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyProcessor>()?;
-    m.add_function(wrap_pyfunction!(get_source_type_list, m)?)?;
     Ok(())
 }

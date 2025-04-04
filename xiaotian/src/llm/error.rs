@@ -7,4 +7,6 @@ use thiserror::Error;
 pub enum LLMError {
     #[error("Ollama error: {0}")]
     OllamaError(#[from] OllamaError),
+    #[error("DeepSeek error: {0}")]
+    DeepSeekError(String),
 }

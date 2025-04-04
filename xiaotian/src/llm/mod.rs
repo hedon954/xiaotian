@@ -1,9 +1,11 @@
 //! LLM 交互模块，封装各种大语言模型的访问接口
 
+mod deepseek;
 mod error;
 mod ollama;
 mod prompt;
 
+pub use deepseek::{DeepSeekClient, DeepSeekConfig};
 pub use error::LLMError;
 pub use ollama::{OllamaClient, OllamaConfig};
 pub use prompt::PromptBuilder;

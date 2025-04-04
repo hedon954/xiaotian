@@ -6,18 +6,17 @@ use ollama_rs::{
     Ollama,
     generation::{completion::request::GenerationRequest, options::GenerationOptions},
 };
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{debug, info};
 
-const DEFAULT_TEMPERATURE: f32 = 0.7;
-const DEFAULT_TOP_P: f32 = 0.9;
-const DEFAULT_MODEL: &str = "llama3";
+const DEFAULT_MODEL: &str = "llama3.2";
 const DEFAULT_HOST: &str = "http://localhost";
 const DEFAULT_PORT: u16 = 11434;
 
 /// Ollama client configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OllamaConfig {
     /// the host of the ollama server
     pub host: String,
@@ -26,9 +25,9 @@ pub struct OllamaConfig {
     /// the model to use
     pub model: String,
     /// the temperature of the model
-    pub temperature: f32,
+    pub temperature: Option<f32>,
     /// the top-p of the model
-    pub top_p: f32,
+    pub top_p: Option<f32>,
 }
 
 impl Default for OllamaConfig {
@@ -37,8 +36,8 @@ impl Default for OllamaConfig {
             host: DEFAULT_HOST.to_string(),
             port: DEFAULT_PORT,
             model: DEFAULT_MODEL.to_string(),
-            temperature: DEFAULT_TEMPERATURE,
-            top_p: DEFAULT_TOP_P,
+            temperature: None,
+            top_p: None,
         }
     }
 }
@@ -67,8 +66,8 @@ impl OllamaClient {
         host: impl Into<String>,
         port: impl Into<u16>,
         model: impl Into<String>,
-        temperature: f32,
-        top_p: f32,
+        temperature: Option<f32>,
+        top_p: Option<f32>,
     ) -> Result<Self, LLMError> {
         let config = OllamaConfig {
             host: host.into(),
@@ -90,14 +89,18 @@ impl LLMClient for OllamaClient {
         }
 
         info!(
-            "Generating content with Ollama model '{}', temperature={}, top_p={}",
+            "Generating content with Ollama model '{}', temperature={:?}, top_p={:?}",
             self.config.model, self.config.temperature, self.config.top_p
         );
         debug!("Prompt: {}", prompt);
 
-        let options = GenerationOptions::default()
-            .temperature(self.config.temperature)
-            .top_p(self.config.top_p);
+        let mut options = GenerationOptions::default();
+        if let Some(temperature) = self.config.temperature {
+            options = options.temperature(temperature);
+        }
+        if let Some(top_p) = self.config.top_p {
+            options = options.top_p(top_p);
+        }
 
         let request =
             GenerationRequest::new(self.config.model.clone(), prompt.to_string()).options(options);
@@ -123,9 +126,9 @@ mod tests {
         let client = OllamaClient::with_config(OllamaConfig {
             host: "http://localhost".to_string(),
             port: 11434,
-            model: "llama3".to_string(),
-            temperature: 0.7,
-            top_p: 0.9,
+            model: "llama3.2".to_string(),
+            temperature: Some(0.7),
+            top_p: Some(0.9),
         })
         .await;
 
@@ -143,8 +146,8 @@ mod tests {
             host: "http://localhost".to_string(),
             port: 11434,
             model: "llama3.2".to_string(),
-            temperature: 0.7,
-            top_p: 0.9,
+            temperature: Some(0.7),
+            top_p: Some(0.9),
         })
         .await?;
 

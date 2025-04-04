@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         async move {
             let _ = processor
                 .run_all(
-                    "llama3.2".to_string(),
+                    "deepseek-chat".to_string(),
                     config.notification.email.unwrap().to,
                 )
                 .await

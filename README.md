@@ -125,10 +125,6 @@ dsn = "mysql://root:root@localhost:3306/xiaotian"
 2. **CRON**: Run XiaoTian in the background to periodically check for updates
 3. **REPL**: Interactive shell for exploration and debugging
 
-## Community & Contributing
-
-Contributions are welcome! See our [contributing guidelines](CONTRIBUTING.md).
-
 ## License
 
 [MIT License](LICENSE)

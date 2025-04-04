@@ -19,11 +19,14 @@ use process::Processor;
 use storage::{MemoryStorage, MySQLStorage, Storage};
 
 pub async fn memory_processor(config: &AppConfig) -> anyhow::Result<Processor<MemoryStorage>> {
-    new_processor(config, MemoryStorage::new()).await
+    let mut processor = new_processor(config, MemoryStorage::new()).await?;
+    init_task(&mut processor).await?;
+    Ok(processor)
 }
 
 pub async fn mysql_processor(config: &AppConfig) -> anyhow::Result<Processor<MySQLStorage>> {
-    new_processor(config, MySQLStorage::with_config(&config.mysql).await?).await
+    let mysql_config = config.mysql_config()?;
+    new_processor(config, MySQLStorage::with_config(&mysql_config).await?).await
 }
 
 pub async fn new_processor<S: Storage>(config: &AppConfig, s: S) -> anyhow::Result<Processor<S>> {
@@ -39,7 +42,6 @@ pub async fn new_processor<S: Storage>(config: &AppConfig, s: S) -> anyhow::Resu
         .with_llm_client(Arc::new(config.deepseek_client().await?))
         .with_notification_manager(notification_manager);
 
-    // init_task(&mut processor).await?;
     Ok(processor)
 }
 

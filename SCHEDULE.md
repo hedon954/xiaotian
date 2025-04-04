@@ -23,47 +23,68 @@ XiaoTian is a command-line tool designed for developers and project managers to 
 | v0.4.0 ✅ | LLM Integration & Summaries   | - Create LLM utility for AI-powered content generation<br>- Implement Ollama integration<br>- Generate update summaries using LLM<br>- Create enhanced report format with AI summaries                                 | - LLM integration framework<br>- AI-powered update summaries<br>- Enhanced report quality<br>- Improved information density   |
 | v0.5.0 ✅ | Notification System           | - Implement notification system<br>- Add report management commands<br>- Support multiple notification channels<br>- Add delivery mechanisms for reports                                                               | - Notification system<br>- Report delivery<br>- Multiple notification channels                                                |
 | v0.6.0 ✅ | Gradio Web Interface          | - Create frontend-gradio directory<br>- Implement Gradio UI components<br>- Add placeholder functions<br>- Set up Python environment<br>- Create mock data for testing                                                 | - Web interface with Gradio<br>- Python environment setup<br>- Mock functionality<br>- Basic UI testing                       |
-| v0.6.1    | Python-Rust FFI Integration   | - Implement PyO3 bindings for core functions<br>- Bridge Gradio UI with Rust backend<br>- Add data converters between Rust and Python<br>- Replace mock functions with real calls                                      | - Python-Rust FFI<br>- Live data in UI<br>- Email notification<br>- Real functionality                                        |
-| v0.7.0    | Advanced UI & FFI Features    | - Implement PyO3 bindings for advanced features<br>- Create Python package structure<br>- Improve UI responsiveness<br>- Add error handling<br>- Integration testing                                                   | - Complete Python-Rust integration<br>- Full UI functionality<br>- Error handling<br>- Integration tests                      |
-| v0.8.0    | Testing & Documentation       | - Integration testing<br>- End-to-end testing<br>- Comprehensive documentation<br>- Code coverage improvements<br>- Performance benchmarks                                                                             | - Test suite<br>- Documentation updates<br>- Performance metrics<br>- Code quality improvements                               |
-| v0.9.0    | Enhanced Notifications        | - Support for Slack integration<br>- Discord webhook support<br>- Custom notification templates<br>- Notification preferences<br>- Message formatting options                                                          | - Multiple notification channels<br>- Template system<br>- User preferences<br>- Rich message formatting                      |
-| v1.0.0    | Storage & Optimization        | - SQLite storage backend<br>- Data migration tools<br>- Performance optimizations<br>- Resource usage improvements<br>- Configuration validation                                                                       | - Persistent storage<br>- Migration utilities<br>- Optimized performance<br>- Resource monitoring                             |
+| v0.6.1 ✅ | Python-Rust FFI Integration   | - Implement PyO3 bindings for core functions<br>- Bridge Gradio UI with Rust backend<br>- Add data converters between Rust and Python<br>- Replace mock functions with real calls                                      | - Python-Rust FFI<br>- Live data in UI<br>- Email notification<br>- Real functionality                                        |
+| v0.7.0 ✅ | Advanced UI & FFI Features    | - Implement PyO3 bindings for advanced features<br>- Create Python package structure<br>- Improve UI responsiveness<br>- Add error handling<br>- Integration testing                                                   | - Complete Python-Rust integration<br>- Full UI functionality<br>- Error handling<br>- Integration tests                      |
+| v0.8.1 ✅ | Multiple Data Sources         | - Design unified source interface<br>- Implement HackerNews data source<br>- Support multiple feed types<br>- Create uniform data model<br>- Enhance reporting capabilities                                            | - Unified source interface<br>- HackerNews integration<br>- Multiple feed types<br>- Enhanced reports                         |
+| v0.8.2 ✅ | Multiple LLM Providers        | - Create unified LLM client interface<br>- Add DeepSeek integration<br>- Support hot-swapping LLM providers<br>- Configure different models<br>- Optimize prompt engineering                                           | - LLM Provider abstraction<br>- DeepSeek integration<br>- Model configuration<br>- Enhanced prompt system                     |
+| v0.8.3 ✅ | MySQL Storage Support         | - Design flexible storage interface<br>- Implement MySQL backend<br>- Optimize with JSON field usage<br>- Create migration utilities<br>- Add transaction support                                                      | - Storage abstraction layer<br>- MySQL integration<br>- JSON field optimization<br>- Data migration tools                     |
+| v0.9.0    | Integration & Testing         | - System integration testing<br>- End-to-end testing<br>- Performance benchmarks<br>- Code quality improvements<br>- Documentation updates                                                                             | - Test suite<br>- Performance metrics<br>- Code quality enhancements<br>- Comprehensive documentation                         |
 
-### Stable Release (v1.0.0)
+### Future Releases (v0.9.x and beyond)
 
-Initial stable release with all MVP features properly tested and documented.
+| Version | Focus                  | Features                                                                                                                                                                                              |
+| ------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v0.9.1  | RSS Feed Integration   | - Generic RSS feed support<br>- Feed discovery and extraction<br>- Content categorization<br>- Flexible feed configuration                                                                            |
+| v0.9.2  | Enhanced Notifications | - Slack integration<br>- Discord webhooks<br>- Custom notification templates<br>- Notification scheduling and batching                                                                                |
+| v0.9.3  | Authentication & Users | - User authentication system<br>- Multi-user support<br>- Permission management<br>- User preferences                                                                                                 |
+| v1.0.0  | Production Release     | - Comprehensive documentation<br>- Performance optimization<br>- Installation packages<br>- CI/CD pipeline<br>- Docker support                                                                        |
+| v1.1.0  | Analytics & Metrics    | - Update statistics and trends<br>- User engagement metrics<br>- System health monitoring<br>- Data visualization<br>- Interactive dashboards                                                         |
+| v1.2.0  | API & Integration      | - REST API for external access<br>- Integration with third-party services<br>- Plugin system<br>- Custom extension points<br>- WebHook support                                                        |
+| v1.3.0  | Advanced Data Sources  | - Twitter/X integration<br>- Reddit tracking<br>- StackOverflow monitoring<br>- Custom API integration framework<br>- Data source marketplace                                                         |
+| v1.4.0  | Enhanced AI Features   | - Multi-modal content analysis (images, code)<br>- Context-aware summaries<br>- Historical trend analysis<br>- Custom LLM fine-tuning<br>- Vector database integration for semantic search and recall |
 
-### Future Versions
+## Core Features
 
-| Version | Feature Category | Potential Features                                                                                                 |
-| ------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
-| v1.1.0  | Authorization    | - GitHub authentication<br>- Access token management<br>- Rate limit handling                                      |
-| v1.2.0  | User Interface   | - Web interface integration<br>- Dashboard for visualizing updates                                                 |
-| v1.3.0  | Integration      | - Additional notification channels (Telegram, Matrix)<br>- Multi-user support<br>- API for third-party integration |
-| v1.4.0  | Analytics        | - Update statistics<br>- Trend analysis<br>- Custom reporting periods<br>- Data visualization                      |
+### Data Sources
 
-## MVP Core Features (v0.5.0)
+- ✅ GitHub Repositories (commits, issues, PRs, releases)
+- ✅ HackerNews (frontpage, newest, best, ask, show, jobs)
+- 🔄 Generic RSS feeds
+- 🔄 Twitter/X
+- 🔄 Reddit
+- 🔄 StackOverflow
 
-1. **Repository Management**
+### LLM Providers
 
-   - Add/remove GitHub repository sources
-   - List and filter repositories
-   - Group repositories by tags/categories
+- ✅ Ollama (local deployment)
+- ✅ DeepSeek (cloud-based)
+- 🔄 OpenAI
+- 🔄 Anthropic Claude
+- 🔄 Gemini
 
-2. **Update Retrieval**
+### Storage Engines
 
-   - Fetch updates from GitHub (commits, PRs, issues, releases)
-   - Schedule regular update checks
-   - Process updates with source-specific logic
+- ✅ In-memory (ephemeral)
+- ✅ MySQL (persistent)
+- 🔄 PostgreSQL
+- 🔄 SQLite
+- 🔄 MongoDB
 
-3. **Notification System**
+### Interfaces
 
-   - Generate notifications for new updates
-   - Support multiple notification channels (Email)
-   - Customizable notification rules
+- ✅ Command-line (CLI)
+- ✅ Interactive shell (REPL)
+- ✅ Web interface (Gradio)
+- 🔄 REST API
+- 🔄 Mobile application
 
-4. **Report Generation**
-   - Generate daily/weekly summaries
-   - Support text and markdown formats
-   - AI-powered update summaries
-   - Customizable report content
+### Notification Channels
+
+- ✅ Email
+- 🔄 Slack
+- 🔄 Discord
+- 🔄 Telegram
+- 🔄 SMS
+
+✅ = Implemented
+🔄 = Planned

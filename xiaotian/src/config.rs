@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+use crate::error::AppError;
 use crate::llm::{DeepSeekClient, DeepSeekConfig, LLMError, OllamaClient, OllamaConfig};
 use crate::notification::EmailConfig;
 use crate::storage::mysql::MySQLConfig;
@@ -19,8 +20,8 @@ pub struct AppConfig {
     pub ollama: OllamaConfig,
     /// deepseek configuration
     pub deepseek: DeepSeekConfig,
-    /// mysql configuration
-    pub mysql: MySQLConfig,
+    /// storage configuration
+    pub storage: StorageConfig,
 }
 
 /// GitHub API configuration
@@ -63,6 +64,20 @@ impl Default for NotificationConfig {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct StorageConfig {
+    #[serde(rename = "type")]
+    pub r#type: StorageType,
+    pub mysql: Option<MySQLConfig>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum StorageType {
+    #[default]
+    Memory,
+    MySQL,
+}
+
 impl AppConfig {
     /// Load config from file
     pub fn load(path: impl Into<PathBuf>) -> anyhow::Result<Self> {
@@ -72,7 +87,12 @@ impl AppConfig {
         }
 
         let contents = fs::read_to_string(path)?;
-        let config = toml::from_str(&contents)?;
+        let config: AppConfig = toml::from_str(&contents)?;
+
+        if config.storage.r#type == StorageType::MySQL && config.storage.mysql.is_none() {
+            anyhow::bail!("MySQL config is required when storage type is MySQL");
+        }
+
         Ok(config)
     }
 
@@ -91,5 +111,11 @@ impl AppConfig {
         let config = self.deepseek.clone();
         let client = DeepSeekClient::with_config(config).await?;
         Ok(client)
+    }
+
+    pub fn mysql_config(&self) -> Result<MySQLConfig, AppError> {
+        self.storage.mysql.clone().ok_or(AppError::ConfigError(
+            "MySQL config is required".to_string(),
+        ))
     }
 }

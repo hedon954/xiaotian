@@ -20,4 +20,7 @@ pub enum AppError {
 
     #[error("Utils error: {0}")]
     UtilsError(#[from] UtilsError),
+
+    #[error("Config error: {0}")]
+    ConfigError(String),
 }

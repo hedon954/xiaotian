@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // get updates
     let since = Local::now() - Duration::days(days);
-    match source.fetch_updates(since, Local::now()).await {
+    match source.fetch_updates(since).await {
         Ok(updates) => {
             println!(
                 "Successfully fetched {} updates:\n{}",

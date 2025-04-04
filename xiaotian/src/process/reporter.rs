@@ -149,9 +149,8 @@ impl<S: Storage> Reporter<S> {
         model: &str,
     ) -> Result<ReportResult, AppError> {
         // fetch updates from 7 days ago to now
-        let start = Local::now() - chrono::Duration::days(7);
-        let end = Local::now();
-        let updates = source.fetch_updates(start, end).await?;
+        let since = Local::now() - chrono::Duration::days(7);
+        let updates = source.fetch_updates(since).await?;
         if updates.is_empty() {
             info!("No updates found for source {}", source.get_name());
             return Ok(ReportResult {
@@ -172,7 +171,7 @@ impl<S: Storage> Reporter<S> {
 
         // save updates and generate summary
         let report_result = self
-            .save_and_summary(source, &updates, start, end, model)
+            .save_and_summary(source, &updates, since, model)
             .await?;
 
         Ok(report_result)
@@ -184,14 +183,13 @@ impl<S: Storage> Reporter<S> {
         source: &Source,
         report: &str,
         since: DateTime<Local>,
-        until: DateTime<Local>,
         model: &str,
     ) -> Result<ReportResult, AppError> {
         let source_name = source.get_name();
         let source_type = source.get_type();
         let source_type_str = source_type.to_string().to_lowercase();
         let since_str = since.format("%Y%m%d").to_string();
-        let until_str = until.format("%Y%m%d").to_string();
+        let until_str = Local::now().format("%Y%m%d").to_string();
         let safe_name = source_name.replace('/', "_");
 
         // 1. save original report
@@ -221,7 +219,7 @@ impl<S: Storage> Reporter<S> {
 
         if let Some(client) = self.get_llm_client(model) {
             let (ai_report_path, ai_report_data) = self
-                .summary_by_llm(source, report, &original_filename, since, until, client)
+                .summary_by_llm(source, report, &original_filename, since, client)
                 .await?;
             result.report_paths = format!("{} and {}", result.report_paths, ai_report_path);
             result.ai_report_path = Some(ai_report_path);
@@ -243,7 +241,6 @@ impl<S: Storage> Reporter<S> {
         report: &str,
         original_filename: &str,
         since: DateTime<Local>,
-        until: DateTime<Local>,
         llm_client: &Arc<dyn LLMClient>,
     ) -> Result<(String, String), AppError> {
         // 1. format updates content to llm input
@@ -259,7 +256,7 @@ impl<S: Storage> Reporter<S> {
         let source_type = source.get_type().to_string().to_lowercase();
         let source_name = source.get_name().replace('/', "_");
         let since_str = since.format("%Y%m%d").to_string();
-        let until_str = until.format("%Y%m%d").to_string();
+        let until_str = Local::now().format("%Y%m%d").to_string();
 
         let ai_report_filename = format!(
             "{}_{}_{}_{}_report.md",
@@ -272,7 +269,6 @@ impl<S: Storage> Reporter<S> {
             &summary,
             original_filename,
             since,
-            until,
             Some(llm_client.get_name()),
         );
 
@@ -305,7 +301,6 @@ impl<S: Storage> Reporter<S> {
         ai_summary: &str,
         original_report_filename: &str,
         since: DateTime<Local>,
-        until: DateTime<Local>,
         model: Option<&str>,
     ) -> String {
         let mut report = String::new();
@@ -315,7 +310,7 @@ impl<S: Storage> Reporter<S> {
         report.push_str(&format!(
             "## Period: {} to {}\n\n",
             since.format("%Y-%m-%d"),
-            until.format("%Y-%m-%d")
+            Local::now().format("%Y-%m-%d")
         ));
 
         // source information

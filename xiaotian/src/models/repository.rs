@@ -46,11 +46,7 @@ impl Repository {
 
 #[async_trait]
 impl Fetcher for Repository {
-    async fn fetch_updates(
-        &self,
-        start: DateTime<Local>,
-        end: DateTime<Local>,
-    ) -> Result<String, AppError> {
+    async fn fetch_updates(&self, since: DateTime<Local>) -> Result<String, AppError> {
         let client = if let Some(token) = &self.token {
             GithubClient::with_token(token.clone()).unwrap()
         } else {
@@ -61,7 +57,7 @@ impl Fetcher for Repository {
                 &self.owner,
                 &self.name,
                 None,
-                start,
+                since,
                 vec![UpdateEventType::Issue, UpdateEventType::PullRequest],
             )
             .await?;
@@ -71,8 +67,8 @@ impl Fetcher for Repository {
         report.push_str(&format!("# Update Report: {}\n\n", self.full_name()));
         report.push_str(&format!(
             "## Period: {} to {}\n\n",
-            start.format("%Y-%m-%d"),
-            end.format("%Y-%m-%d")
+            since.format("%Y-%m-%d"),
+            Local::now().format("%Y-%m-%d")
         ));
 
         // source information

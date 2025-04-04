@@ -14,12 +14,8 @@ use crate::error::AppError;
 #[async_trait]
 #[enum_dispatch]
 pub trait Fetcher {
-    /// Fetch updates from the source between the start and end time
-    async fn fetch_updates(
-        &self,
-        start: DateTime<Local>,
-        end: DateTime<Local>,
-    ) -> Result<String, AppError>;
+    /// Fetch updates from the source since the given time
+    async fn fetch_updates(&self, since: DateTime<Local>) -> Result<String, AppError>;
 }
 
 #[enum_dispatch(Fetcher)]

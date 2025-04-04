@@ -3,6 +3,14 @@ use std::sync::Arc;
 use pyo3::{exceptions::PyTypeError, prelude::*};
 use xiaotian::{log::init_logger, models::SourceType, process::Processor, storage::MemoryStorage};
 
+#[pyfunction]
+fn get_source_type_list() -> PyResult<Vec<i8>> {
+    Ok(vec![
+        SourceType::GitHub.into(),
+        SourceType::HackerNews.into(),
+    ])
+}
+
 #[pyclass(name = "Processor")]
 pub struct PyProcessor {
     processor: Arc<Processor<MemoryStorage>>,
@@ -80,5 +88,6 @@ impl PyProcessor {
 #[pymodule]
 fn _lowlevel(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyProcessor>()?;
+    m.add_function(wrap_pyfunction!(get_source_type_list, m)?)?;
     Ok(())
 }

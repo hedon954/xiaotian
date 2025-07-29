@@ -19,10 +19,10 @@
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">订阅源</h2>
         <button
-          @click="showAddForm = !showAddForm"
+          @click="showAddFeed = !showAddFeed"
           class="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
         >
-          <svg v-if="!showAddForm" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg v-if="!showAddFeed" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
@@ -30,7 +30,7 @@
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-          <span>{{ showAddForm ? '取消' : '添加源' }}</span>
+          <span>{{ showAddFeed ? '取消' : '添加源' }}</span>
         </button>
       </div>
 
@@ -140,7 +140,7 @@
 
       <!-- Add Feed Form -->
       <Transition name="slide-down">
-        <div v-if="showAddForm" class="mt-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+        <div v-if="showAddFeed" class="mt-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
           <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center space-x-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 11a9 9 0 0 1 9-9"/>
@@ -427,27 +427,33 @@
   </aside>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useAppStore } from '@/stores/app'
+import type { NewFeedData } from '@/types'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 
 const appStore = useAppStore()
 const { feeds, selectedFeed, feedbackMessage, showFeedback, qaChatSessions, currentChatSessionId } = storeToRefs(appStore)
 
-const qaInput = ref('')
-const showAddForm = ref(false)
-const selectedFeedDetails = ref(null)
+// QA 输入
+const qaInput = ref<string>('')
 
-// 新订阅源表单数据
-const newFeed = ref({
+// 新订阅源表单
+const showAddFeed = ref<boolean>(false)
+const newFeed = reactive<NewFeedData>({
   name: '',
   feedUrl: '',
   description: '',
-  category: '其他'
+  category: '科技'
 })
 
-function handleFeedSelect(feedName) {
+// 选择的订阅源详情
+const selectedFeedDetails = ref<any>(null)
+
+// 处理订阅源选择
+const handleFeedSelect = (feedName: string) => {
+  console.log('点击订阅源:', feedName)
   appStore.selectFeed(feedName)
   // 如果当前不在摘要视图，切换到摘要视图
   if (appStore.currentView !== 'summary') {
@@ -455,56 +461,66 @@ function handleFeedSelect(feedName) {
   }
 }
 
-function handleAddFeed() {
-  if (newFeed.value.feedUrl.trim()) {
-    const success = appStore.addFeed(newFeed.value)
-    if (success) {
-      resetAddForm()
-      showAddForm.value = false
-    }
-  } else {
-    appStore.showFeedbackMessage('请输入RSS链接', 2000)
+// 处理添加订阅源
+const handleAddFeed = async () => {
+  if (!newFeed.name || !newFeed.feedUrl) {
+    appStore.showFeedbackMessage('请填写必要的订阅源信息')
+    return
   }
-}
 
-function resetAddForm() {
-  newFeed.value = {
+  await appStore.addFeed(newFeed)
+
+  // 重置表单
+  Object.assign(newFeed, {
     name: '',
     feedUrl: '',
     description: '',
-    category: '其他'
-  }
+    category: '科技'
+  })
+  showAddFeed.value = false
 }
 
-function showFeedDetails(feed) {
-  selectedFeedDetails.value = feed
-}
-
-// QA 相关功能
-function handleQASubmit() {
+// QA相关函数
+const handleQASubmit = () => {
   if (qaInput.value.trim()) {
-    // 从侧边栏开始新聊天
-    appStore.startNewChatFromSidebar(qaInput.value)
+    appStore.startNewChatFromSidebar(qaInput.value.trim())
     qaInput.value = ''
-  } else {
-    appStore.showFeedbackMessage('请输入您的问题', 2000)
   }
 }
 
-function createNewChat() {
-  appStore.createNewChatSession()
-  appStore.switchToQAView()
-}
-
-function switchToChat(sessionId) {
+const createNewChat = () => {
+  const sessionId = appStore.createNewChatSession()
   appStore.switchChatSession(sessionId)
   appStore.switchToQAView()
 }
 
-function deleteChat(sessionId) {
-  if (confirm('确定要删除这个对话吗？')) {
-    appStore.deleteChatSession(sessionId)
-  }
+const switchToChat = (sessionId: string) => {
+  appStore.switchChatSession(sessionId)
+  appStore.switchToQAView()
+}
+
+const deleteChat = (sessionId: string) => {
+  appStore.deleteChatSession(sessionId)
+}
+
+// 显示订阅源详情
+const showFeedDetails = (feed: any) => {
+  selectedFeedDetails.value = feed
+}
+
+// 重置添加订阅源表单
+const resetAddForm = () => {
+  Object.assign(newFeed, {
+    name: '',
+    feedUrl: '',
+    description: '',
+    category: '科技'
+  })
+}
+
+// 关闭订阅源详情
+const closeFeedDetails = () => {
+  selectedFeedDetails.value = null
 }
 </script>
 

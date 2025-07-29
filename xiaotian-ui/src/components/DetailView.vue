@@ -34,8 +34,8 @@
     <div class="flex-grow overflow-y-auto" v-if="currentDetail">
       <!-- Meta Info -->
       <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        <span>来源: <strong>{{ currentDetail.source }}</strong></span>
-        <span class="ml-4">{{ currentDetail.date }}</span>
+        <span>来源: <strong>{{ currentDetail.originalUrl }}</strong></span>
+        <span class="ml-4">{{ currentDetail.publishedAt }}</span>
       </div>
 
       <!-- Tags Section -->
@@ -87,7 +87,7 @@
       <div class="mb-6">
         <h3 class="text-lg font-semibold mb-3">参考链接</h3>
         <a
-          :href="currentDetail.link"
+                        :href="currentDetail.originalUrl"
           target="_blank"
           class="inline-flex items-center font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900 px-4 py-2 rounded-lg transition-colors"
         >
@@ -195,7 +195,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useAppStore } from '@/stores/app'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
@@ -219,13 +219,8 @@ const newNotePreview = computed(() => {
 // 监听当前详情变化，加载对应的笔记列表
 watch(currentDetail, (newDetail) => {
   if (newDetail) {
-    // 从字符串格式的笔记转换为笔记列表
-    if (newDetail.notes && typeof newDetail.notes === 'string' && newDetail.notes.trim()) {
-      notesList.value = [{
-        content: newDetail.notes,
-        createdAt: '历史笔记'
-      }]
-    } else if (Array.isArray(newDetail.notesList)) {
+    // 使用笔记列表
+    if (Array.isArray(newDetail.notesList)) {
       notesList.value = [...newDetail.notesList]
     } else {
       notesList.value = []

@@ -1,22 +1,32 @@
+import type {
+    ChatMessage,
+    ChatSession,
+    Feed,
+    NewFeedData,
+    Note,
+    QAReturnContext,
+    Summary,
+    ViewType
+} from '@/types'
 import { marked } from 'marked'
 import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 
 export const useAppStore = defineStore('app', () => {
   // 当前视图状态
-  const currentView = ref('summary') // 'summary', 'qa', 'detail'
-  const currentDetail = ref(null)
-  const currentQAQuery = ref('')
+  const currentView = ref<ViewType>('summary')
+  const currentDetail = ref<Summary | null>(null)
+  const currentQAQuery = ref<string>('')
 
   // 当前选中的订阅源
-  const selectedFeed = ref('Hacker News')
+  const selectedFeed = ref<string>('Hacker News')
 
   // 反馈消息
-  const feedbackMessage = ref('')
-  const showFeedback = ref(false)
+  const feedbackMessage = ref<string>('')
+  const showFeedback = ref<boolean>(false)
 
   // QA 相关状态 - 多会话管理
-  const qaChatSessions = ref([
+  const qaChatSessions = ref<ChatSession[]>([
     {
       id: 'session-1',
       title: 'Rust 性能更新',
@@ -24,41 +34,41 @@ export const useAppStore = defineStore('app', () => {
       updatedAt: new Date(),
       messages: [
         {
-          id: 1,
+          id: '1',
           type: 'user',
           content: '最近 Rust 有哪些值得关注的性能更新?',
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         },
         {
-          id: 2,
+          id: '2',
           type: 'assistant',
           content: '根据你的知识库，Rust 在最新版本中发布了重要的异步编程改进。Rust 1.75 版本带来了期待已久的异步编程改进，包括更好的错误处理、性能优化和开发体验提升。新版本的 async/await 语法更加直观，同时引入了更强大的并发原语。这些改进使得 Rust 在构建高性能异步应用方面更加强大，特别是在网络服务和系统编程领域。',
           sources: ['Rust 1.75 版本发布：异步编程的重大改进'],
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         }
       ]
     }
   ])
 
   // 当前活跃的会话ID
-  const currentChatSessionId = ref('session-1')
+  const currentChatSessionId = ref<string>('session-1')
 
   // 记住从QA跳转前的状态，用于返回
-  const qaReturnContext = ref(null)
+  const qaReturnContext = ref<QAReturnContext | null>(null)
 
   // 当前会话的消息（计算属性）
-  const currentChatMessages = computed(() => {
+  const currentChatMessages = computed<ChatMessage[]>(() => {
     const session = qaChatSessions.value.find(s => s.id === currentChatSessionId.value)
     return session ? session.messages : []
   })
 
   // 当前会话信息（计算属性）
-  const currentChatSession = computed(() => {
+  const currentChatSession = computed<ChatSession | undefined>(() => {
     return qaChatSessions.value.find(s => s.id === currentChatSessionId.value)
   })
 
   // 订阅源数据 - 移除硬编码的count，改为动态计算
-  const feeds = reactive([
+  const feeds = reactive<Feed[]>([
     {
       name: 'Hacker News',
       description: '技术新闻和讨论社区，汇聚全球程序员的智慧和前沿科技趋势',
@@ -102,7 +112,7 @@ export const useAppStore = defineStore('app', () => {
   ])
 
   // 按订阅源分组的摘要文章
-  const feedSummaries = reactive({
+  const feedSummaries = reactive<{ [key: string]: Summary[] }>({
     'hacker-news': [
       {
         id: 1,
@@ -176,7 +186,7 @@ export const useAppStore = defineStore('app', () => {
   })
 
   // 格式化时间的辅助函数
-  function formatTimeAgo(date) {
+  function formatTimeAgo(date: Date | string | null) {
     if (!date) return '未知时间'
 
     const now = new Date()
@@ -195,7 +205,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // 显示反馈消息
-  function showFeedbackMessage(message, duration = 3000) {
+  function showFeedbackMessage(message: string, duration = 3000) {
     feedbackMessage.value = message
     showFeedback.value = true
     setTimeout(() => {
@@ -204,13 +214,13 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // 选择订阅源
-  function selectFeed(feedName) {
+  function selectFeed(feedName: string) {
     console.log('选择订阅源:', feedName)
     selectedFeed.value = feedName
   }
 
   // 添加新的订阅源
-  function addFeed(feedData) {
+  function addFeed(feedData: NewFeedData) {
     console.log('添加订阅源:', feedData)
 
     // 验证必要字段
@@ -264,18 +274,18 @@ export const useAppStore = defineStore('app', () => {
     currentDetail.value = null
   }
 
-  function switchToQAView(query = '') {
+  function switchToQAView(query: string = '') {
     currentView.value = 'qa'
     currentQAQuery.value = query
   }
 
-  function switchToDetailView(summary) {
+  function switchToDetailView(summary: Summary) {
     currentView.value = 'detail'
     currentDetail.value = summary
   }
 
   // 模拟 AI 回答生成
-  function generateAIAnswer(question) {
+  function generateAIAnswer(question: string) {
     const responses = {
       'vue': {
         content: '关于 Vue.js 的问题，基于你的知识库：Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持。这些改进使得 Vue.js 在大型项目中的表现更加出色。',
@@ -320,7 +330,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // 处理从QA页面跳转到文章详情
-  function jumpToSourceFromQA(sourceName) {
+  function jumpToSourceFromQA(sourceName: string) {
     console.log('尝试跳转到文章:', sourceName) // 调试信息
 
     // 保存当前QA状态，以便返回
@@ -378,7 +388,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // 笔记管理
-  function addNoteToSummary(summaryId, note) {
+  function addNoteToSummary(summaryId: string, note: Note) {
     // 查找对应的摘要并添加笔记
     for (const feedId in feedSummaries) {
       const summary = feedSummaries[feedId].find(s => s.id === summaryId)
@@ -387,8 +397,8 @@ export const useAppStore = defineStore('app', () => {
           summary.notesList = []
         }
         summary.notesList.push({
-          content: note,
-          createdAt: new Date().toLocaleString()
+          content: note.content,
+          createdAt: note.createdAt
         })
         return true
       }
@@ -396,7 +406,7 @@ export const useAppStore = defineStore('app', () => {
     return false
   }
 
-  function updateNotesForSummary(summaryId, notesList) {
+  function updateNotesForSummary(summaryId: string, notesList: Note[]) {
     // 查找对应的摘要并更新笔记列表
     for (const feedId in feedSummaries) {
       const summary = feedSummaries[feedId].find(s => s.id === summaryId)
@@ -409,7 +419,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // 标签管理
-  function addTag(summaryId, tag) {
+  function addTag(summaryId: string, tag: string) {
     for (const feedId in feedSummaries) {
       const summary = feedSummaries[feedId].find(s => s.id === summaryId)
       if (summary) {
@@ -425,7 +435,7 @@ export const useAppStore = defineStore('app', () => {
     return false
   }
 
-  function removeTag(summaryId, tagToRemove) {
+  function removeTag(summaryId: string, tagToRemove: string) {
     for (const feedId in feedSummaries) {
       const summary = feedSummaries[feedId].find(s => s.id === summaryId)
       if (summary && summary.tags) {
@@ -437,12 +447,12 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // Markdown 渲染
-  function renderMarkdown(content) {
+  function renderMarkdown(content: string) {
     return marked(content)
   }
 
   // QA 会话管理
-  function createNewChatSession(initialQuestion = '') {
+  function createNewChatSession(initialQuestion: string = '') {
     const sessionId = `session-${Date.now()}`
     const sessionTitle = initialQuestion.length > 20
       ? initialQuestion.substring(0, 20) + '...'
@@ -459,10 +469,10 @@ export const useAppStore = defineStore('app', () => {
     // 如果有初始问题，直接添加
     if (initialQuestion.trim()) {
       newSession.messages.push({
-        id: Date.now(),
+        id: Date.now().toString(),
         type: 'user',
         content: initialQuestion,
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       })
     }
 
@@ -480,7 +490,7 @@ export const useAppStore = defineStore('app', () => {
     return sessionId
   }
 
-  function switchChatSession(sessionId) {
+  function switchChatSession(sessionId: string) {
     if (qaChatSessions.value.find(s => s.id === sessionId)) {
       currentChatSessionId.value = sessionId
       return true
@@ -488,7 +498,7 @@ export const useAppStore = defineStore('app', () => {
     return false
   }
 
-  function deleteChatSession(sessionId) {
+  function deleteChatSession(sessionId: string) {
     const index = qaChatSessions.value.findIndex(s => s.id === sessionId)
     if (index > -1) {
       qaChatSessions.value.splice(index, 1)
@@ -507,15 +517,15 @@ export const useAppStore = defineStore('app', () => {
     return false
   }
 
-  function addMessageToCurrentSession(content, type = 'user', sources = []) {
+  function addMessageToCurrentSession(content: string, type: 'user' | 'assistant', sources: string[] = []) {
     const session = qaChatSessions.value.find(s => s.id === currentChatSessionId.value)
     if (session) {
       const newMessage = {
-        id: Date.now(),
+        id: Date.now().toString(),
         type,
         content,
         sources: sources || [],
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       }
       session.messages.push(newMessage)
       session.updatedAt = new Date()
@@ -530,7 +540,7 @@ export const useAppStore = defineStore('app', () => {
     return null
   }
 
-  function askQuestionInCurrentSession(question) {
+  function askQuestionInCurrentSession(question: string) {
     // 添加用户问题到当前会话
     addMessageToCurrentSession(question, 'user')
 
@@ -541,7 +551,7 @@ export const useAppStore = defineStore('app', () => {
     }, 1000)
   }
 
-  function startNewChatFromSidebar(question) {
+  function startNewChatFromSidebar(question: string) {
     // 从侧边栏开始新聊天
     const sessionId = createNewChatSession(question)
     switchToQAView()

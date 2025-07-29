@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import DetailView from '@/components/DetailView.vue'
 import QAView from '@/components/QAView.vue'
 import Sidebar from '@/components/Sidebar.vue'

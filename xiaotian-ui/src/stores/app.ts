@@ -5,7 +5,9 @@ import type {
   NewFeedData,
   Note,
   QAReturnContext,
+  ScheduledTaskConfig,
   Summary,
+  SyncStatus,
   ViewType
 } from '@/types'
 import { marked } from 'marked'
@@ -24,6 +26,36 @@ export const useAppStore = defineStore('app', () => {
   // 反馈消息
   const feedbackMessage = ref<string>('')
   const showFeedback = ref<boolean>(false)
+
+  // 同步状态
+  const syncStatus = ref<SyncStatus>({
+    isRunning: false,
+    lastSyncTime: null,
+    progress: 0,
+    currentAction: '',
+    errors: []
+  })
+
+  // 定时任务配置
+  const scheduledTasks = ref<ScheduledTaskConfig[]>([
+    {
+      id: 'default-task',
+      name: '每日技术资讯推送',
+      enabled: false,
+      cronExpression: '0 9 * * *',
+      cronDescription: '每天上午9点',
+      nextRun: new Date(Date.now() + 24 * 60 * 60 * 1000), // 明天
+      lastRun: null,
+      emailConfig: {
+        enabled: false,
+        recipientEmails: [],
+        senderName: '小天AI助手'
+      },
+      selectedFeeds: [],
+      aiSummaryEnabled: true,
+      summaryLength: 'medium'
+    }
+  ])
 
   // QA 相关状态 - 多会话管理
   const qaChatSessions = ref<ChatSession[]>([
@@ -554,6 +586,137 @@ export const useAppStore = defineStore('app', () => {
     return sessionId
   }
 
+  // 手动同步所有订阅源
+  const manualSync = async (options: { includeAI?: boolean; sendEmail?: boolean } = {}) => {
+    if (syncStatus.value.isRunning) return false
+
+    syncStatus.value.isRunning = true
+    syncStatus.value.progress = 0
+    syncStatus.value.errors = []
+    syncStatus.value.currentAction = '开始同步...'
+
+    try {
+      const steps = [
+        { action: '连接到订阅源服务器...', duration: 1000 },
+        { action: '获取最新文章列表...', duration: 2000 },
+        { action: '解析文章内容...', duration: 1500 },
+        { action: 'AI内容分析与总结...', duration: options.includeAI ? 3000 : 500 },
+        { action: '更新本地数据...', duration: 1000 },
+        { action: '发送邮件通知...', duration: options.sendEmail ? 1000 : 0 }
+      ].filter(step => step.duration > 0)
+
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i]
+        syncStatus.value.currentAction = step.action
+
+        await new Promise(resolve => setTimeout(resolve, step.duration))
+        syncStatus.value.progress = Math.round(((i + 1) / steps.length) * 100)
+      }
+
+      syncStatus.value.lastSyncTime = new Date()
+
+      // 模拟更新订阅源状态
+      feeds.forEach(feed => {
+        if (feed.status === 'loading') {
+          feed.status = 'active'
+          feed.lastUpdated = new Date()
+        }
+      })
+
+      showFeedbackMessage('同步完成！已获取最新内容并生成AI总结。')
+      return true
+    } catch (error) {
+      console.error('同步失败:', error)
+      syncStatus.value.errors.push({
+        feedId: 'general',
+        feedName: '系统',
+        error: '同步过程中发生未知错误',
+        timestamp: new Date()
+      })
+      showFeedbackMessage('同步失败，请检查网络连接后重试。')
+      return false
+    } finally {
+      syncStatus.value.isRunning = false
+      syncStatus.value.currentAction = ''
+    }
+  }
+
+  // 获取定时任务
+  const getScheduledTask = (id: string) => {
+    return scheduledTasks.value.find(task => task.id === id)
+  }
+
+  // 更新定时任务
+  const updateScheduledTask = (taskId: string, updates: Partial<ScheduledTaskConfig>) => {
+    const taskIndex = scheduledTasks.value.findIndex(task => task.id === taskId)
+    if (taskIndex !== -1) {
+      scheduledTasks.value[taskIndex] = { ...scheduledTasks.value[taskIndex], ...updates }
+
+      // 如果启用了任务，计算下次执行时间
+      if (updates.enabled === true) {
+        const task = scheduledTasks.value[taskIndex]
+        // 这里可以根据 cron 表达式计算下次执行时间
+        // 简化处理：默认24小时后
+        const now = new Date()
+        task.nextRun = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+      }
+    }
+  }
+
+  // 创建新的定时任务
+  const createScheduledTask = (task: Omit<ScheduledTaskConfig, 'id'>) => {
+    const newTask: ScheduledTaskConfig = {
+      ...task,
+      id: `task-${Date.now()}`
+    }
+    scheduledTasks.value.push(newTask)
+    return newTask.id
+  }
+
+  // 删除定时任务
+  const deleteScheduledTask = (taskId: string) => {
+    const index = scheduledTasks.value.findIndex(task => task.id === taskId)
+    if (index !== -1) {
+      scheduledTasks.value.splice(index, 1)
+    }
+  }
+
+  // 执行定时任务
+  const executeScheduledTask = async (taskId: string) => {
+    const task = getScheduledTask(taskId)
+    if (!task || !task.enabled) return false
+
+    console.log(`执行定时任务: ${task.name}`)
+
+    // 执行同步
+    const success = await manualSync({
+      includeAI: task.aiSummaryEnabled,
+      sendEmail: task.emailConfig.enabled
+    })
+
+    if (success) {
+      task.lastRun = new Date()
+      // 计算下次执行时间
+      updateScheduledTask(taskId, { lastRun: new Date() })
+    }
+
+    return success
+  }
+
+  // 测试邮件配置
+  const testEmailConfig = async (emailConfig: any) => {
+    // 模拟邮件测试
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    if (!emailConfig.recipientEmail) {
+      throw new Error('收件人邮箱不能为空')
+    }
+
+    showFeedbackMessage('邮件配置测试成功！')
+    return true
+  }
+
+
   return {
     // 状态
     currentView,
@@ -571,6 +734,9 @@ export const useAppStore = defineStore('app', () => {
     currentChatMessages,
     currentChatSession,
     qaReturnContext,
+    // 同步状态
+    syncStatus,
+    scheduledTasks,
 
     // 方法
     formatTimeAgo,
@@ -593,6 +759,14 @@ export const useAppStore = defineStore('app', () => {
     askQuestionInCurrentSession,
     startNewChatFromSidebar,
     jumpToSourceFromQA,
-    returnToQAChat
+    returnToQAChat,
+    // 同步和定时任务方法
+    manualSync,
+    getScheduledTask,
+    updateScheduledTask,
+    createScheduledTask,
+    deleteScheduledTask,
+    executeScheduledTask,
+    testEmailConfig
   }
 })

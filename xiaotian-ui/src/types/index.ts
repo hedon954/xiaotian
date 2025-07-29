@@ -62,3 +62,68 @@ export interface QAReturnContext {
   fromQA: boolean
   sessionId?: string
 }
+
+// Cron表达式解析结果
+export interface CronParseResult {
+  isValid: boolean
+  description: string
+  nextRun?: Date
+  error?: string
+}
+
+// 邮件配置接口（简化版，移除SMTP设置）
+export interface EmailConfig {
+  enabled: boolean
+  recipientEmails: string[] // 改为多个邮件地址的数组
+  senderName?: string
+}
+
+// 定时任务配置接口（使用cron表达式）
+export interface ScheduledTaskConfig {
+  id: string
+  name: string
+  enabled: boolean
+  cronExpression: string // 改为cron表达式
+  cronDescription?: string // cron表达式的人类可读描述
+  nextRun: Date
+  lastRun: Date | null
+  emailConfig: EmailConfig
+  selectedFeeds: string[] // 选中的订阅源ID列表
+  aiSummaryEnabled: boolean // 是否启用AI总结
+  summaryLength: 'short' | 'medium' | 'long' // 总结长度
+}
+
+// 手动同步状态
+export interface SyncStatus {
+  isRunning: boolean
+  lastSyncTime: Date | null
+  progress: number // 0-100
+  currentAction: string // 当前正在执行的操作描述
+  errors: SyncError[]
+}
+
+// 同步错误信息
+export interface SyncError {
+  feedId: string
+  feedName: string
+  error: string
+  timestamp: Date
+}
+
+// AI总结生成配置
+export interface AISummaryConfig {
+  enabled: boolean
+  summaryType: 'highlights' | 'comprehensive' | 'technical' // 总结类型
+  maxItems: number // 最大处理条目数
+  includeKeywords: string[] // 关键词过滤
+  excludeKeywords: string[] // 排除关键词
+}
+
+// 邮件模板配置
+export interface EmailTemplate {
+  subject: string
+  headerText: string
+  footerText: string
+  includeOriginalLinks: boolean
+  groupByFeed: boolean
+}

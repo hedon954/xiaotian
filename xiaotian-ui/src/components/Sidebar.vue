@@ -18,20 +18,63 @@
     <div class="flex-grow p-4 overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">订阅源</h2>
-        <button
-          @click="showAddFeed = !showAddFeed"
-          class="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-        >
-          <svg v-if="!showAddFeed" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-          <span>{{ showAddFeed ? '取消' : '添加源' }}</span>
-        </button>
+        <div class="flex items-center space-x-2">
+          <!-- 快速同步按钮 -->
+          <button
+            @click="triggerQuickSync"
+            :disabled="isQuickSyncing"
+            class="flex items-center space-x-1 text-xs text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1.5 rounded-md hover:bg-green-50 dark:hover:bg-green-900/30"
+            title="快速同步所有订阅源"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              :class="{'animate-spin': isQuickSyncing}"
+            >
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M8 16H3v5"/>
+            </svg>
+          </button>
+
+          <!-- 设置按钮 -->
+          <button
+            @click="showSettings = true"
+            class="flex items-center space-x-1 text-xs text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            title="系统设置"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6m0 6v6"/>
+              <path d="m15.5 3.5-3 3 3 3"/>
+              <path d="m8.5 20.5 3-3-3-3"/>
+            </svg>
+          </button>
+
+          <!-- 添加订阅源按钮 -->
+          <button
+            @click="showAddFeed = !showAddFeed"
+            class="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1.5 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30"
+            title="添加订阅源"
+          >
+            <svg v-if="!showAddFeed" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- Add Feed Form (moved to top) -->
@@ -226,7 +269,11 @@
 
     </div>
 
-
+    <!-- Settings Panel -->
+    <SettingsPanel
+      :visible="showSettings"
+      @close="showSettings = false"
+    />
 
     <!-- Feed Details Modal -->
     <Transition name="modal">
@@ -352,6 +399,7 @@
 </template>
 
 <script setup lang="ts">
+import SettingsPanel from '@/components/SettingsPanel.vue'
 import { useAppStore } from '@/stores/app'
 import type { NewFeedData } from '@/types'
 import { storeToRefs } from 'pinia'
@@ -368,6 +416,12 @@ const newFeed = reactive<NewFeedData>({
   description: '',
   category: '科技'
 })
+
+// 设置面板
+const showSettings = ref<boolean>(false)
+
+// 快速同步状态
+const isQuickSyncing = ref<boolean>(false)
 
 // 选择的订阅源详情
 const selectedFeedDetails = ref<any>(null)
@@ -416,6 +470,24 @@ const resetAddForm = () => {
     description: '',
     category: '科技'
   })
+}
+
+// 快速同步功能
+const triggerQuickSync = async () => {
+  if (isQuickSyncing.value) return
+
+  isQuickSyncing.value = true
+
+  try {
+    // 模拟快速同步过程
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    appStore.showFeedbackMessage('快速同步完成！已获取最新内容并生成AI总结。')
+  } catch (error) {
+    console.error('快速同步失败:', error)
+    appStore.showFeedbackMessage('快速同步失败，请检查网络连接后重试。')
+  } finally {
+    isQuickSyncing.value = false
+  }
 }
 
 // 关闭订阅源详情

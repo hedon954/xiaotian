@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ChatPanel from '@/components/ChatPanel.vue'
 import DetailView from '@/components/DetailView.vue'
 import QAView from '@/components/QAView.vue'
 import Sidebar from '@/components/Sidebar.vue'
@@ -32,6 +33,9 @@ const { currentView } = storeToRefs(appStore)
           <p class="text-gray-500">未知视图: {{ currentView }}</p>
         </div>
       </div>
+
+      <!-- Right Column: Chat Panel -->
+      <ChatPanel />
     </div>
   </div>
 </template>

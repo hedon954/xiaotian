@@ -34,6 +34,91 @@
         </button>
       </div>
 
+      <!-- Add Feed Form (moved to top) -->
+      <Transition name="slide-down">
+        <div v-if="showAddFeed" class="mb-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+          <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 11a9 9 0 0 1 9-9"/>
+              <path d="M4 4a16 16 0 0 1 16 16"/>
+              <circle cx="5" cy="19" r="1"/>
+            </svg>
+            <span>添加新订阅源</span>
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">订阅源名称</label>
+              <input
+                v-model="newFeed.name"
+                type="text"
+                placeholder="例如: TechCrunch"
+                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              >
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">RSS链接</label>
+              <input
+                v-model="newFeed.feedUrl"
+                type="url"
+                placeholder="https://example.com/feed.xml"
+                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              >
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">简要描述</label>
+              <textarea
+                v-model="newFeed.description"
+                rows="3"
+                placeholder="描述这个订阅源的内容..."
+                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
+              ></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+              <select
+                v-model="newFeed.category"
+                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              >
+                <option value="科技">科技</option>
+                <option value="编程">编程</option>
+                <option value="前端">前端</option>
+                <option value="设计">设计</option>
+                <option value="产品">产品</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="flex space-x-2 pt-2">
+              <button
+                @click="handleAddFeed"
+                :disabled="!newFeed.feedUrl.trim()"
+                class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm"
+              >
+                添加订阅源
+              </button>
+              <button
+                @click="resetAddForm"
+                class="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                重置
+              </button>
+            </div>
+          </div>
+
+          <!-- Feedback Message -->
+          <Transition name="feedback">
+            <div
+              v-if="showFeedback"
+              class="mt-3 p-3 rounded-lg text-sm"
+              :class="feedbackMessage.includes('成功')
+                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border border-green-200 dark:border-green-800'
+                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border border-red-200 dark:border-red-800'"
+            >
+              {{ feedbackMessage }}
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+
       <!-- Feed Cards -->
       <div class="space-y-3">
         <div
@@ -138,171 +223,10 @@
         </div>
       </div>
 
-      <!-- Add Feed Form -->
-      <Transition name="slide-down">
-        <div v-if="showAddFeed" class="mt-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
-          <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 11a9 9 0 0 1 9-9"/>
-              <path d="M4 4a16 16 0 0 1 16 16"/>
-              <circle cx="5" cy="19" r="1"/>
-            </svg>
-            <span>添加新订阅源</span>
-          </h3>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">订阅源名称</label>
-              <input
-                v-model="newFeed.name"
-                type="text"
-                placeholder="例如: TechCrunch"
-                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              >
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">RSS链接</label>
-              <input
-                v-model="newFeed.feedUrl"
-                type="url"
-                placeholder="https://example.com/feed.xml"
-                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              >
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">简要描述</label>
-              <textarea
-                v-model="newFeed.description"
-                rows="3"
-                placeholder="描述这个订阅源的内容..."
-                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
-              ></textarea>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
-              <select
-                v-model="newFeed.category"
-                class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              >
-                <option value="科技">科技</option>
-                <option value="编程">编程</option>
-                <option value="前端">前端</option>
-                <option value="设计">设计</option>
-                <option value="产品">产品</option>
-                <option value="其他">其他</option>
-              </select>
-            </div>
-            <div class="flex space-x-2 pt-2">
-              <button
-                @click="handleAddFeed"
-                :disabled="!newFeed.feedUrl.trim()"
-                class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm"
-              >
-                添加订阅源
-              </button>
-              <button
-                @click="resetAddForm"
-                class="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                重置
-              </button>
-            </div>
-          </div>
 
-          <!-- Feedback Message -->
-          <Transition name="feedback">
-            <div
-              v-if="showFeedback"
-              class="mt-3 p-3 rounded-lg text-sm"
-              :class="feedbackMessage.includes('成功')
-                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border border-green-200 dark:border-green-800'
-                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border border-red-200 dark:border-red-800'"
-            >
-              {{ feedbackMessage }}
-            </div>
-          </Transition>
-        </div>
-      </Transition>
     </div>
 
-    <!-- Q&A Section -->
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-      <!-- 聊天历史 -->
-      <div class="mb-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center space-x-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            <span>聊天历史</span>
-          </h3>
-          <button
-            @click="createNewChat"
-            class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center space-x-1"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>新对话</span>
-          </button>
-        </div>
 
-        <!-- 聊天会话列表 -->
-        <div class="space-y-1 max-h-32 overflow-y-auto">
-          <div
-            v-for="session in qaChatSessions"
-            :key="session.id"
-            @click="switchToChat(session.id)"
-            class="group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors"
-            :class="currentChatSessionId === session.id
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'"
-          >
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-medium truncate">{{ session.title }}</p>
-              <p class="text-xs opacity-75">{{ appStore.formatTimeAgo(session.updatedAt) }}</p>
-            </div>
-            <button
-              v-if="qaChatSessions.length > 1"
-              @click.stop="deleteChat(session.id)"
-              class="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-600 transition-all"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 知识库问答 -->
-      <div>
-        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 6v6"/>
-            <path d="m15.5 3.5-3 3 3 3"/>
-            <path d="m8.5 20.5 3-3-3-3"/>
-          </svg>
-          <span>新问题</span>
-        </h2>
-        <textarea
-          v-model="qaInput"
-          rows="3"
-          placeholder="开始新的对话..."
-          class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
-        ></textarea>
-        <button
-          @click="handleQASubmit"
-          class="w-full mt-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm"
-        >
-          开始新对话
-        </button>
-      </div>
-    </div>
 
     <!-- Feed Details Modal -->
     <Transition name="modal">
@@ -434,10 +358,7 @@ import { storeToRefs } from 'pinia'
 import { reactive, ref } from 'vue'
 
 const appStore = useAppStore()
-const { feeds, selectedFeed, feedbackMessage, showFeedback, qaChatSessions, currentChatSessionId } = storeToRefs(appStore)
-
-// QA 输入
-const qaInput = ref<string>('')
+const { feeds, selectedFeed, feedbackMessage, showFeedback } = storeToRefs(appStore)
 
 // 新订阅源表单
 const showAddFeed = ref<boolean>(false)
@@ -480,28 +401,7 @@ const handleAddFeed = async () => {
   showAddFeed.value = false
 }
 
-// QA相关函数
-const handleQASubmit = () => {
-  if (qaInput.value.trim()) {
-    appStore.startNewChatFromSidebar(qaInput.value.trim())
-    qaInput.value = ''
-  }
-}
 
-const createNewChat = () => {
-  const sessionId = appStore.createNewChatSession()
-  appStore.switchChatSession(sessionId)
-  appStore.switchToQAView()
-}
-
-const switchToChat = (sessionId: string) => {
-  appStore.switchChatSession(sessionId)
-  appStore.switchToQAView()
-}
-
-const deleteChat = (sessionId: string) => {
-  appStore.deleteChatSession(sessionId)
-}
 
 // 显示订阅源详情
 const showFeedDetails = (feed: any) => {

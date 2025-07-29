@@ -1,12 +1,12 @@
 import type {
-    ChatMessage,
-    ChatSession,
-    Feed,
-    NewFeedData,
-    Note,
-    QAReturnContext,
-    Summary,
-    ViewType
+  ChatMessage,
+  ChatSession,
+  Feed,
+  NewFeedData,
+  Note,
+  QAReturnContext,
+  Summary,
+  ViewType
 } from '@/types'
 import { marked } from 'marked'
 import { defineStore } from 'pinia'
@@ -115,13 +115,12 @@ export const useAppStore = defineStore('app', () => {
   const feedSummaries = reactive<{ [key: string]: Summary[] }>({
     'hacker-news': [
       {
-        id: 1,
+        id: '1',
         title: '大型语言模型在代码生成领域的最新进展',
-        source: 'Hacker News',
-        date: '2025年7月8日',
+        originalUrl: 'https://news.ycombinator.com/item?id=123456',
+        publishedAt: '2025年7月8日',
         content: '近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性。模型不再是盲目生成代码，而是能够理解代码的上下文、依赖关系和潜在的空指针风险...',
         fullContent: '近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性。模型不再是盲目生成代码，而是能够理解代码的上下文、依赖关系和潜在的空指针风险。这种技术的突破为自动化编程带来了新的可能性，同时也为代码质量的提升提供了新的工具。更重要的是，这种结合静态分析的方法能够在编码阶段就发现潜在的bug，大大提高了代码的可靠性。',
-        link: 'https://news.ycombinator.com/item?id=123456',
         tags: ['AI', '代码生成', '静态分析', 'LLM'],
         notesList: [
           { content: '这个技术可能会改变整个编程行业', createdAt: '2025-01-15 10:30' },
@@ -129,26 +128,24 @@ export const useAppStore = defineStore('app', () => {
         ]
       },
       {
-        id: 2,
+        id: '2',
         title: 'WebAssembly 在浏览器性能优化中的实际应用',
-        source: 'Hacker News',
-        date: '2025年7月7日',
+        originalUrl: 'https://news.ycombinator.com/item?id=789012',
+        publishedAt: '2025年7月7日',
         content: 'WebAssembly (WASM) 作为新一代 Web 技术，在实际应用中展现了强大的性能潜力。本文通过多个真实案例，展示了 WASM 如何在图像处理、游戏引擎、加密算法等场景中显著提升性能...',
         fullContent: 'WebAssembly (WASM) 作为新一代 Web 技术，在实际应用中展现了强大的性能潜力。本文通过多个真实案例，展示了 WASM 如何在图像处理、游戏引擎、加密算法等场景中显著提升性能。特别是在计算密集型任务中，WASM 的性能甚至接近原生应用。随着工具链的不断完善，WASM 正在成为构建高性能 Web 应用的重要选择。',
-        link: 'https://news.ycombinator.com/item?id=789012',
         tags: ['WebAssembly', '性能优化', '浏览器技术'],
         notesList: []
       }
     ],
     'rust-blog': [
       {
-        id: 3,
+        id: '3',
         title: 'Rust 1.75 版本发布：异步编程的重大改进',
-        source: 'Rust Blog',
-        date: '2025年7月6日',
+        originalUrl: 'https://blog.rust-lang.org/2025/01/15/Rust-1.75.0.html',
+        publishedAt: '2025年7月6日',
         content: 'Rust 1.75 版本带来了期待已久的异步编程改进，包括更好的错误处理、性能优化和开发体验提升。新版本的 async/await 语法更加直观，同时引入了更强大的并发原语...',
         fullContent: 'Rust 1.75 版本带来了期待已久的异步编程改进，包括更好的错误处理、性能优化和开发体验提升。新版本的 async/await 语法更加直观，同时引入了更强大的并发原语。这些改进使得 Rust 在构建高性能异步应用方面更加强大，特别是在网络服务和系统编程领域。',
-        link: 'https://blog.rust-lang.org/2025/01/15/Rust-1.75.0.html',
         tags: ['Rust', '异步编程', '版本发布'],
         notesList: [
           { content: '需要测试现有代码的兼容性', createdAt: '2025-01-15 14:20' }
@@ -157,13 +154,12 @@ export const useAppStore = defineStore('app', () => {
     ],
     'vue-blog': [
       {
-        id: 4,
+        id: '4',
         title: 'Vue 3.5 带来的组合式 API 优化',
-        source: 'Vue.js Blog',
-        date: '2025年7月5日',
+        originalUrl: 'https://blog.vuejs.org/posts/vue-3-5.html',
+        publishedAt: '2025年7月5日',
         content: 'Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持...',
         fullContent: 'Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持。这些改进使得 Vue.js 在大型项目中的表现更加出色，开发体验也得到了显著提升。',
-        link: 'https://blog.vuejs.org/posts/vue-3-5.html',
         tags: ['Vue.js', '组合式API', 'TypeScript'],
         notesList: []
       }
@@ -190,7 +186,7 @@ export const useAppStore = defineStore('app', () => {
     if (!date) return '未知时间'
 
     const now = new Date()
-    const diff = now - new Date(date)
+    const diff = now.getTime() - new Date(date).getTime()
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)
@@ -241,7 +237,7 @@ export const useAppStore = defineStore('app', () => {
     }
 
     // 生成新的订阅源
-    const newFeed = {
+    const newFeed: Feed = {
       name: feedData.name.trim() || new URL(feedData.feedUrl).hostname,
       description: feedData.description.trim() || '新添加的订阅源',
       feedUrl: feedData.feedUrl.trim(),
@@ -252,8 +248,8 @@ export const useAppStore = defineStore('app', () => {
       status: 'loading'
     }
 
-    // 添加到列表
-    feeds.push(newFeed)
+    // 添加到列表顶部（最新的在前面）
+    feeds.unshift(newFeed)
     feedSummaries[newFeed.id] = [] // 初始化为空数组
 
     // 模拟加载过程
@@ -335,8 +331,8 @@ export const useAppStore = defineStore('app', () => {
 
     // 保存当前QA状态，以便返回
     qaReturnContext.value = {
-      view: 'qa',
-      timestamp: new Date()
+      fromQA: true,
+      sessionId: currentChatSessionId.value
     }
 
     // 查找对应的文章

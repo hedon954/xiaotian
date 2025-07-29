@@ -5,15 +5,9 @@ import Sidebar from '@/components/Sidebar.vue'
 import SummaryView from '@/components/SummaryView.vue'
 import { useAppStore } from '@/stores/app'
 import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
 
 const appStore = useAppStore()
 const { currentView } = storeToRefs(appStore)
-
-// 调试：监听视图变化
-watch(currentView, (newView, oldView) => {
-  console.log('App: 视图从', oldView, '切换到', newView)
-}, { immediate: true })
 </script>
 
 <template>
@@ -24,11 +18,6 @@ watch(currentView, (newView, oldView) => {
 
       <!-- Main Content Area -->
       <div class="flex-1 flex flex-col overflow-hidden">
-        <!-- Debug Info -->
-        <div class="bg-yellow-100 p-2 text-xs text-yellow-800" v-if="true">
-          当前视图: {{ currentView }}
-        </div>
-
         <!-- View 1: Summaries List (Default) -->
         <SummaryView v-if="currentView === 'summary'" />
 

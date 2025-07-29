@@ -3,8 +3,10 @@ import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 
 export const useAppStore = defineStore('app', () => {
-  // 当前活跃的视图
+  // 当前视图状态
   const currentView = ref('summary') // 'summary', 'qa', 'detail'
+  const currentDetail = ref(null)
+  const currentQAQuery = ref('')
 
   // 当前选中的订阅源
   const selectedFeed = ref('Hacker News')
@@ -13,11 +15,48 @@ export const useAppStore = defineStore('app', () => {
   const feedbackMessage = ref('')
   const showFeedback = ref(false)
 
-  // RSS 订阅源列表
+  // 订阅源数据 - 移除硬编码的count，改为动态计算
   const feeds = reactive([
-    { name: 'Hacker News', count: 12, id: 'hacker-news' },
-    { name: 'Rust Blog', count: 5, id: 'rust-blog' },
-    { name: 'Vue.js Blog', count: 8, id: 'vue-blog' }
+    {
+      name: 'Hacker News',
+      description: '技术新闻和讨论社区，汇聚全球程序员的智慧和前沿科技趋势',
+      feedUrl: 'https://hnrss.org/frontpage',
+      icon: '🔥', // 添加icon
+      id: 'hacker-news',
+      category: '科技',
+      lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前
+      status: 'active' // active, error, loading
+    },
+    {
+      name: 'Rust Blog',
+      description: 'Rust 编程语言官方博客，最新版本发布、性能优化和社区动态',
+      feedUrl: 'https://blog.rust-lang.org/feed.xml',
+      icon: '🦀',
+      id: 'rust-blog',
+      category: '编程',
+      lastUpdated: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1天前
+      status: 'active'
+    },
+    {
+      name: 'Vue.js Blog',
+      description: 'Vue.js 官方博客，框架更新、最佳实践和前端生态发展资讯',
+      feedUrl: 'https://blog.vuejs.org/feed.rss',
+      icon: '💚',
+      id: 'vue-blog',
+      category: '前端',
+      lastUpdated: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6小时前
+      status: 'active'
+    },
+    {
+      name: 'www.reddit.com',
+      description: '全球最大的在线社区和讨论平台，涵盖科技、编程、设计等话题',
+      feedUrl: 'https://www.reddit.com/r/programming/.rss',
+      icon: '🤖',
+      id: 'reddit',
+      category: '社区',
+      lastUpdated: new Date(Date.now() - 30 * 60 * 1000), // 30分钟前
+      status: 'error' // 演示错误状态
+    }
   ])
 
   // 按订阅源分组的摘要文章
@@ -31,73 +70,87 @@ export const useAppStore = defineStore('app', () => {
         content: '近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性。模型不再是盲目生成代码，而是能够理解代码的上下文、依赖关系和潜在的空指针风险...',
         fullContent: '近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性。模型不再是盲目生成代码，而是能够理解代码的上下文、依赖关系和潜在的空指针风险。这种技术的突破为自动化编程带来了新的可能性，同时也为代码质量的提升提供了新的工具。更重要的是，这种结合静态分析的方法能够在编码阶段就发现潜在的bug，大大提高了代码的可靠性。',
         link: 'https://news.ycombinator.com/item?id=123456',
-        notes: '',
+        tags: ['AI', '代码生成', '静态分析', 'LLM'],
         notesList: [
-          {
-            content: '这篇文章很有启发性，静态分析结合LLM的思路很新颖。',
-            createdAt: '2025年7月8日 14:30'
-          }
-        ],
-        tags: ['AI', '代码生成', 'LLM', '静态分析']
+          { content: '这个技术可能会改变整个编程行业', createdAt: '2025-01-15 10:30' },
+          { content: '需要关注对传统开发流程的影响', createdAt: '2025-01-15 11:00' }
+        ]
       },
       {
         id: 2,
-        title: 'WebAssembly在前端性能优化中的实践',
+        title: 'WebAssembly 在浏览器性能优化中的实际应用',
         source: 'Hacker News',
         date: '2025年7月7日',
-        content: 'WebAssembly 正在成为前端性能优化的重要工具。通过将计算密集型任务移植到 WASM，可以获得接近原生的性能表现...',
-        fullContent: 'WebAssembly 正在成为前端性能优化的重要工具。通过将计算密集型任务移植到 WASM，可以获得接近原生的性能表现。特别是在图像处理、数据分析和游戏开发等领域，WASM 的优势尤为明显。本文将分享一些实际项目中使用 WASM 优化性能的经验和最佳实践。',
-        link: 'https://news.ycombinator.com/item?id=123457',
-        notes: '',
-        notesList: [],
-        tags: ['WebAssembly', '性能优化', '前端']
+        content: 'WebAssembly (WASM) 作为新一代 Web 技术，在实际应用中展现了强大的性能潜力。本文通过多个真实案例，展示了 WASM 如何在图像处理、游戏引擎、加密算法等场景中显著提升性能...',
+        fullContent: 'WebAssembly (WASM) 作为新一代 Web 技术，在实际应用中展现了强大的性能潜力。本文通过多个真实案例，展示了 WASM 如何在图像处理、游戏引擎、加密算法等场景中显著提升性能。特别是在计算密集型任务中，WASM 的性能甚至接近原生应用。随着工具链的不断完善，WASM 正在成为构建高性能 Web 应用的重要选择。',
+        link: 'https://news.ycombinator.com/item?id=789012',
+        tags: ['WebAssembly', '性能优化', '浏览器技术'],
+        notesList: []
       }
     ],
     'rust-blog': [
       {
         id: 3,
-        title: 'Rust 1.79.0 发布：关键性能优化与新特性',
+        title: 'Rust 1.75 版本发布：异步编程的重大改进',
         source: 'Rust Blog',
-        date: '2025年7月8日',
-        content: 'Rust 1.79.0 版本正式发布。本次更新的核心是针对编译器和标准库的性能优化，编译速度在部分场景下提升了 15%。同时，引入了新的 `#[must_use]` 属性扩展...',
-        fullContent: 'Rust 1.79.0 版本正式发布。本次更新的核心是针对编译器和标准库的性能优化，编译速度在部分场景下提升了 15%。同时，引入了新的 `#[must_use]` 属性扩展，帮助开发者更好地处理返回值。这次更新还包括了对异步编程的进一步优化，特别是在 tokio 生态系统的集成方面有了显著改进。此外，标准库新增了多个实用的 API，进一步提升了开发体验。',
-        link: 'https://blog.rust-lang.org/2025/07/08/Rust-1.79.0.html',
-        notes: '',
-        notesList: [],
-        tags: ['Rust', '性能优化', '编译器', '异步编程']
+        date: '2025年7月6日',
+        content: 'Rust 1.75 版本带来了期待已久的异步编程改进，包括更好的错误处理、性能优化和开发体验提升。新版本的 async/await 语法更加直观，同时引入了更强大的并发原语...',
+        fullContent: 'Rust 1.75 版本带来了期待已久的异步编程改进，包括更好的错误处理、性能优化和开发体验提升。新版本的 async/await 语法更加直观，同时引入了更强大的并发原语。这些改进使得 Rust 在构建高性能异步应用方面更加强大，特别是在网络服务和系统编程领域。',
+        link: 'https://blog.rust-lang.org/2025/01/15/Rust-1.75.0.html',
+        tags: ['Rust', '异步编程', '版本发布'],
+        notesList: [
+          { content: '需要测试现有代码的兼容性', createdAt: '2025-01-15 14:20' }
+        ]
       }
     ],
     'vue-blog': [
       {
         id: 4,
-        title: 'Vue 3.5 新特性深度解析',
+        title: 'Vue 3.5 带来的组合式 API 优化',
         source: 'Vue.js Blog',
-        date: '2025年7月6日',
-        content: 'Vue 3.5 带来了多项重要更新，包括改进的响应式系统、更好的 TypeScript 支持和新的组合式 API 特性...',
-        fullContent: 'Vue 3.5 带来了多项重要更新，包括改进的响应式系统、更好的 TypeScript 支持和新的组合式 API 特性。其中最值得关注的是新的 defineModel 宏，它简化了自定义组件的 v-model 实现。此外，Suspense 组件也得到了显著改进，现在支持更复杂的异步场景。',
+        date: '2025年7月5日',
+        content: 'Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持...',
+        fullContent: 'Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持。这些改进使得 Vue.js 在大型项目中的表现更加出色，开发体验也得到了显著提升。',
         link: 'https://blog.vuejs.org/posts/vue-3-5.html',
-        notes: '',
-        notesList: [],
-        tags: ['Vue.js', 'TypeScript', '响应式', 'Composition API']
+        tags: ['Vue.js', '组合式API', 'TypeScript'],
+        notesList: []
       }
-    ]
+    ],
+    'reddit': [] // Reddit 为空，模拟错误状态的订阅源
   })
 
-  // 计算当前选中订阅源的摘要列表
+  // 动态计算每个订阅源的文章数量
+  const feedsWithCount = computed(() => {
+    return feeds.map(feed => ({
+      ...feed,
+      count: feedSummaries[feed.id]?.length || 0
+    }))
+  })
+
+  // 根据选中的订阅源过滤摘要
   const summaries = computed(() => {
     const feedId = feeds.find(f => f.name === selectedFeed.value)?.id
-    return feedSummaries[feedId] || []
+    return feedId ? feedSummaries[feedId] || [] : []
   })
 
-  // 当前查看的详情
-  const currentDetail = ref(null)
+  // 格式化时间的辅助函数
+  function formatTimeAgo(date) {
+    if (!date) return '未知时间'
 
-  // 问答相关状态
-  const qaQuestion = ref('')
-  const qaAnswer = ref({
-    content: '根据你的知识库，Rust 在 1.79.0 版本中发布了重要的性能更新，主要体现在编译器速度提升和标准库优化两个方面。',
-    sources: ['Rust 1.79.0 发布：关键性能优化与新特性']
-  })
+    const now = new Date()
+    const diff = now - new Date(date)
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+
+    if (minutes < 60) {
+      return `${minutes}分钟前`
+    } else if (hours < 24) {
+      return `${hours}小时前`
+    } else {
+      return `${days}天前`
+    }
+  }
 
   // 显示反馈消息
   function showFeedbackMessage(message, duration = 3000) {
@@ -108,128 +161,98 @@ export const useAppStore = defineStore('app', () => {
     }, duration)
   }
 
-  // 视图切换方法
-  function switchToSummaryView() {
-    currentView.value = 'summary'
-  }
-
-  function switchToQAView(question) {
-    if (question) {
-      qaQuestion.value = question
-    }
-    currentView.value = 'qa'
-  }
-
-  function switchToDetailView(summary) {
-    console.log('Store: 切换到详情视图', summary) // 调试日志
-    console.log('Store: 当前视图状态:', currentView.value) // 调试日志
-    currentDetail.value = summary
-    currentView.value = 'detail'
-    console.log('Store: 新视图状态:', currentView.value) // 调试日志
-    console.log('Store: 详情数据:', currentDetail.value) // 调试日志
-  }
-
   // 选择订阅源
   function selectFeed(feedName) {
+    console.log('选择订阅源:', feedName)
     selectedFeed.value = feedName
   }
 
-  // 添加RSS源
-  function addFeed(feedUrl) {
-    if (feedUrl && feedUrl.trim()) {
-      try {
-        const url = new URL(feedUrl)
-        const feedName = url.hostname
-        const feedId = feedName.toLowerCase().replace(/\./g, '-')
+  // 添加新的订阅源
+  function addFeed(feedData) {
+    console.log('添加订阅源:', feedData)
 
-        // 检查是否已存在
-        if (feeds.find(f => f.name === feedName)) {
-          showFeedbackMessage(`订阅源 "${feedName}" 已存在`, 2000)
-          return false
-        }
-
-        // 添加新的订阅源
-        feeds.push({
-          name: feedName,
-          count: 0,
-          id: feedId
-        })
-
-        // 初始化空的摘要列表
-        feedSummaries[feedId] = []
-
-        showFeedbackMessage(`成功添加订阅源 "${feedName}"`, 2000)
-        return true
-      } catch (error) {
-        showFeedbackMessage('请输入有效的 URL', 2000)
-        return false
-      }
+    // 验证必要字段
+    if (!feedData.feedUrl || !feedData.feedUrl.trim()) {
+      showFeedbackMessage('RSS链接不能为空')
+      return false
     }
-    return false
-  }
 
-  // 保存笔记（支持markdown）
-  function saveNotes(summaryId, notes) {
-    // 在所有订阅源中查找对应的摘要
-    for (const feedId in feedSummaries) {
-      const summary = feedSummaries[feedId].find(s => s.id === summaryId)
-      if (summary) {
-        summary.notes = notes
-        return true
-      }
+    // 检查是否已存在
+    const exists = feeds.some(feed =>
+      feed.feedUrl === feedData.feedUrl.trim() ||
+      feed.name === feedData.name.trim()
+    )
+
+    if (exists) {
+      showFeedbackMessage('该订阅源已存在')
+      return false
     }
-    return false
-  }
 
-  // 添加标签
-  function addTag(summaryId, tag) {
-    for (const feedId in feedSummaries) {
-      const summary = feedSummaries[feedId].find(s => s.id === summaryId)
-      if (summary && !summary.tags.includes(tag)) {
-        summary.tags.push(tag)
-        return true
-      }
+    // 生成新的订阅源
+    const newFeed = {
+      name: feedData.name.trim() || new URL(feedData.feedUrl).hostname,
+      description: feedData.description.trim() || '新添加的订阅源',
+      feedUrl: feedData.feedUrl.trim(),
+      icon: '📰', // 默认图标
+      id: `feed-${Date.now()}`,
+      category: feedData.category || '其他',
+      lastUpdated: new Date(),
+      status: 'loading'
     }
-    return false
-  }
 
-  // 移除标签
-  function removeTag(summaryId, tag) {
-    for (const feedId in feedSummaries) {
-      const summary = feedSummaries[feedId].find(s => s.id === summaryId)
-      if (summary) {
-        const index = summary.tags.indexOf(tag)
-        if (index > -1) {
-          summary.tags.splice(index, 1)
-          return true
-        }
+    // 添加到列表
+    feeds.push(newFeed)
+    feedSummaries[newFeed.id] = [] // 初始化为空数组
+
+    // 模拟加载过程
+    setTimeout(() => {
+      const feed = feeds.find(f => f.id === newFeed.id)
+      if (feed) {
+        feed.status = 'active'
       }
-    }
-    return false
+    }, 2000)
+
+    showFeedbackMessage('订阅源添加成功！')
+    return true
   }
 
-  // 渲染markdown
-  function renderMarkdown(text) {
-    return marked(text)
+  // 视图切换函数
+  function switchToSummaryView() {
+    currentView.value = 'summary'
+    currentDetail.value = null
   }
 
-  // 为摘要添加笔记
+  function switchToQAView(query = '') {
+    currentView.value = 'qa'
+    currentQAQuery.value = query
+  }
+
+  function switchToDetailView(summary) {
+    currentView.value = 'detail'
+    currentDetail.value = summary
+  }
+
+  // 笔记管理
   function addNoteToSummary(summaryId, note) {
+    // 查找对应的摘要并添加笔记
     for (const feedId in feedSummaries) {
       const summary = feedSummaries[feedId].find(s => s.id === summaryId)
       if (summary) {
         if (!summary.notesList) {
           summary.notesList = []
         }
-        summary.notesList.push(note)
+        summary.notesList.push({
+          content: note,
+          createdAt: new Date().toLocaleString()
+        })
         return true
       }
     }
     return false
   }
 
-  // 更新摘要的笔记列表
   function updateNotesForSummary(summaryId, notesList) {
+    // 查找对应的摘要并更新笔记列表
     for (const feedId in feedSummaries) {
       const summary = feedSummaries[feedId].find(s => s.id === summaryId)
       if (summary) {
@@ -240,30 +263,63 @@ export const useAppStore = defineStore('app', () => {
     return false
   }
 
+  // 标签管理
+  function addTag(summaryId, tag) {
+    for (const feedId in feedSummaries) {
+      const summary = feedSummaries[feedId].find(s => s.id === summaryId)
+      if (summary) {
+        if (!summary.tags) {
+          summary.tags = []
+        }
+        if (!summary.tags.includes(tag)) {
+          summary.tags.push(tag)
+        }
+        return true
+      }
+    }
+    return false
+  }
+
+  function removeTag(summaryId, tagToRemove) {
+    for (const feedId in feedSummaries) {
+      const summary = feedSummaries[feedId].find(s => s.id === summaryId)
+      if (summary && summary.tags) {
+        summary.tags = summary.tags.filter(tag => tag !== tagToRemove)
+        return true
+      }
+    }
+    return false
+  }
+
+  // Markdown 渲染
+  function renderMarkdown(content) {
+    return marked(content)
+  }
+
   return {
     // 状态
     currentView,
-    selectedFeed,
-    feeds,
-    summaries,
     currentDetail,
-    qaQuestion,
-    qaAnswer,
+    currentQAQuery,
+    selectedFeed,
     feedbackMessage,
     showFeedback,
+    feeds: feedsWithCount, // 使用带计数的订阅源
+    summaries,
+    feedSummaries,
 
     // 方法
+    formatTimeAgo,
+    showFeedbackMessage,
+    selectFeed,
+    addFeed,
     switchToSummaryView,
     switchToQAView,
     switchToDetailView,
-    selectFeed,
-    addFeed,
-    saveNotes,
+    addNoteToSummary,
+    updateNotesForSummary,
     addTag,
     removeTag,
-    renderMarkdown,
-    showFeedbackMessage,
-    addNoteToSummary,
-    updateNotesForSummary
+    renderMarkdown
   }
 })

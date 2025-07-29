@@ -15,15 +15,18 @@
     <div class="flex-grow p-4 overflow-y-auto">
       <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">订阅源</h2>
       <div class="space-y-2">
-        <a
+        <button
           v-for="feed in feeds"
           :key="feed.name"
-          href="#"
-          class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+          @click="handleFeedSelect(feed.name)"
+          class="flex items-center justify-between p-2 rounded-lg w-full text-left transition-colors"
+          :class="selectedFeed === feed.name
+            ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+            : 'hover:bg-gray-200 dark:hover:bg-gray-700'"
         >
           <span class="font-semibold">{{ feed.name }}</span>
           <span class="text-xs font-bold text-gray-500 dark:text-gray-400">{{ feed.count }}</span>
-        </a>
+        </button>
       </div>
 
       <!-- Add Feed Section -->
@@ -50,6 +53,19 @@
             </svg>
           </button>
         </div>
+
+        <!-- Feedback Message -->
+        <Transition name="feedback">
+          <div
+            v-if="showFeedback"
+            class="mt-2 p-2 rounded-md text-sm"
+            :class="feedbackMessage.includes('成功')
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'"
+          >
+            {{ feedbackMessage }}
+          </div>
+        </Transition>
       </div>
     </div>
 
@@ -74,18 +90,33 @@
 
 <script setup>
 import { useAppStore } from '@/stores/app'
+import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 
 const appStore = useAppStore()
-const { feeds } = appStore
+const { feeds, selectedFeed, feedbackMessage, showFeedback } = storeToRefs(appStore)
 
 const newFeedUrl = ref('')
 const qaInput = ref('')
 
+function handleFeedSelect(feedName) {
+  console.log('选择订阅源:', feedName) // 调试日志
+  appStore.selectFeed(feedName)
+  // 如果当前不在摘要视图，切换到摘要视图
+  if (appStore.currentView !== 'summary') {
+    appStore.switchToSummaryView()
+  }
+}
+
 function handleAddFeed() {
   if (newFeedUrl.value.trim()) {
-    appStore.addFeed(newFeedUrl.value)
-    newFeedUrl.value = ''
+    console.log('添加RSS源:', newFeedUrl.value) // 调试日志
+    const success = appStore.addFeed(newFeedUrl.value)
+    if (success) {
+      newFeedUrl.value = ''
+    }
+  } else {
+    appStore.showFeedbackMessage('请输入 RSS 源地址', 2000)
   }
 }
 
@@ -94,7 +125,17 @@ function handleQASubmit() {
     appStore.switchToQAView(qaInput.value)
     qaInput.value = ''
   } else {
-    alert('请输入您的问题。')
+    appStore.showFeedbackMessage('请输入您的问题', 2000)
   }
 }
 </script>
+
+<style scoped>
+.feedback-enter-active, .feedback-leave-active {
+  transition: all 0.3s ease;
+}
+.feedback-enter-from, .feedback-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+</style>

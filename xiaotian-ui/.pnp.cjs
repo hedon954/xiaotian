@@ -30,6 +30,7 @@ const RAW_RUNTIME_STATE =
           ["@tailwindcss/typography", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:0.5.16"],\
           ["@vitejs/plugin-vue", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:6.0.1"],\
           ["autoprefixer", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:10.4.20"],\
+          ["marked", "npm:16.1.1"],\
           ["pinia", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:3.0.3"],\
           ["postcss", "npm:8.4.49"],\
           ["tailwindcss", "npm:3.4.15"],\
@@ -2591,6 +2592,15 @@ const RAW_RUNTIME_STATE =
         "linkType": "HARD"\
       }]\
     ]],\
+    ["marked", [\
+      ["npm:16.1.1", {\
+        "packageLocation": "../../../../.yarn/berry/cache/marked-npm-16.1.1-b649d2bcae-10c0.zip/node_modules/marked/",\
+        "packageDependencies": [\
+          ["marked", "npm:16.1.1"]\
+        ],\
+        "linkType": "HARD"\
+      }]\
+    ]],\
     ["merge2", [\
       ["npm:1.4.1", {\
         "packageLocation": "../../../../.yarn/berry/cache/merge2-npm-1.4.1-a2507bd06c-10c0.zip/node_modules/merge2/",\
@@ -4032,6 +4042,7 @@ const RAW_RUNTIME_STATE =
           ["@tailwindcss/typography", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:0.5.16"],\
           ["@vitejs/plugin-vue", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:6.0.1"],\
           ["autoprefixer", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:10.4.20"],\
+          ["marked", "npm:16.1.1"],\
           ["pinia", "virtual:8e19ae8be2894e76496540b32f205d42b95ab059d5aaeac4f8921c7822763ea4697801019f8203d4da0a143982eb6a619dc4f6bcd1f3ec7cb462d02cbd8d316a#npm:3.0.3"],\
           ["postcss", "npm:8.4.49"],\
           ["tailwindcss", "npm:3.4.15"],\

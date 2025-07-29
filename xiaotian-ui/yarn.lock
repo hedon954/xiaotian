@@ -2098,6 +2098,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marked@npm:^16.1.1":
+  version: 16.1.1
+  resolution: "marked@npm:16.1.1"
+  bin:
+    marked: bin/marked.js
+  checksum: 10c0/1b02f1b9e82fe8fec1e1fd7d2f96ea19001bf535c8558f70dcb6e28c7afcd03f34095689484bbde600d00c33d5bb51b3f9b29932aee324751047e40f4d092a9c
+  languageName: node
+  linkType: hard
+
 "merge2@npm:^1.3.0":
   version: 1.4.1
   resolution: "merge2@npm:1.4.1"
@@ -3332,6 +3341,7 @@ __metadata:
     "@tailwindcss/typography": "npm:0.5.16"
     "@vitejs/plugin-vue": "npm:^6.0.1"
     autoprefixer: "npm:10.4.20"
+    marked: "npm:^16.1.1"
     pinia: "npm:^3.0.3"
     postcss: "npm:8.4.49"
     tailwindcss: "npm:3.4.15"

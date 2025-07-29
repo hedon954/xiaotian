@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="flex-shrink-0 flex items-center mb-6">
       <button
-        @click="appStore.switchToSummaryView()"
+        @click="handleBackToSummary"
         class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 mr-4"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -22,20 +22,61 @@
         <span class="ml-4">{{ currentDetail.date }}</span>
       </div>
 
+      <!-- Tags Section -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-3">标签</h3>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <span
+            v-for="tag in currentDetail.tags"
+            :key="tag"
+            class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+          >
+            {{ tag }}
+            <button
+              @click="removeTag(tag)"
+              class="ml-2 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <input
+            v-model="newTag"
+            @keyup.enter="addNewTag"
+            placeholder="添加标签..."
+            class="flex-grow bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          >
+          <button
+            @click="addNewTag"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            添加
+          </button>
+        </div>
+      </div>
+
       <!-- Summary Content -->
-      <div class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 leading-relaxed">
-        <p>{{ currentDetail.fullContent }}</p>
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-3">摘要内容</h3>
+        <div class="prose prose-lg dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+          <p>{{ currentDetail.fullContent }}</p>
+        </div>
       </div>
 
       <!-- Original Link -->
-      <div class="mt-6">
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-3">参考链接</h3>
         <a
           :href="currentDetail.link"
           target="_blank"
-          class="inline-flex items-center font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          class="inline-flex items-center font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900 px-4 py-2 rounded-lg transition-colors"
         >
           阅读原文
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
             <polyline points="15 3 21 3 21 9"></polyline>
             <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -44,21 +85,94 @@
       </div>
 
       <!-- Notes Section -->
-      <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
         <h3 class="text-lg font-semibold mb-3">我的笔记</h3>
-        <textarea
-          v-model="notes"
-          rows="5"
-          placeholder="在这里添加你的想法和笔记... 这部分内容也会被加入知识库并与本文关联。"
-          class="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-        ></textarea>
-        <div class="flex justify-end mt-3">
-          <button
-            @click="handleSaveNotes"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+
+        <!-- Existing Notes List -->
+        <div v-if="notesList.length > 0" class="mb-6 space-y-3">
+          <div
+            v-for="(note, index) in notesList"
+            :key="index"
+            class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 border-blue-500"
           >
-            保存笔记
-          </button>
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-xs text-gray-500 dark:text-gray-400">{{ note.createdAt }}</span>
+              <button
+                @click="deleteNote(index)"
+                class="text-red-500 hover:text-red-700 text-xs"
+              >
+                删除
+              </button>
+            </div>
+            <div
+              class="prose dark:prose-invert max-w-none text-sm"
+              v-html="appStore.renderMarkdown(note.content)"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Add New Note -->
+        <div class="space-y-3">
+          <h4 class="font-medium text-gray-700 dark:text-gray-300">添加新笔记 (支持 Markdown)</h4>
+
+          <!-- Markdown Editor and Preview Tabs -->
+          <div class="mb-3">
+            <div class="flex border-b border-gray-200 dark:border-gray-600">
+              <button
+                @click="activeTab = 'edit'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+                :class="activeTab === 'edit'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+              >
+                编辑
+              </button>
+              <button
+                @click="activeTab = 'preview'"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+                :class="activeTab === 'preview'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+              >
+                预览
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit Tab -->
+          <div v-if="activeTab === 'edit'">
+            <textarea
+              v-model="newNote"
+              rows="6"
+              placeholder="在这里添加你的想法和笔记... 支持 Markdown 语法：
+
+**粗体文本**
+*斜体文本*
+`代码`
+[链接](https://example.com)
+- 列表项
+- 另一个列表项"
+              class="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+            ></textarea>
+          </div>
+
+          <!-- Preview Tab -->
+          <div v-else-if="activeTab === 'preview'">
+            <div
+              class="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 min-h-[150px] prose dark:prose-invert max-w-none"
+              v-html="newNotePreview"
+            ></div>
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              @click="handleAddNote"
+              :disabled="!newNote.trim()"
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              添加笔记
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -67,24 +181,119 @@
 
 <script setup>
 import { useAppStore } from '@/stores/app'
-import { ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed, ref, watch } from 'vue'
 
 const appStore = useAppStore()
-const { currentDetail } = appStore
+const { currentDetail } = storeToRefs(appStore)
 
-const notes = ref('')
+const newTag = ref('')
+const activeTab = ref('edit')
+const newNote = ref('')
+const notesList = ref([])
 
-// 当切换到新的详情时，加载对应的笔记
+// 计算新笔记的markdown预览
+const newNotePreview = computed(() => {
+  if (!newNote.value.trim()) {
+    return '<p class="text-gray-500">暂无内容...</p>'
+  }
+  return appStore.renderMarkdown(newNote.value)
+})
+
+// 监听当前详情变化，加载对应的笔记列表
 watch(currentDetail, (newDetail) => {
   if (newDetail) {
-    notes.value = newDetail.notes || ''
+    // 从字符串格式的笔记转换为笔记列表
+    if (newDetail.notes && typeof newDetail.notes === 'string' && newDetail.notes.trim()) {
+      notesList.value = [{
+        content: newDetail.notes,
+        createdAt: '历史笔记'
+      }]
+    } else if (Array.isArray(newDetail.notesList)) {
+      notesList.value = [...newDetail.notesList]
+    } else {
+      notesList.value = []
+    }
   }
 }, { immediate: true })
 
-function handleSaveNotes() {
+function handleBackToSummary() {
+  console.log('DetailView: 点击返回按钮') // 调试日志
+  appStore.switchToSummaryView()
+}
+
+function handleAddNote() {
+  if (newNote.value.trim() && currentDetail.value) {
+    const note = {
+      content: newNote.value.trim(),
+      createdAt: new Date().toLocaleString('zh-CN')
+    }
+
+    // 添加到本地列表
+    notesList.value.push(note)
+
+    // 保存到store
+    appStore.addNoteToSummary(currentDetail.value.id, note)
+
+    // 清空输入框
+    newNote.value = ''
+
+    // 切换到编辑标签页
+    activeTab.value = 'edit'
+
+    appStore.showFeedbackMessage('笔记已添加', 2000)
+  }
+}
+
+function deleteNote(index) {
   if (currentDetail.value) {
-    appStore.saveNotes(currentDetail.value.id, notes.value)
-    alert('笔记已保存')
+    notesList.value.splice(index, 1)
+    appStore.updateNotesForSummary(currentDetail.value.id, [...notesList.value])
+    appStore.showFeedbackMessage('笔记已删除', 2000)
+  }
+}
+
+function addNewTag() {
+  if (newTag.value.trim() && currentDetail.value) {
+    const success = appStore.addTag(currentDetail.value.id, newTag.value.trim())
+    if (success) {
+      newTag.value = ''
+      appStore.showFeedbackMessage('标签已添加', 2000)
+    } else {
+      appStore.showFeedbackMessage('标签已存在', 2000)
+    }
+  }
+}
+
+function removeTag(tag) {
+  if (currentDetail.value) {
+    const success = appStore.removeTag(currentDetail.value.id, tag)
+    if (success) {
+      appStore.showFeedbackMessage('标签已移除', 2000)
+    }
   }
 }
 </script>
+
+<style scoped>
+/* 为代码编辑器添加等宽字体 */
+.font-mono {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* 确保预览区域的样式正确 */
+:deep(.prose) {
+  max-width: none;
+}
+
+:deep(.prose code) {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+:deep(.dark .prose code) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+</style>

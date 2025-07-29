@@ -226,27 +226,82 @@
 
     <!-- Q&A Section -->
     <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-      <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 1v6m0 6v6"/>
-          <path d="m15.5 3.5-3 3 3 3"/>
-          <path d="m8.5 20.5 3-3-3-3"/>
-        </svg>
-        <span>知识库问答</span>
-      </h2>
-      <textarea
-        v-model="qaInput"
-        rows="3"
-        placeholder="向你的知识库提问..."
-        class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
-      ></textarea>
-      <button
-        @click="handleQASubmit"
-        class="w-full mt-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm"
-      >
-        开始问答
-      </button>
+      <!-- 聊天历史 -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>聊天历史</span>
+          </h3>
+          <button
+            @click="createNewChat"
+            class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center space-x-1"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>新对话</span>
+          </button>
+        </div>
+
+        <!-- 聊天会话列表 -->
+        <div class="space-y-1 max-h-32 overflow-y-auto">
+          <div
+            v-for="session in qaChatSessions"
+            :key="session.id"
+            @click="switchToChat(session.id)"
+            class="group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors"
+            :class="currentChatSessionId === session.id
+              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium truncate">{{ session.title }}</p>
+              <p class="text-xs opacity-75">{{ appStore.formatTimeAgo(session.updatedAt) }}</p>
+            </div>
+            <button
+              v-if="qaChatSessions.length > 1"
+              @click.stop="deleteChat(session.id)"
+              class="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:text-red-600 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 知识库问答 -->
+      <div>
+        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v6m0 6v6"/>
+            <path d="m15.5 3.5-3 3 3 3"/>
+            <path d="m8.5 20.5 3-3-3-3"/>
+          </svg>
+          <span>新问题</span>
+        </h2>
+        <textarea
+          v-model="qaInput"
+          rows="3"
+          placeholder="开始新的对话..."
+          class="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
+        ></textarea>
+        <button
+          @click="handleQASubmit"
+          class="w-full mt-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm"
+        >
+          开始新对话
+        </button>
+      </div>
     </div>
 
     <!-- Feed Details Modal -->
@@ -378,7 +433,7 @@ import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 
 const appStore = useAppStore()
-const { feeds, selectedFeed, feedbackMessage, showFeedback } = storeToRefs(appStore)
+const { feeds, selectedFeed, feedbackMessage, showFeedback, qaChatSessions, currentChatSessionId } = storeToRefs(appStore)
 
 const qaInput = ref('')
 const showAddForm = ref(false)
@@ -393,7 +448,6 @@ const newFeed = ref({
 })
 
 function handleFeedSelect(feedName) {
-  console.log('选择订阅源:', feedName) // 调试日志
   appStore.selectFeed(feedName)
   // 如果当前不在摘要视图，切换到摘要视图
   if (appStore.currentView !== 'summary') {
@@ -403,7 +457,6 @@ function handleFeedSelect(feedName) {
 
 function handleAddFeed() {
   if (newFeed.value.feedUrl.trim()) {
-    console.log('添加RSS源:', newFeed.value) // 调试日志
     const success = appStore.addFeed(newFeed.value)
     if (success) {
       resetAddForm()
@@ -427,12 +480,30 @@ function showFeedDetails(feed) {
   selectedFeedDetails.value = feed
 }
 
+// QA 相关功能
 function handleQASubmit() {
   if (qaInput.value.trim()) {
-    appStore.switchToQAView(qaInput.value)
+    // 从侧边栏开始新聊天
+    appStore.startNewChatFromSidebar(qaInput.value)
     qaInput.value = ''
   } else {
     appStore.showFeedbackMessage('请输入您的问题', 2000)
+  }
+}
+
+function createNewChat() {
+  appStore.createNewChatSession()
+  appStore.switchToQAView()
+}
+
+function switchToChat(sessionId) {
+  appStore.switchChatSession(sessionId)
+  appStore.switchToQAView()
+}
+
+function deleteChat(sessionId) {
+  if (confirm('确定要删除这个对话吗？')) {
+    appStore.deleteChatSession(sessionId)
   }
 }
 </script>

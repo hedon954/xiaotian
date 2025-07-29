@@ -15,6 +15,48 @@ export const useAppStore = defineStore('app', () => {
   const feedbackMessage = ref('')
   const showFeedback = ref(false)
 
+  // QA 相关状态 - 多会话管理
+  const qaChatSessions = ref([
+    {
+      id: 'session-1',
+      title: 'Rust 性能更新',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      messages: [
+        {
+          id: 1,
+          type: 'user',
+          content: '最近 Rust 有哪些值得关注的性能更新?',
+          timestamp: new Date()
+        },
+        {
+          id: 2,
+          type: 'assistant',
+          content: '根据你的知识库，Rust 在最新版本中发布了重要的异步编程改进。Rust 1.75 版本带来了期待已久的异步编程改进，包括更好的错误处理、性能优化和开发体验提升。新版本的 async/await 语法更加直观，同时引入了更强大的并发原语。这些改进使得 Rust 在构建高性能异步应用方面更加强大，特别是在网络服务和系统编程领域。',
+          sources: ['Rust 1.75 版本发布：异步编程的重大改进'],
+          timestamp: new Date()
+        }
+      ]
+    }
+  ])
+
+  // 当前活跃的会话ID
+  const currentChatSessionId = ref('session-1')
+
+  // 记住从QA跳转前的状态，用于返回
+  const qaReturnContext = ref(null)
+
+  // 当前会话的消息（计算属性）
+  const currentChatMessages = computed(() => {
+    const session = qaChatSessions.value.find(s => s.id === currentChatSessionId.value)
+    return session ? session.messages : []
+  })
+
+  // 当前会话信息（计算属性）
+  const currentChatSession = computed(() => {
+    return qaChatSessions.value.find(s => s.id === currentChatSessionId.value)
+  })
+
   // 订阅源数据 - 移除硬编码的count，改为动态计算
   const feeds = reactive([
     {
@@ -232,6 +274,109 @@ export const useAppStore = defineStore('app', () => {
     currentDetail.value = summary
   }
 
+  // 模拟 AI 回答生成
+  function generateAIAnswer(question) {
+    const responses = {
+      'vue': {
+        content: '关于 Vue.js 的问题，基于你的知识库：Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持。这些改进使得 Vue.js 在大型项目中的表现更加出色。',
+        sources: ['Vue 3.5 带来的组合式 API 优化'] // 使用真实的文章标题
+      },
+      'rust': {
+        content: '关于 Rust 的问题，根据最新资讯：Rust 1.75 版本带来了异步编程的重大改进，包括更好的错误处理和性能优化。新版本的 async/await 语法更加直观，引入了更强大的并发原语。',
+        sources: ['Rust 1.75 版本发布：异步编程的重大改进'] // 使用真实的文章标题
+      },
+      'webassembly': {
+        content: '关于 WebAssembly，从你的订阅内容来看：WASM 在实际应用中展现了强大的性能潜力，特别是在图像处理、游戏引擎、加密算法等场景中显著提升性能。',
+        sources: ['WebAssembly 在浏览器性能优化中的实际应用'] // 使用真实的文章标题
+      },
+      'ai': {
+        content: '关于人工智能和代码生成，根据最新研究：结合静态分析工具的大型语言模型在代码生成任务上表现出了惊人的准确性，这种技术突破为自动化编程带来了新的可能性。',
+        sources: ['大型语言模型在代码生成领域的最新进展'] // 使用真实的文章标题
+      }
+    }
+
+    const lowerQuestion = question.toLowerCase()
+    if (lowerQuestion.includes('vue')) {
+      return responses.vue
+    } else if (lowerQuestion.includes('rust')) {
+      return responses.rust
+    } else if (lowerQuestion.includes('webassembly') || lowerQuestion.includes('wasm')) {
+      return responses.webassembly
+    } else if (lowerQuestion.includes('ai') || lowerQuestion.includes('人工智能') || lowerQuestion.includes('代码生成') || lowerQuestion.includes('llm')) {
+      return responses.ai
+    } else {
+      // 对于其他问题，从现有文章中随机选择一些作为参考
+      const allArticles = []
+      for (const feedId in feedSummaries) {
+        allArticles.push(...feedSummaries[feedId].map(s => s.title))
+      }
+      const randomSources = allArticles.slice(0, 2) // 取前两篇作为参考
+
+      return {
+        content: `关于"${question}"的问题，基于你的知识库内容分析，这是一个很有意思的技术话题。从订阅的文章中可以看出，相关技术正在快速发展，建议你关注最新的技术动态和最佳实践。`,
+        sources: randomSources.length > 0 ? randomSources : ['综合技术资讯']
+      }
+    }
+  }
+
+  // 处理从QA页面跳转到文章详情
+  function jumpToSourceFromQA(sourceName) {
+    console.log('尝试跳转到文章:', sourceName) // 调试信息
+
+    // 保存当前QA状态，以便返回
+    qaReturnContext.value = {
+      view: 'qa',
+      timestamp: new Date()
+    }
+
+    // 查找对应的文章
+    for (const feedId in feedSummaries) {
+      console.log(`在 ${feedId} 中查找文章...`) // 调试信息
+      const summary = feedSummaries[feedId].find(s => {
+        console.log(`检查文章: ${s.title}`) // 调试信息
+        return s.title === sourceName
+      })
+      if (summary) {
+        console.log('找到匹配文章:', summary.title) // 调试信息
+        switchToDetailView(summary)
+        showFeedbackMessage(`已找到相关文章: ${sourceName}`)
+        return
+      }
+    }
+
+    // 如果精确匹配失败，尝试模糊匹配
+    console.log('精确匹配失败，尝试模糊匹配...') // 调试信息
+    for (const feedId in feedSummaries) {
+      const summary = feedSummaries[feedId].find(s => {
+        // 检查标题中是否包含参考来源的关键词
+        const sourceKeywords = sourceName.split(/[\s\-：:]+/).filter(word => word.length > 1)
+        return sourceKeywords.some(keyword =>
+          s.title.toLowerCase().includes(keyword.toLowerCase())
+        )
+      })
+      if (summary) {
+        console.log('模糊匹配成功:', summary.title) // 调试信息
+        switchToDetailView(summary)
+        showFeedbackMessage(`已找到相关文章: ${summary.title}`)
+        return
+      }
+    }
+
+    // 如果还是没找到，显示所有可用文章供参考
+    console.log('未找到匹配文章，返回摘要视图') // 调试信息
+    switchToSummaryView()
+    showFeedbackMessage(`未找到具体文章"${sourceName}"，请在列表中查看相关内容`)
+  }
+
+  // 从文章详情返回到QA聊天
+  function returnToQAChat() {
+    if (qaReturnContext.value) {
+      switchToQAView()
+      qaReturnContext.value = null
+      showFeedbackMessage('已返回聊天界面')
+    }
+  }
+
   // 笔记管理
   function addNoteToSummary(summaryId, note) {
     // 查找对应的摘要并添加笔记
@@ -296,6 +441,113 @@ export const useAppStore = defineStore('app', () => {
     return marked(content)
   }
 
+  // QA 会话管理
+  function createNewChatSession(initialQuestion = '') {
+    const sessionId = `session-${Date.now()}`
+    const sessionTitle = initialQuestion.length > 20
+      ? initialQuestion.substring(0, 20) + '...'
+      : initialQuestion || '新对话'
+
+    const newSession = {
+      id: sessionId,
+      title: sessionTitle,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      messages: []
+    }
+
+    // 如果有初始问题，直接添加
+    if (initialQuestion.trim()) {
+      newSession.messages.push({
+        id: Date.now(),
+        type: 'user',
+        content: initialQuestion,
+        timestamp: new Date()
+      })
+    }
+
+    qaChatSessions.value.unshift(newSession) // 添加到开头
+    currentChatSessionId.value = sessionId
+
+    // 如果有初始问题，生成AI回答
+    if (initialQuestion.trim()) {
+      setTimeout(() => {
+        const answer = generateAIAnswer(initialQuestion)
+        addMessageToCurrentSession(answer.content, 'assistant', answer.sources)
+      }, 1000)
+    }
+
+    return sessionId
+  }
+
+  function switchChatSession(sessionId) {
+    if (qaChatSessions.value.find(s => s.id === sessionId)) {
+      currentChatSessionId.value = sessionId
+      return true
+    }
+    return false
+  }
+
+  function deleteChatSession(sessionId) {
+    const index = qaChatSessions.value.findIndex(s => s.id === sessionId)
+    if (index > -1) {
+      qaChatSessions.value.splice(index, 1)
+
+      // 如果删除的是当前会话，切换到最新的会话
+      if (currentChatSessionId.value === sessionId) {
+        if (qaChatSessions.value.length > 0) {
+          currentChatSessionId.value = qaChatSessions.value[0].id
+        } else {
+          // 如果没有会话了，创建一个新的
+          createNewChatSession()
+        }
+      }
+      return true
+    }
+    return false
+  }
+
+  function addMessageToCurrentSession(content, type = 'user', sources = []) {
+    const session = qaChatSessions.value.find(s => s.id === currentChatSessionId.value)
+    if (session) {
+      const newMessage = {
+        id: Date.now(),
+        type,
+        content,
+        sources: sources || [],
+        timestamp: new Date()
+      }
+      session.messages.push(newMessage)
+      session.updatedAt = new Date()
+
+      // 如果是用户消息且消息较短，更新会话标题
+      if (type === 'user' && session.messages.length <= 2 && content.length <= 30) {
+        session.title = content
+      }
+
+      return newMessage
+    }
+    return null
+  }
+
+  function askQuestionInCurrentSession(question) {
+    // 添加用户问题到当前会话
+    addMessageToCurrentSession(question, 'user')
+
+    // 模拟 AI 回答
+    setTimeout(() => {
+      const answer = generateAIAnswer(question)
+      addMessageToCurrentSession(answer.content, 'assistant', answer.sources)
+    }, 1000)
+  }
+
+  function startNewChatFromSidebar(question) {
+    // 从侧边栏开始新聊天
+    const sessionId = createNewChatSession(question)
+    switchToQAView()
+    return sessionId
+  }
+
   return {
     // 状态
     currentView,
@@ -307,6 +559,12 @@ export const useAppStore = defineStore('app', () => {
     feeds: feedsWithCount, // 使用带计数的订阅源
     summaries,
     feedSummaries,
+    // QA 多会话状态
+    qaChatSessions,
+    currentChatSessionId,
+    currentChatMessages,
+    currentChatSession,
+    qaReturnContext,
 
     // 方法
     formatTimeAgo,
@@ -320,6 +578,15 @@ export const useAppStore = defineStore('app', () => {
     updateNotesForSummary,
     addTag,
     removeTag,
-    renderMarkdown
+    renderMarkdown,
+    // QA 多会话方法
+    createNewChatSession,
+    switchChatSession,
+    deleteChatSession,
+    addMessageToCurrentSession,
+    askQuestionInCurrentSession,
+    startNewChatFromSidebar,
+    jumpToSourceFromQA,
+    returnToQAChat
   }
 })

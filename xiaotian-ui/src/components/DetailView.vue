@@ -1,17 +1,33 @@
 <template>
   <div class="flex-1 flex-col p-6 lg:p-8 view-transition">
     <!-- Header -->
-    <div class="flex-shrink-0 flex items-center mb-6">
+    <div class="flex items-center justify-between mb-6 flex-shrink-0">
+      <div class="flex items-center space-x-3">
+        <button
+          @click="handleBackToSummary"
+          class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+        <h1 class="text-2xl font-bold">详细内容</h1>
+      </div>
+
+      <!-- 返回聊天按钮 -->
       <button
-        @click="handleBackToSummary"
-        class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 mr-4"
+        v-if="appStore.qaReturnContext"
+        @click="returnToChat"
+        class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-xl transition-all duration-200 shadow-sm"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
+        <span>返回聊天</span>
       </button>
-      <h1 class="text-2xl font-bold">{{ currentDetail?.title || '' }}</h1>
     </div>
 
     <!-- Content -->
@@ -218,8 +234,12 @@ watch(currentDetail, (newDetail) => {
 }, { immediate: true })
 
 function handleBackToSummary() {
-  console.log('DetailView: 点击返回按钮') // 调试日志
   appStore.switchToSummaryView()
+}
+
+// 返回到QA聊天界面
+function returnToChat() {
+  appStore.returnToQAChat()
 }
 
 function handleAddNote() {

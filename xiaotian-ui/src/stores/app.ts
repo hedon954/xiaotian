@@ -5,6 +5,7 @@ import type {
   NewFeedData,
   Note,
   QAReturnContext,
+  RelatedSummary,
   ScheduledTaskConfig,
   Summary,
   SyncStatus,
@@ -152,11 +153,140 @@ export const useAppStore = defineStore('app', () => {
         originalUrl: 'https://news.ycombinator.com/item?id=123456',
         publishedAt: '2025年7月8日',
         content: '近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性。模型不再是盲目生成代码，而是能够理解代码的上下文、依赖关系和潜在的空指针风险...',
-        fullContent: '近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性。模型不再是盲目生成代码，而是能够理解代码的上下文、依赖关系和潜在的空指针风险。这种技术的突破为自动化编程带来了新的可能性，同时也为代码质量的提升提供了新的工具。更重要的是，这种结合静态分析的方法能够在编码阶段就发现潜在的bug，大大提高了代码的可靠性。',
+        fullContent: `# LLM 代码生成领域的技术突破
+
+## 🔬 研究背景
+
+近期的多项研究表明，**结合静态分析工具的大型语言模型 (LLM)** 在代码生成任务上表现出了前所未有的准确性和可靠性。这一技术融合代表了人工智能辅助编程领域的重大进步。
+
+## 🚀 核心技术创新
+
+### 1. 智能上下文理解
+- **语义分析增强**：模型能够深度理解代码的语义结构和业务逻辑
+- **依赖关系映射**：自动识别并管理复杂的模块间依赖关系
+- **类型推断优化**：基于上下文进行精确的类型推断和验证
+
+### 2. 静态分析集成
+\`\`\`python
+def analyze_code_quality(code_snippet):
+    # 集成静态分析工具的示例
+    vulnerabilities = static_analyzer.scan(code_snippet)
+    suggestions = llm_model.generate_improvements(code_snippet, vulnerabilities)
+    return {
+        'quality_score': calculate_score(code_snippet),
+        'security_issues': vulnerabilities,
+        'optimization_suggestions': suggestions
+    }
+\`\`\`
+
+### 3. 预防性错误检测
+> **关键优势**：在代码生成阶段就能发现潜在的空指针异常、内存泄漏和安全漏洞
+
+## 📊 性能表现
+
+| 指标 | 传统代码生成 | LLM + 静态分析 | 提升幅度 |
+|------|-------------|---------------|----------|
+| **准确率** | 65% | 89% | +24% |
+| **Bug检出率** | 42% | 78% | +36% |
+| **代码质量分数** | 6.2/10 | 8.7/10 | +40% |
+
+## 🎯 实际应用场景
+
+### 自动化测试生成
+- 智能生成单元测试用例
+- 覆盖边界条件和异常处理
+- 确保测试的完整性和有效性
+
+### 代码重构建议
+- 识别重复代码模式
+- 提供性能优化建议
+- 保持代码的可维护性
+
+### API设计优化
+- 分析接口的一致性
+- 检测设计模式的合理性
+- 提供最佳实践建议
+
+## 💡 未来发展方向
+
+1. **多语言支持扩展** - 覆盖更多编程语言和框架
+2. **实时协作集成** - 与IDE深度集成，提供实时代码建议
+3. **领域特化模型** - 针对特定行业（金融、医疗、IoT）的专业化模型
+
+## ⚠️ 注意事项与限制
+
+- **人工审查必要性**：生成的代码仍需要人工代码审查
+- **上下文依赖性**：在复杂业务逻辑中可能需要额外的上下文信息
+- **安全性考量**：敏感代码的生成需要额外的安全验证
+
+---
+
+*这一技术突破不仅提高了代码生成的质量，更为软件开发工作流程的自动化开辟了新的可能性。*`,
         tags: ['AI', '代码生成', '静态分析', 'LLM'],
         notesList: [
           { content: '这个技术可能会改变整个编程行业', createdAt: '2025-01-15 10:30' },
           { content: '需要关注对传统开发流程的影响', createdAt: '2025-01-15 11:00' }
+        ],
+        sourceMaterials: [
+          {
+            id: 'source-1-1',
+            title: 'LLMs and Static Analysis: A Perfect Match for Code Generation',
+            url: 'https://arxiv.org/abs/2025.12345',
+            publishedAt: '2025-01-14T10:30:00Z',
+            author: 'Dr. Sarah Chen',
+            source: 'arXiv.org',
+            excerpt: '本研究探讨了大型语言模型与静态分析工具结合在代码生成中的应用...',
+            wordCount: 8500,
+            readingTime: 12,
+            language: 'en',
+            contentType: 'article'
+          },
+          {
+            id: 'source-1-2',
+            title: 'GitHub Copilot X: Enhanced Code Generation with Static Analysis',
+            url: 'https://github.blog/2025-01-14-copilot-x-static-analysis/',
+            publishedAt: '2025-01-14T14:15:00Z',
+            author: 'GitHub Team',
+            source: 'GitHub Blog',
+            excerpt: 'GitHub Copilot X 集成了先进的静态分析能力，显著提升代码质量...',
+            wordCount: 3200,
+            readingTime: 5,
+            language: 'en',
+            contentType: 'article'
+          },
+          {
+            id: 'source-1-3',
+            title: 'The Future of AI-Assisted Programming',
+            url: 'https://news.ycombinator.com/item?id=123456',
+            publishedAt: '2025-01-15T08:00:00Z',
+            author: 'tech_enthusiast',
+            source: 'Hacker News',
+            excerpt: 'HN社区对AI辅助编程的深度讨论，涵盖了最新技术趋势...',
+            wordCount: 1800,
+            readingTime: 3,
+            language: 'en',
+            contentType: 'article'
+          }
+        ],
+        relatedSummaries: [
+          {
+            id: '3',
+            title: 'Rust 1.75 版本发布：异步编程的重大改进',
+            relevanceScore: 0.75,
+            relationType: 'content',
+            sharedTags: ['编程语言', '性能优化'],
+            publishedAt: '2025年7月6日',
+            excerpt: 'Rust 1.75版本在编程语言演进方面的重要突破...'
+          },
+          {
+            id: '4',
+            title: 'Vue 3.5 带来的组合式 API 优化',
+            relevanceScore: 0.68,
+            relationType: 'content',
+            sharedTags: ['代码生成', 'TypeScript'],
+            publishedAt: '2025年7月5日',
+            excerpt: 'Vue.js在开发体验优化方面的最新进展...'
+          }
         ]
       },
       {
@@ -165,9 +295,146 @@ export const useAppStore = defineStore('app', () => {
         originalUrl: 'https://news.ycombinator.com/item?id=789012',
         publishedAt: '2025年7月7日',
         content: 'WebAssembly (WASM) 作为新一代 Web 技术，在实际应用中展现了强大的性能潜力。本文通过多个真实案例，展示了 WASM 如何在图像处理、游戏引擎、加密算法等场景中显著提升性能...',
-        fullContent: 'WebAssembly (WASM) 作为新一代 Web 技术，在实际应用中展现了强大的性能潜力。本文通过多个真实案例，展示了 WASM 如何在图像处理、游戏引擎、加密算法等场景中显著提升性能。特别是在计算密集型任务中，WASM 的性能甚至接近原生应用。随着工具链的不断完善，WASM 正在成为构建高性能 Web 应用的重要选择。',
+        fullContent: `# WebAssembly 性能优化实战指南
+
+## 🌟 技术概述
+
+**WebAssembly (WASM)** 作为新一代 Web 技术标准，正在重新定义浏览器应用的性能边界。通过将低级字节码引入 Web 环境，WASM 实现了**接近原生应用的执行速度**。
+
+## 🎯 核心应用场景
+
+### 图像与视频处理
+- **实时滤镜效果**：Instagram 风格的实时图像处理
+- **视频编解码**：在浏览器中进行 H.264/H.265 编解码
+- **计算机视觉**：人脸识别、物体检测等 AI 应用
+
+\`\`\`javascript
+// WASM 模块调用示例
+const wasmModule = await WebAssembly.instantiateStreaming(
+  fetch('image-processor.wasm')
+);
+
+function processImage(imageData) {
+  const result = wasmModule.instance.exports.applyFilter(
+    imageData.data.buffer,
+    imageData.width,
+    imageData.height
+  );
+  return new ImageData(new Uint8ClampedArray(result), imageData.width);
+}
+\`\`\`
+
+### 游戏引擎优化
+- **物理引擎**：复杂的物理模拟计算
+- **渲染管线**：3D 图形渲染优化
+- **音频处理**：实时音频合成和效果处理
+
+### 密码学与安全
+- **加密算法**：AES、RSA 等加密运算
+- **哈希计算**：大数据的哈希处理
+- **数字签名**：区块链相关的签名验证
+
+## 📈 性能对比分析
+
+| 测试场景 | JavaScript | WebAssembly | 性能提升 |
+|----------|------------|-------------|----------|
+| **图像处理** | 2.3s | 0.8s | **187%** |
+| **数学运算** | 1.5s | 0.4s | **275%** |
+| **字符串操作** | 0.9s | 0.6s | **50%** |
+| **内存操作** | 1.2s | 0.3s | **300%** |
+
+> 💡 **性能提升关键**：WASM 在计算密集型任务中的优势最为明显
+
+## 🛠️ 开发工具链
+
+### 编译器支持
+- **Emscripten**：C/C++ 到 WASM 的完整工具链
+- **wasm-pack**：Rust 生态的 WASM 编译工具
+- **AssemblyScript**：TypeScript-like 语法编写 WASM
+
+### 调试与优化
+- **Chrome DevTools**：WASM 调试支持
+- **wabt**：WebAssembly 二进制工具包
+- **Binaryen**：WASM 优化器
+
+## 🚀 实施建议
+
+### 1. 识别性能瓶颈
+- 使用 **Performance API** 测量 JavaScript 性能
+- 识别 CPU 密集型计算部分
+- 评估 WASM 迁移的成本效益
+
+### 2. 渐进式迁移
+- 从**独立模块**开始迁移
+- 保持 JavaScript 和 WASM 的清晰接口
+- 建立完善的测试覆盖
+
+### 3. 生产部署
+- **GZIP 压缩**：减小 WASM 文件大小
+- **CDN 缓存**：优化加载速度
+- **懒加载**：按需加载 WASM 模块
+
+## ⚡ 未来展望
+
+随着 **WASI (WebAssembly System Interface)** 和 **Component Model** 的发展，WASM 将超越浏览器环境，成为：
+
+- 🌐 **云原生应用**的轻量级运行时
+- 🔧 **边缘计算**的标准执行环境
+- 🏗️ **微服务架构**的高性能组件
+
+---
+
+*WebAssembly 正在成为现代 Web 应用不可或缺的性能优化工具，值得每个前端开发者深入学习。*`,
         tags: ['WebAssembly', '性能优化', '浏览器技术'],
-        notesList: []
+        notesList: [],
+        sourceMaterials: [
+          {
+            id: 'source-2-1',
+            title: 'WebAssembly Performance Benchmarks in Production',
+            url: 'https://bytecodealliance.org/articles/wasm-performance-2025',
+            publishedAt: '2025-01-12T16:45:00Z',
+            author: 'Bytecode Alliance',
+            source: 'Bytecode Alliance Blog',
+            excerpt: '生产环境中WebAssembly性能基准测试的综合分析...',
+            wordCount: 4800,
+            readingTime: 8,
+            language: 'en',
+            contentType: 'article'
+          },
+          {
+            id: 'source-2-2',
+            title: 'Real-world WASM Applications: Case Studies',
+            url: 'https://developer.mozilla.org/en-US/blog/wasm-case-studies/',
+            publishedAt: '2025-01-13T09:20:00Z',
+            author: 'MDN Team',
+            source: 'MDN Blog',
+            excerpt: 'Mozilla开发者网络分享的WebAssembly实际应用案例研究...',
+            wordCount: 6200,
+            readingTime: 10,
+            language: 'en',
+            contentType: 'article'
+          }
+        ],
+        relatedSummaries: [
+          {
+            id: '1',
+            title: '大型语言模型在代码生成领域的最新进展',
+            relevanceScore: 0.62,
+            relationType: 'content',
+            sharedTags: ['性能优化'],
+            publishedAt: '2025年7月8日',
+            excerpt: 'AI技术在提升开发效率和代码质量方面的突破...'
+          },
+          {
+            id: '4',
+            title: 'Vue 3.5 带来的组合式 API 优化',
+            relevanceScore: 0.58,
+            relationType: 'content',
+            sharedTags: ['性能优化', '浏览器技术'],
+            publishedAt: '2025年7月5日',
+            excerpt: '前端框架在性能优化方面的持续改进...'
+          }
+        ]
       }
     ],
     'rust-blog': [
@@ -181,6 +448,54 @@ export const useAppStore = defineStore('app', () => {
         tags: ['Rust', '异步编程', '版本发布'],
         notesList: [
           { content: '需要测试现有代码的兼容性', createdAt: '2025-01-15 14:20' }
+        ],
+        sourceMaterials: [
+          {
+            id: 'source-3-1',
+            title: 'Announcing Rust 1.75.0',
+            url: 'https://blog.rust-lang.org/2025/01/15/Rust-1.75.0.html',
+            publishedAt: '2025-01-15T18:00:00Z',
+            author: 'Rust Team',
+            source: 'Rust官方博客',
+            excerpt: 'Rust 1.75.0版本正式发布，带来异步编程重大改进...',
+            wordCount: 5500,
+            readingTime: 9,
+            language: 'en',
+            contentType: 'article'
+          },
+          {
+            id: 'source-3-2',
+            title: 'Performance Improvements in Rust 1.75 Async Runtime',
+            url: 'https://tokio.rs/blog/2025-01-rust-1-75-performance',
+            publishedAt: '2025-01-16T10:30:00Z',
+            author: 'Tokio Team',
+            source: 'Tokio官方博客',
+            excerpt: 'Tokio团队分析Rust 1.75异步运行时的性能提升...',
+            wordCount: 3800,
+            readingTime: 6,
+            language: 'en',
+            contentType: 'article'
+          }
+        ],
+        relatedSummaries: [
+          {
+            id: '1',
+            title: '大型语言模型在代码生成领域的最新进展',
+            relevanceScore: 0.75,
+            relationType: 'content',
+            sharedTags: ['编程语言', '性能优化'],
+            publishedAt: '2025年7月8日',
+            excerpt: 'AI在编程语言生态系统中的应用和影响...'
+          },
+          {
+            id: '2',
+            title: 'WebAssembly 在浏览器性能优化中的实际应用',
+            relevanceScore: 0.65,
+            relationType: 'content',
+            sharedTags: ['性能优化'],
+            publishedAt: '2025年7月7日',
+            excerpt: '高性能Web技术的发展趋势和应用实践...'
+          }
         ]
       }
     ],
@@ -193,7 +508,76 @@ export const useAppStore = defineStore('app', () => {
         content: 'Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持...',
         fullContent: 'Vue 3.5 版本进一步优化了组合式 API 的性能和易用性。新增的响应式语法糖让代码更加简洁，同时改进的类型推导提供了更好的 TypeScript 支持。这些改进使得 Vue.js 在大型项目中的表现更加出色，开发体验也得到了显著提升。',
         tags: ['Vue.js', '组合式API', 'TypeScript'],
-        notesList: []
+        notesList: [],
+        sourceMaterials: [
+          {
+            id: 'source-4-1',
+            title: 'Vue 3.5 Released: Performance and DX Improvements',
+            url: 'https://blog.vuejs.org/posts/vue-3-5.html',
+            publishedAt: '2025-01-10T14:00:00Z',
+            author: 'Vue Team',
+            source: 'Vue.js官方博客',
+            excerpt: 'Vue 3.5正式发布，带来性能提升和开发体验改进...',
+            wordCount: 4200,
+            readingTime: 7,
+            language: 'en',
+            contentType: 'article'
+          },
+          {
+            id: 'source-4-2',
+            title: 'Deep Dive: Vue 3.5 Reactivity Improvements',
+            url: 'https://vue-land.com/articles/vue-3-5-reactivity-deep-dive',
+            publishedAt: '2025-01-11T11:15:00Z',
+            author: 'Anthony Fu',
+            source: 'Vue Land',
+            excerpt: 'Vue.js核心团队成员深入解析3.5版本响应式系统改进...',
+            wordCount: 6800,
+            readingTime: 11,
+            language: 'en',
+            contentType: 'article'
+          },
+          {
+            id: 'source-4-3',
+            title: 'TypeScript Support in Vue 3.5: What\'s New',
+            url: 'https://typescript.org/docs/vue-3-5-support',
+            publishedAt: '2025-01-12T09:45:00Z',
+            author: 'TypeScript Team',
+            source: 'TypeScript文档',
+            excerpt: 'TypeScript官方团队介绍对Vue 3.5的支持改进...',
+            wordCount: 2900,
+            readingTime: 5,
+            language: 'en',
+            contentType: 'article'
+          }
+        ],
+        relatedSummaries: [
+          {
+            id: '1',
+            title: '大型语言模型在代码生成领域的最新进展',
+            relevanceScore: 0.68,
+            relationType: 'content',
+            sharedTags: ['TypeScript', '代码生成'],
+            publishedAt: '2025年7月8日',
+            excerpt: '前端开发工具和AI技术的融合趋势...'
+          },
+          {
+            id: '2',
+            title: 'WebAssembly 在浏览器性能优化中的实际应用',
+            relevanceScore: 0.58,
+            relationType: 'content',
+            sharedTags: ['性能优化', '前端技术'],
+            publishedAt: '2025年7月7日',
+            excerpt: '现代前端技术栈中的性能优化策略...'
+          },
+          {
+            id: '3',
+            title: 'Rust 1.75 版本发布：异步编程的重大改进',
+            relevanceScore: 0.45,
+            relationType: 'temporal',
+            publishedAt: '2025年7月6日',
+            excerpt: '同期编程语言生态系统的发展动态...'
+          }
+        ]
       }
     ],
     'reddit': [] // Reddit 为空，模拟错误状态的订阅源
@@ -716,6 +1100,99 @@ export const useAppStore = defineStore('app', () => {
     return true
   }
 
+  // 计算关联摘要
+  const calculateRelatedSummaries = (currentSummaryId: string): RelatedSummary[] => {
+    // 获取当前摘要
+    let currentSummary: Summary | null = null
+    for (const feedId in feedSummaries) {
+      const found = feedSummaries[feedId].find(s => s.id === currentSummaryId)
+      if (found) {
+        currentSummary = found
+        break
+      }
+    }
+
+    if (!currentSummary) return []
+
+    const related: RelatedSummary[] = []
+    const currentTags = new Set(currentSummary.tags)
+
+    // 遍历所有摘要，计算相似度
+    for (const feedId in feedSummaries) {
+      for (const summary of feedSummaries[feedId]) {
+        if (summary.id === currentSummaryId) continue
+
+        let relevanceScore = 0
+        const sharedTags: string[] = []
+        let relationType: RelatedSummary['relationType'] = 'content'
+
+        // 1. 标签相似度计算（权重 40%）
+        const summaryTags = new Set(summary.tags)
+        for (const tag of summary.tags) {
+          if (currentTags.has(tag)) {
+            sharedTags.push(tag)
+            relevanceScore += 0.4 / currentSummary.tags.length
+          }
+        }
+
+        // 2. 内容相似度计算（简化版 - 基于关键词匹配，权重 40%）
+        const currentKeywords = extractKeywords(currentSummary.title + ' ' + currentSummary.content)
+        const summaryKeywords = extractKeywords(summary.title + ' ' + summary.content)
+        const keywordMatches = currentKeywords.filter(kw => summaryKeywords.includes(kw))
+        relevanceScore += (keywordMatches.length / Math.max(currentKeywords.length, 1)) * 0.4
+
+        // 3. 时间相关性（权重 20%）
+        const currentDate = new Date(currentSummary.publishedAt)
+        const summaryDate = new Date(summary.publishedAt)
+        const daysDiff = Math.abs(currentDate.getTime() - summaryDate.getTime()) / (1000 * 60 * 60 * 24)
+        const timeRelevance = Math.max(0, 1 - daysDiff / 30) // 30天内的内容有时间相关性
+        relevanceScore += timeRelevance * 0.2
+
+        // 确定关联类型
+        if (sharedTags.length > 0) {
+          relationType = 'tag'
+        } else if (keywordMatches.length > 2) {
+          relationType = 'content'
+        } else if (timeRelevance > 0.7) {
+          relationType = 'temporal'
+        } else {
+          relationType = 'source'
+        }
+
+        // 只保留相关度大于0.3的摘要
+        if (relevanceScore > 0.3) {
+          related.push({
+            id: summary.id,
+            title: summary.title,
+            relevanceScore: Math.min(relevanceScore, 1), // 确保不超过1
+            relationType,
+            sharedTags: sharedTags.length > 0 ? sharedTags : undefined,
+            publishedAt: summary.publishedAt,
+            excerpt: summary.content.substring(0, 100) + '...'
+          })
+        }
+      }
+    }
+
+    // 按相关度排序，返回前5个
+    return related
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, 5)
+  }
+
+  // 提取关键词的简化函数
+  const extractKeywords = (text: string): string[] => {
+    // 简化的关键词提取：分词并过滤停用词
+    const stopWords = new Set(['的', '是', '在', '有', '和', '了', '也', '就', '都', '而', '及', '与', '或', '但', '不', '没', '很', '更', '最', '这', '那', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'])
+
+    return text
+      .toLowerCase()
+      .replace(/[^\w\u4e00-\u9fff\s]/g, ' ') // 保留中英文字符
+      .split(/\s+/)
+      .filter(word => word.length > 1 && !stopWords.has(word))
+      .slice(0, 20) // 限制关键词数量
+  }
+
 
   return {
     // 状态
@@ -767,6 +1244,8 @@ export const useAppStore = defineStore('app', () => {
     createScheduledTask,
     deleteScheduledTask,
     executeScheduledTask,
-    testEmailConfig
+    testEmailConfig,
+    // 关联摘要计算
+    calculateRelatedSummaries
   }
 })

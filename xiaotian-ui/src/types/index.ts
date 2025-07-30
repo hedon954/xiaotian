@@ -13,16 +13,44 @@ export interface Feed {
   icon: string
 }
 
+// 原始材料接口
+export interface SourceMaterial {
+  id: string
+  title: string           // 原始标题
+  url: string            // 原始链接
+  publishedAt: string    // 发布时间
+  author?: string        // 作者
+  source: string         // 来源网站/平台
+  excerpt?: string       // 摘要/简介
+  wordCount?: number     // 字数
+  readingTime?: number   // 预估阅读时间（分钟）
+  language?: string      // 语言
+  contentType: 'article' | 'video' | 'podcast' | 'document' // 内容类型
+}
+
+// 关联摘要接口
+export interface RelatedSummary {
+  id: string
+  title: string
+  relevanceScore: number    // 关联度评分 0-1
+  relationType: 'content' | 'temporal' | 'source' | 'tag'  // 关联类型
+  sharedTags?: string[]     // 共同标签
+  publishedAt: string
+  excerpt: string          // 简短摘要
+}
+
 // 摘要接口
 export interface Summary {
   id: string
   title: string
   content: string
-  originalUrl: string
+  originalUrl: string           // 保留兼容性，指向主要来源
   publishedAt: string
   tags: string[]
   notesList: Note[]
   fullContent: string
+  sourceMaterials: SourceMaterial[]  // 多个原始材料
+  relatedSummaries?: RelatedSummary[] // 关联摘要
 }
 
 // 笔记接口

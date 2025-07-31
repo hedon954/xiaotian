@@ -98,38 +98,114 @@
 </template>
 
 <script setup lang="ts">
+import { useApiStore } from '@/stores/api'
 import { useAppStore } from '@/stores/app'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const appStore = useAppStore()
-const { qaChatSessions, currentChatSessionId } = storeToRefs(appStore)
+const apiStore = useApiStore()
+const { currentChatSessionId } = storeToRefs(appStore)
+
+// 使用API Store的聊天会话数据
+const qaChatSessions = computed(() => {
+  return apiStore.chatSessionsCache.length > 0
+    ? apiStore.chatSessionsCache
+    : appStore.qaChatSessions
+})
 
 // QA 输入
 const qaInput = ref<string>('')
 
 // QA相关函数
-const handleQASubmit = () => {
+const handleQASubmit = async () => {
   if (qaInput.value.trim()) {
-    appStore.startNewChatFromSidebar(qaInput.value.trim())
-    qaInput.value = ''
+    console.log('🗣️ 发送聊天消息:', qaInput.value.trim())
+
+    // 检查是否有活跃的会话，如果没有则创建一个
+    if (qaChatSessions.value.length === 0) {
+      await createNewChat()
+    }
+
+    // 使用API Store发送消息
+    const currentSessionId = currentChatSessionId.value || qaChatSessions.value[0]?.id
+    if (currentSessionId) {
+      try {
+        await apiStore.sendChatMessage(currentSessionId, { content: qaInput.value.trim() })
+        console.log('✅ 消息发送成功')
+        qaInput.value = ''
+        appStore.switchToQAView()
+      } catch (error) {
+        console.error('❌ 发送消息失败:', error)
+        // 降级到App Store的方法
+        appStore.startNewChatFromSidebar(qaInput.value.trim())
+        qaInput.value = ''
+      }
+    }
   }
 }
 
-const createNewChat = () => {
+const createNewChat = async () => {
+  console.log('🆕 创建新的聊天会话')
+  try {
+    // 优先使用API Store创建会话
+    const session = await apiStore.createChatSession({ title: '新对话' })
+    if (session) {
+      appStore.switchChatSession(session.id)
+      appStore.switchToQAView()
+      console.log('✅ API会话创建成功:', session)
+      return session.id
+    }
+  } catch (error) {
+    console.error('❌ API会话创建失败，使用本地会话:', error)
+  }
+
+  // 降级到App Store的方法
   const sessionId = appStore.createNewChatSession()
   appStore.switchChatSession(sessionId)
   appStore.switchToQAView()
+  return sessionId
 }
 
-const switchToChat = (sessionId: string) => {
+const switchToChat = (sessionId: number) => {
+  console.log('🔄 切换到聊天会话:', sessionId)
   appStore.switchChatSession(sessionId)
   appStore.switchToQAView()
 }
 
-const deleteChat = (sessionId: string) => {
-  appStore.deleteChatSession(sessionId)
+const deleteChat = async (sessionId: number) => {
+  console.log('🗑️ 删除聊天会话:', sessionId)
+  try {
+    // 优先使用API Store删除
+    await apiStore.deleteChatSession(sessionId)
+    console.log('✅ API会话删除成功')
+  } catch (error) {
+    console.error('❌ API会话删除失败，使用本地删除:', error)
+    // 降级到App Store的方法
+    appStore.deleteChatSession(sessionId)
+  }
 }
+
+// 组件挂载时加载聊天会话
+onMounted(async () => {
+  console.log('💬 ChatPanel挂载，加载聊天会话...')
+  try {
+    await apiStore.loadChatSessions()
+    console.log('✅ 聊天会话加载完成:', apiStore.chatSessionsCache)
+
+    // 如果有API会话，设置第一个为当前会话
+    if (apiStore.chatSessionsCache.length > 0) {
+      const firstSession = apiStore.chatSessionsCache[0]
+      appStore.switchChatSession(firstSession.id)
+      console.log('🎯 设置默认会话:', firstSession.id)
+    } else {
+      console.log('🔧 没有API聊天会话，创建默认会话...')
+      await createNewChat()
+    }
+  } catch (error) {
+    console.error('❌ 聊天会话加载失败:', error)
+  }
+})
 </script>
 
 <style scoped>

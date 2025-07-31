@@ -400,13 +400,20 @@
 
 <script setup lang="ts">
 import SettingsPanel from '@/components/SettingsPanel.vue'
+import { useApiStore } from '@/stores/api'
 import { useAppStore } from '@/stores/app'
 import type { NewFeedData } from '@/types'
 import { storeToRefs } from 'pinia'
-import { reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const appStore = useAppStore()
-const { feeds, selectedFeed, feedbackMessage, showFeedback } = storeToRefs(appStore)
+const apiStore = useApiStore()
+const { selectedFeed, feedbackMessage, showFeedback } = storeToRefs(appStore)
+
+
+const feeds = computed(() => {
+  return apiStore.feedsCache
+})
 
 // 新订阅源表单
 const showAddFeed = ref<boolean>(false)
@@ -494,6 +501,21 @@ const triggerQuickSync = async () => {
 const closeFeedDetails = () => {
   selectedFeedDetails.value = null
 }
+
+// 组件挂载时加载API数据
+onMounted(async () => {
+  console.log('🔄 Sidebar挂载，开始加载数据...')
+  try {
+    await apiStore.loadFeeds()
+    console.log('✅ 订阅源加载完成:', apiStore.feedsCache)
+
+    // 也加载摘要数据
+    await apiStore.loadSummaries()
+    console.log('✅ 摘要数据加载完成:', apiStore.summariesCache)
+  } catch (error) {
+    console.error('❌ 数据加载失败:', error)
+  }
+})
 </script>
 
 <style scoped>

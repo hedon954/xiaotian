@@ -62,12 +62,40 @@
           <p class="text-gray-500 dark:text-gray-400 max-w-md mb-4">
             向AI助手提问关于你订阅内容的任何问题，比如技术更新、最佳实践等。
           </p>
+                  <div class="space-y-3">
           <button
             @click="focusInput"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
           >
             开始提问
           </button>
+          <div class="flex gap-2">
+            <button
+              @click="testChat('Rust有什么新功能？')"
+              class="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+            >
+              测试Rust问题
+            </button>
+            <button
+              @click="testChat('Vue.js怎么样？')"
+              class="px-3 py-1 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+            >
+              测试Vue问题
+            </button>
+            <button
+              @click="testChat('你好')"
+              class="px-3 py-1 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
+            >
+              测试打招呼
+            </button>
+            <button
+              @click="debugSessionState"
+              class="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+            >
+              调试状态
+            </button>
+          </div>
+        </div>
         </div>
 
         <!-- Messages -->
@@ -126,11 +154,11 @@
                     <div class="space-y-1">
                       <button
                         v-for="source in message.sources"
-                        :key="source"
-                        @click="jumpToSource(source)"
+                        :key="source.summaryId"
+                        @click="jumpToSource(source.summaryId)"
                         class="block text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
                       >
-                        {{ source }}
+                        {{ source.summaryTitle }}
                       </button>
                     </div>
                   </div>
@@ -221,12 +249,59 @@
 </template>
 
 <script setup>
+import { useApiStore } from '@/stores/api'
 import { useAppStore } from '@/stores/app'
 import { storeToRefs } from 'pinia'
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const appStore = useAppStore()
-const { currentChatMessages, currentChatSession } = storeToRefs(appStore)
+const apiStore = useApiStore()
+const { currentChatSession, currentChatSessionId } = storeToRefs(appStore)
+
+// 使用API Store或App Store的聊天消息
+const currentChatMessages = computed(() => {
+  const sessionId = currentChatSessionId.value
+
+  if (!sessionId) {
+    console.log('⚠️ 没有当前会话ID')
+    return []
+  }
+
+  // 优先检查API Store的会话
+  const apiSessions = apiStore.chatSessionsCache
+  if (apiSessions.length > 0) {
+    const session = apiSessions.find(s => s.id === sessionId)
+    if (session && session.messages) {
+      console.log('✅ 使用API会话消息:', {
+        sessionId,
+        messageCount: session.messages.length,
+        messages: session.messages.map(m => ({ type: m.type, content: m.content.substring(0, 50) + '...' }))
+      })
+      return session.messages
+    }
+  }
+
+  // 降级到App Store的本地消息
+  const localSessions = appStore.qaChatSessions
+  if (localSessions.length > 0) {
+    const session = localSessions.find(s => s.id === sessionId)
+    if (session && session.messages) {
+      console.log('✅ 使用本地会话消息:', {
+        sessionId,
+        messageCount: session.messages.length,
+        messages: session.messages.map(m => ({ type: m.type, content: m.content.substring(0, 50) + '...' }))
+      })
+      return session.messages
+    }
+  }
+
+  console.log('⚠️ 没有找到任何消息', {
+    sessionId,
+    apiSessions: apiSessions.length,
+    localSessions: localSessions.length
+  })
+  return []
+})
 
 const newQuestion = ref('')
 const isLoading = ref(false)
@@ -250,25 +325,58 @@ async function askQuestion() {
   newQuestion.value = ''
   isLoading.value = true
 
-  // 调用 store 的方法在当前会话中提问
-  appStore.askQuestionInCurrentSession(question)
+  console.log('💬 QAView发送消息:', question)
 
-  // 滚动到底部
-  await nextTick()
-  scrollToBottom()
+  try {
+    // 确保有活跃的会话
+    let sessionId = currentChatSessionId.value
 
-  // 模拟加载时间
-  setTimeout(() => {
+    if (!sessionId || !apiStore.chatSessionsCache.find(s => s.id === sessionId)) {
+      console.log('🆕 创建新的API会话')
+      const session = await apiStore.createChatSession({ title: '新对话' })
+      if (session) {
+        sessionId = session.id
+        appStore.switchChatSession(sessionId)
+      }
+    }
+
+    if (sessionId) {
+      // 使用API Store发送消息
+      await apiStore.sendChatMessage(sessionId, { content: question })
+      console.log('✅ API消息发送成功')
+    } else {
+      throw new Error('无法创建会话')
+    }
+  } catch (error) {
+    console.error('❌ API消息发送失败，使用本地方法:', error)
+    // 降级到App Store的方法
+    appStore.askQuestionInCurrentSession(question)
+  } finally {
     isLoading.value = false
-    nextTick(() => {
-      scrollToBottom()
-      questionInput.value?.focus()
-    })
-  }, 1000)
+
+    // 滚动到底部
+    await nextTick()
+    scrollToBottom()
+    questionInput.value?.focus()
+  }
 }
 
 // 创建新会话
-function createNewSession() {
+async function createNewSession() {
+  console.log('🆕 QAView创建新会话')
+  try {
+    // 优先使用API Store创建会话
+    const session = await apiStore.createChatSession({ title: '新对话' })
+    if (session) {
+      appStore.switchChatSession(session.id)
+      console.log('✅ API会话创建成功:', session)
+      return
+    }
+  } catch (error) {
+    console.error('❌ API会话创建失败，使用本地会话:', error)
+  }
+
+  // 降级到App Store的方法
   appStore.createNewChatSession()
 }
 
@@ -277,9 +385,37 @@ function focusInput() {
   questionInput.value?.focus()
 }
 
+// 测试聊天功能
+async function testChat(question) {
+  console.log('🧪 测试聊天:', question)
+  newQuestion.value = question
+  await askQuestion()
+}
+
+// 调试会话状态
+function debugSessionState() {
+  console.log('🔍 调试会话状态:')
+  console.log('当前会话ID:', currentChatSessionId.value)
+  console.log('API会话数量:', apiStore.chatSessionsCache.length)
+  console.log('API会话列表:', apiStore.chatSessionsCache.map(s => ({
+    id: s.id,
+    title: s.title,
+    messageCount: s.messageCount,
+    messagesLength: s.messages?.length || 0
+  })))
+  console.log('本地会话数量:', appStore.qaChatSessions.length)
+  console.log('本地会话列表:', appStore.qaChatSessions.map(s => ({
+    id: s.id,
+    title: s.title,
+    messagesLength: s.messages?.length || 0
+  })))
+  console.log('当前消息数量:', currentChatMessages.value.length)
+  console.log('当前消息:', currentChatMessages.value)
+}
+
 // 跳转到参考文章
-function jumpToSource(sourceName) {
-  appStore.jumpToSourceFromQA(sourceName)
+function jumpToSource(summaryId) {
+  appStore.jumpToSourceFromQA(summaryId)
 }
 
 // 滚动到底部
@@ -298,7 +434,12 @@ function handleScroll() {
 }
 
 // 监听消息变化，自动滚动到底部
-watch(currentChatMessages, async () => {
+watch(currentChatMessages, async (newMessages, oldMessages) => {
+  console.log('👀 消息变化监听:', {
+    oldCount: oldMessages?.length || 0,
+    newCount: newMessages?.length || 0
+  })
+
   await nextTick()
   if (showScrollToBottom.value) {
     scrollToBottom()
@@ -306,10 +447,34 @@ watch(currentChatMessages, async () => {
 }, { deep: true })
 
 // 组件挂载时滚动到底部并聚焦输入框
-onMounted(() => {
+onMounted(async () => {
   nextTick(() => {
     scrollToBottom()
     questionInput.value?.focus()
   })
+
+  // 调试信息：检查当前聊天状态
+  console.log('🔍 QAView挂载 - 当前状态检查:', {
+    currentChatSessionId: currentChatSessionId.value,
+    apiSessions: apiStore.chatSessionsCache.length,
+    appSessions: appStore.qaChatSessions.length,
+    currentMessages: currentChatMessages.value.length
+  })
+
+  // 如果没有当前会话ID，尝试设置一个默认会话
+  if (!currentChatSessionId.value) {
+    if (apiStore.chatSessionsCache.length > 0) {
+      const firstSession = apiStore.chatSessionsCache[0]
+      appStore.switchChatSession(firstSession.id)
+      console.log('🎯 QAView: 设置默认API会话:', firstSession.id)
+    } else if (appStore.qaChatSessions.length > 0) {
+      const firstSession = appStore.qaChatSessions[0]
+      appStore.switchChatSession(firstSession.id)
+      console.log('🎯 QAView: 设置默认本地会话:', firstSession.id)
+    } else {
+      console.log('🆕 QAView: 没有会话，创建新会话')
+      await createNewSession()
+    }
+  }
 })
 </script>

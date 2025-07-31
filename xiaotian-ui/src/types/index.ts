@@ -1,9 +1,12 @@
 // 应用视图类型
 export type ViewType = 'summary' | 'qa' | 'detail'
 
+// 导出API相关类型
+export * from './api'
+
 // 订阅源接口
 export interface Feed {
-  id: string
+  id: number
   name: string
   description: string
   feedUrl: string
@@ -30,7 +33,7 @@ export interface SourceMaterial {
 
 // 关联摘要接口
 export interface RelatedSummary {
-  id: string
+  id: number
   title: string
   relevanceScore: number    // 关联度评分 0-1
   relationType: 'content' | 'temporal' | 'source' | 'tag'  // 关联类型
@@ -41,7 +44,7 @@ export interface RelatedSummary {
 
 // 摘要接口
 export interface Summary {
-  id: string
+  id: number
   title: string
   content: string
   originalUrl: string           // 保留兼容性，指向主要来源
@@ -65,12 +68,15 @@ export interface ChatMessage {
   content: string
   type: 'user' | 'assistant'
   timestamp: string
-  sources?: string[]
+  sources?: {
+    summaryId: number
+    summaryTitle: string
+  }[]
 }
 
 // 聊天会话接口
 export interface ChatSession {
-  id: string
+  id: number
   title: string
   createdAt: Date
   updatedAt: Date
@@ -88,7 +94,7 @@ export interface NewFeedData {
 // QA返回上下文接口
 export interface QAReturnContext {
   fromQA: boolean
-  sessionId?: string
+  sessionId?: number
 }
 
 // Cron表达式解析结果
@@ -116,7 +122,7 @@ export interface ScheduledTaskConfig {
   nextRun: Date
   lastRun: Date | null
   emailConfig: EmailConfig
-  selectedFeeds: string[] // 选中的订阅源ID列表
+  selectedFeeds: number[]
   aiSummaryEnabled: boolean // 是否启用AI总结
   summaryLength: 'short' | 'medium' | 'long' // 总结长度
 }

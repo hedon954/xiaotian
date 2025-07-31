@@ -341,11 +341,11 @@
 
 <script setup lang="ts">
 import EmailTagsInput from '@/components/EmailTagsInput.vue'
+import { useApiStore } from '@/stores/api'
 import { useAppStore } from '@/stores/app'
 import type { CronParseResult, ScheduledTaskConfig, SyncStatus } from '@/types'
 import { PRESET_CRON_EXPRESSIONS, parseCronExpression } from '@/utils/cronParser'
-import { storeToRefs } from 'pinia'
-import { reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 // Props
 interface Props {
@@ -360,7 +360,12 @@ defineEmits<{
 }>()
 
 const appStore = useAppStore()
-const { feeds } = storeToRefs(appStore)
+const apiStore = useApiStore()
+
+
+const feeds = computed(() => {
+  return apiStore.feedsCache
+})
 
 // 标签页
 const activeTab = ref<'sync' | 'schedule' | 'email'>('sync')
@@ -451,60 +456,39 @@ watch(() => scheduledTask.value.cronExpression, () => {
   parseCron()
 })
 
-// 开始手动同步
+// 开始手动同步 - 现在使用 API Store
 const startManualSync = async () => {
   if (syncStatus.value.isRunning) return
 
-  syncStatus.value.isRunning = true
-  syncStatus.value.progress = 0
-  syncStatus.value.errors = []
+  // 使用 App Store 的同步方法
+  await appStore.manualSync({
+    includeAI: manualSyncConfig.includeAISummary,
+    sendEmail: manualSyncConfig.sendEmailNotification
+  })
+}
 
+// 保存设置 - 现在使用 API Store
+const saveSettings = async () => {
   try {
-    // 模拟同步过程
-    const steps = [
-      { action: '连接到订阅源服务器...', duration: 1000 },
-      { action: '获取最新文章列表...', duration: 2000 },
-      { action: '解析文章内容...', duration: 1500 },
-      { action: 'AI内容分析与总结...', duration: 3000 },
-      { action: '更新本地数据...', duration: 1000 },
-      { action: '发送邮件通知...', duration: 500 }
-    ]
-
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i]
-      syncStatus.value.currentAction = step.action
-
-      await new Promise(resolve => setTimeout(resolve, step.duration))
-      syncStatus.value.progress = Math.round(((i + 1) / steps.length) * 100)
+    // 如果是新任务则创建，否则更新
+    if (scheduledTask.value.id === 'default-task') {
+      await appStore.createScheduledTask(scheduledTask.value)
+    } else {
+      await appStore.updateScheduledTask(scheduledTask.value.id, scheduledTask.value)
     }
 
-    syncStatus.value.lastSyncTime = new Date()
-    appStore.showFeedbackMessage('同步完成！已获取最新内容并生成AI总结。')
+    appStore.showFeedbackMessage('设置已保存')
   } catch (error) {
-    console.error('同步失败:', error)
-    syncStatus.value.errors.push({
-      feedId: 'general',
-      feedName: '系统',
-      error: '同步过程中发生未知错误',
-      timestamp: new Date()
-    })
-    appStore.showFeedbackMessage('同步失败，请检查网络连接后重试。')
-  } finally {
-    syncStatus.value.isRunning = false
-    syncStatus.value.currentAction = ''
+    console.error('保存设置失败:', error)
+    appStore.showFeedbackMessage('保存设置失败，请稍后重试')
   }
 }
 
-// 保存设置
-const saveSettings = () => {
-  // TODO: 保存到本地存储或发送到后端
-  console.log('保存设置:', {
-    scheduledTask: scheduledTask.value,
-    manualSyncConfig
-  })
-
-  appStore.showFeedbackMessage('设置已保存')
-}
+// 组件挂载时加载数据
+onMounted(() => {
+  apiStore.loadFeeds()
+  apiStore.loadTasks()
+})
 </script>
 
 <style scoped>

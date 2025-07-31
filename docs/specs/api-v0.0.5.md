@@ -1,14 +1,38 @@
-# Xiaotian v0.0.4 RESTful API 接口文档
+# Xiaotian v0.0.5 RESTful API 接口文档
 
-**版本**: v0.0.4
+**版本**: v0.0.5
 **基础 URL**: `/api/v1`
-**发布日期**: 2025 年 7 月 31 日
+**发布日期**: 2025 年 8 月 1 日
 **内容类型**: `application/json`
 **字符编码**: `UTF-8`
 
 ## 📋 概述
 
-本文档定义了 Xiaotian UI v0.0.4 版本所需的所有后端 RESTful API 接口，涵盖订阅源管理、内容摘要、智能问答、定时任务、邮件通知等核心功能模块。
+本文档定义了 Xiaotian UI v0.0.5 版本所需的所有后端 RESTful API 接口，涵盖订阅源管理、内容摘要、智能问答、定时任务、邮件通知等核心功能模块。
+
+## 🆕 v0.0.5 版本重要变更
+
+### 📊 ID 格式统一
+
+- **订阅源 ID**: 使用 number 类型（如 `1`）
+- **摘要 ID**: 使用 number 类型（如 `1`）
+- **聊天会话 ID**: 使用 number 类型（如 `1`）
+- **定时任务 ID**: 使用 string 类型（如 `"task-daily-tech"`）
+- **笔记 ID**: 使用 number 类型（如 `1`）
+- **消息 ID**: 使用 string 类型（如 `"1"`）
+
+### 📅 时间格式统一
+
+- **创建/更新时间**: 使用 Date 对象格式（如 `"2025-07-29T10:30:00.000Z"`）
+- **发布时间**: 摘要使用中文日期格式（如 `"2025年7月8日"`）
+- **其他时间戳**: 根据具体使用场景
+
+### 🔧 数据结构优化
+
+- 订阅源的 `summaryCount` 字段更名为 `count`
+- 摘要详情包含完整的 `notesList`、`sourceMaterials`、`relatedSummaries`
+- 聊天会话包含完整的 `messages` 数组
+- 定时任务新增 `cronDescription` 字段
 
 ## 🎯 API 设计原则
 
@@ -29,8 +53,8 @@
   "code": 0,
   "data": {},
   "message": "操作成功",
-  "trace_id": "trace-20250729-103000-abc123",
-  "request_id": "req-20250729-103000-def456"
+  "trace_id": "trace-20250801-103000-abc123",
+  "request_id": "req-20250801-103000-def456"
 }
 ```
 
@@ -41,8 +65,8 @@
   "code": 40001,
   "data": null,
   "message": "请求参数无效：feedUrl 必须是有效的URL格式",
-  "trace_id": "trace-20250729-103000-abc123",
-  "request_id": "req-20250729-103000-def456"
+  "trace_id": "trace-20250801-103000-abc123",
+  "request_id": "req-20250801-103000-def456"
 }
 ```
 
@@ -62,13 +86,6 @@
 
 **说明**: 以下接口文档中的**返回结构**仅展示 `data` 字段的内容结构。
 
-**ID 格式说明**:
-
-- **资源 ID** (如订阅源、摘要等): 使用自增整数
-- **消息 ID** (聊天消息): 使用 UUID 格式 (`msg-{uuid}`)
-- **会话 ID** (聊天会话): 使用自增整数
-- **执行 ID** (任务执行): 使用时间戳格式 (`exec-{timestamp}`)
-
 ---
 
 ## 🗂 1. 订阅源管理 (Feeds Management)
@@ -78,11 +95,6 @@
 **GET** `/feeds`
 
 **请求参数**
-
-- `page` (可选): 页码，默认 1
-- `pageSize` (可选): 每页大小，默认 20，最大 100
-- `category` (可选): 分类筛选
-- `status` (可选): 状态筛选 (`active`, `loading`, `error`)
 
 **返回结构**
 
@@ -98,9 +110,9 @@
       "category": "科技",
       "status": "active",
       "icon": "🔥",
-      "createdAt": "2025-07-01T10:00:00Z",
-      "lastUpdated": "2025-07-29T08:30:00Z",
-      "summaryCount": 25
+      "createdAt": "2025-07-01T10:00:00.000Z",
+      "lastUpdated": "2025-07-29T08:30:00.000Z",
+      "count": 25
     }
   ]
 }
@@ -144,9 +156,9 @@
   "category": "分类名称",
   "icon": "🔖",
   "status": "loading",
-  "lastUpdated": null,
-  "createdAt": "2025-07-29T10:30:00Z",
-  "summaryCount": 0
+  "lastUpdated": "2025-07-29T10:30:00.000Z",
+  "createdAt": "2025-07-29T10:30:00.000Z",
+  "count": 0
 }
 ```
 
@@ -178,9 +190,9 @@
   "icon": "🔖",
   "feedUrl": "https://example.com/feed.xml",
   "status": "active",
-  "lastUpdated": "2025-07-29T10:30:00Z",
-  "createdAt": "2025-07-01T10:00:00Z",
-  "summaryCount": 25
+  "lastUpdated": "2025-07-29T10:30:00.000Z",
+  "createdAt": "2025-07-01T10:00:00.000Z",
+  "count": 25
 }
 ```
 
@@ -214,15 +226,9 @@ null
   "category": "科技",
   "icon": "🔥",
   "status": "active",
-  "lastUpdated": "2025-07-29T08:30:00Z",
-  "createdAt": "2025-07-01T10:00:00Z",
-  "summaryCount": 25,
-  "stats": {
-    "totalSummaries": 150,
-    "last30DaySummaries": 25,
-    "avgSummariesPerDay": 5.2,
-    "lastSyncDuration": 45
-  }
+  "lastUpdated": "2025-07-29T08:30:00.000Z",
+  "createdAt": "2025-07-01T10:00:00.000Z",
+  "count": 25
 }
 ```
 
@@ -236,7 +242,7 @@ null
 
 **请求参数**
 
-- `feedId` (可选): 订阅源 ID 筛选
+- `feedId`: 订阅源 ID 筛选
 - `page` (可选): 页码，默认 1
 - `pageSize` (可选): 每页大小，默认 20
 - `startDate` (可选): 开始日期 (ISO 8601)
@@ -253,16 +259,50 @@ null
       "id": 1,
       "title": "大型语言模型在代码生成领域的最新进展",
       "content": "近期研究表明，结合了静态分析工具的 LLM 在代码生成任务上表现出了惊人的准确性...",
+      "fullContent": "# LLM 代码生成领域的技术突破...",
       "originalUrl": "https://news.ycombinator.com/item?id=123456",
-      "publishedAt": "2025-07-08T09:00:00Z",
+      "publishedAt": "2025年7月8日",
       "tags": ["AI", "代码生成", "静态分析", "LLM"],
       "feedId": 1,
       "feedName": "Hacker News",
       "noteCount": 2,
       "sourceMaterialCount": 3,
       "relatedSummaryCount": 2,
-      "createdAt": "2025-07-08T10:30:00Z",
-      "updatedAt": "2025-07-08T15:20:00Z"
+      "createdAt": "2025-07-08T10:30:00.000Z",
+      "updatedAt": "2025-07-08T15:20:00.000Z",
+      "notesList": [
+        {
+          "id": 1,
+          "content": "这个技术可能会改变整个编程行业",
+          "createdAt": "2025-01-15 10:30"
+        }
+      ],
+      "sourceMaterials": [
+        {
+          "id": 1,
+          "title": "LLMs and Static Analysis: A Perfect Match for Code Generation",
+          "url": "https://arxiv.org/abs/2025.12345",
+          "publishedAt": "2025-01-14T10:30:00Z",
+          "author": "Dr. Sarah Chen",
+          "source": "arXiv.org",
+          "excerpt": "本研究探讨了大型语言模型与静态分析工具结合...",
+          "wordCount": 8500,
+          "readingTime": 12,
+          "language": "en",
+          "contentType": "article"
+        }
+      ],
+      "relatedSummaries": [
+        {
+          "id": 3,
+          "title": "Rust 1.75 版本发布：异步编程的重大改进",
+          "relevanceScore": 0.75,
+          "relationType": "content",
+          "sharedTags": ["编程语言", "性能优化"],
+          "publishedAt": "2025年7月6日",
+          "excerpt": "Rust 1.75版本在编程语言演进方面的重要突破..."
+        }
+      ]
     }
   ],
   "pagination": {
@@ -287,19 +327,25 @@ null
   "content": "近期研究表明，结合了静态分析工具的 LLM...",
   "fullContent": "# LLM 代码生成领域的技术突破\n\n## 🔬 研究背景...",
   "originalUrl": "https://news.ycombinator.com/item?id=123456",
-  "publishedAt": "2025-07-08T09:00:00Z",
+  "publishedAt": "2025年7月8日",
   "tags": ["AI", "代码生成", "静态分析", "LLM"],
   "feedId": 1,
   "feedName": "Hacker News",
+  "noteCount": 2,
+  "sourceMaterialCount": 3,
+  "relatedSummaryCount": 2,
+  "createdAt": "2025-07-08T10:30:00.000Z",
+  "updatedAt": "2025-07-08T15:20:00.000Z",
   "notesList": [
     {
+      "id": 1,
       "content": "这个技术可能会改变整个编程行业",
-      "createdAt": "2025-01-15T10:30:00Z"
+      "createdAt": "2025-01-15 10:30"
     }
   ],
   "sourceMaterials": [
     {
-      "id": "source-1-1",
+      "id": 1,
       "title": "LLMs and Static Analysis: A Perfect Match for Code Generation",
       "url": "https://arxiv.org/abs/2025.12345",
       "publishedAt": "2025-01-14T10:30:00Z",
@@ -319,12 +365,10 @@ null
       "relevanceScore": 0.75,
       "relationType": "content",
       "sharedTags": ["编程语言", "性能优化"],
-      "publishedAt": "2025-07-06T09:00:00Z",
+      "publishedAt": "2025年7月6日",
       "excerpt": "Rust 1.75版本在编程语言演进方面的重要突破..."
     }
-  ],
-  "createdAt": "2025-07-08T10:30:00Z",
-  "updatedAt": "2025-07-08T15:20:00Z"
+  ]
 }
 ```
 
@@ -348,7 +392,7 @@ null
       "relevanceScore": 0.75,
       "relationType": "content",
       "sharedTags": ["编程语言", "性能优化"],
-      "publishedAt": "2025-07-06T09:00:00Z",
+      "publishedAt": "2025年7月6日",
       "excerpt": "Rust 1.75版本在编程语言演进方面的重要突破..."
     }
   ]
@@ -375,9 +419,10 @@ null
 
 ```json
 {
+  "id": 1,
   "content": "这是我的笔记内容",
-  "createdAt": "2025-07-29T10:30:00Z",
-  "updatedAt": "2025-07-29T10:30:00Z"
+  "createdAt": "2025-07-29T10:30:00.000Z",
+  "updatedAt": "2025-07-29T10:30:00.000Z"
 }
 ```
 
@@ -397,9 +442,10 @@ null
 
 ```json
 {
+  "id": 1,
   "content": "这是我的笔记内容",
-  "createdAt": "2025-07-29T10:30:00Z",
-  "updatedAt": "2025-07-29T10:30:00Z"
+  "createdAt": "2025-07-29T10:30:00.000Z",
+  "updatedAt": "2025-07-29T10:30:00.000Z"
 }
 ```
 
@@ -464,9 +510,29 @@ null
     {
       "id": 1,
       "title": "Rust 性能更新",
-      "createdAt": "2025-07-29T10:00:00Z",
-      "updatedAt": "2025-07-29T10:30:00Z",
-      "messageCount": 4
+      "createdAt": "2025-07-29T10:00:00.000Z",
+      "updatedAt": "2025-07-29T10:30:00.000Z",
+      "messageCount": 4,
+      "messages": [
+        {
+          "id": "1",
+          "type": "user",
+          "content": "最近 Rust 有哪些值得关注的性能更新?",
+          "timestamp": "2025-07-29T10:00:00Z"
+        },
+        {
+          "id": "2",
+          "type": "assistant",
+          "content": "根据你的知识库，Rust 在最新版本中发布了重要的异步编程改进...",
+          "sources": [
+            {
+              "summaryId": 3,
+              "summaryTitle": "Rust 1.75 版本发布：异步编程的重大改进"
+            }
+          ],
+          "timestamp": "2025-07-29T10:30:00Z"
+        }
+      ]
     }
   ],
   "pagination": {
@@ -502,11 +568,11 @@ null
 {
   "id": 1,
   "title": "新的聊天会话",
-  "createdAt": "2025-07-29T10:30:00Z",
-  "updatedAt": "2025-07-29T10:30:00Z",
+  "createdAt": "2025-07-29T10:30:00.000Z",
+  "updatedAt": "2025-07-29T10:30:00.000Z",
   "messages": [
     {
-      "id": "msg-550e8400-e29b-41d4-a716-446655440002",
+      "id": "1",
       "type": "user",
       "content": "你好，我想了解最新的技术动态",
       "timestamp": "2025-07-29T10:30:00Z"
@@ -525,20 +591,25 @@ null
 {
   "id": 1,
   "title": "Rust 性能更新",
-  "createdAt": "2025-07-29T10:00:00Z",
-  "updatedAt": "2025-07-29T10:30:00Z",
+  "createdAt": "2025-07-29T10:00:00.000Z",
+  "updatedAt": "2025-07-29T10:30:00.000Z",
   "messages": [
     {
-      "id": "msg-550e8400-e29b-41d4-a716-446655440000",
+      "id": "1",
       "type": "user",
       "content": "最近 Rust 有哪些值得关注的性能更新?",
       "timestamp": "2025-07-29T10:00:00Z"
     },
     {
-      "id": "msg-550e8400-e29b-41d4-a716-446655440001",
+      "id": "2",
       "type": "assistant",
       "content": "根据你的知识库，Rust 在最新版本中发布了重要的异步编程改进...",
-      "sources": ["Rust 1.75 版本发布：异步编程的重大改进"],
+      "sources": [
+        {
+          "summaryId": 3,
+          "summaryTitle": "Rust 1.75 版本发布：异步编程的重大改进"
+        }
+      ],
       "timestamp": "2025-07-29T10:30:00Z"
     }
   ]
@@ -555,8 +626,8 @@ null
 {
   "content": "请详细介绍一下这些改进的具体内容",
   "context": {
-    "summaryId": "summary-3",
-    "feedId": "rust-blog"
+    "summaryId": 3,
+    "feedId": 1
   }
 }
 ```
@@ -571,16 +642,21 @@ null
 ```json
 {
   "userMessage": {
-    "id": "msg-550e8400-e29b-41d4-a716-446655440003",
+    "id": "3",
     "type": "user",
     "content": "请详细介绍一下这些改进的具体内容",
     "timestamp": "2025-07-29T10:35:00Z"
   },
   "assistantMessage": {
-    "id": "msg-550e8400-e29b-41d4-a716-446655440004",
+    "id": "4",
     "type": "assistant",
     "content": "这些改进主要包括以下几个方面：\n1. 异步函数的性能优化...",
-    "sources": ["Rust 1.75 版本发布：异步编程的重大改进"],
+    "sources": [
+      {
+        "summaryId": 3,
+        "summaryTitle": "Rust 1.75 版本发布：异步编程的重大改进"
+      }
+    ],
     "timestamp": "2025-07-29T10:35:30Z"
   }
 }
@@ -614,7 +690,7 @@ null
 {
   "id": 1,
   "title": "更新后的会话标题",
-  "updatedAt": "2025-07-29T10:40:00Z"
+  "updatedAt": "2025-07-29T10:40:00.000Z"
 }
 ```
 
@@ -630,7 +706,7 @@ null
 
 ```json
 {
-  "feedIds": ["hacker-news", "rust-blog"],
+  "feedIds": [1, 2],
   "options": {
     "includeAI": true,
     "sendEmail": false,
@@ -652,9 +728,9 @@ null
 
 ```json
 {
-  "syncId": "sync-20250729-103000",
+  "syncId": "sync-20250801-103000",
   "status": "started",
-  "startTime": "2025-07-29T10:30:00Z",
+  "startTime": "2025-08-01T10:30:00.000Z",
   "estimatedDuration": 120,
   "feedCount": 2
 }
@@ -674,8 +750,8 @@ null
 {
   "isRunning": true,
   "currentSync": {
-    "syncId": "sync-20250729-103000",
-    "startTime": "2025-07-29T10:30:00Z",
+    "syncId": "sync-20250801-103000",
+    "startTime": "2025-08-01T10:30:00.000Z",
     "progress": 65,
     "currentAction": "正在分析 Rust Blog 的新内容...",
     "feedsProcessed": 1,
@@ -683,14 +759,14 @@ null
     "itemsProcessed": 23,
     "itemsTotal": 35
   },
-  "lastSyncTime": "2025-07-29T08:15:00Z",
+  "lastSyncTime": "2025-08-01T08:15:00.000Z",
   "lastSyncDuration": 85,
   "errors": [
     {
-      "feedId": "reddit",
+      "feedId": 3,
       "feedName": "Reddit Programming",
       "error": "连接超时",
-      "timestamp": "2025-07-29T08:16:30Z"
+      "timestamp": "2025-08-01T08:16:30Z"
     }
   ]
 }
@@ -713,9 +789,9 @@ null
 {
   "items": [
     {
-      "syncId": "sync-20250729-081500",
-      "startTime": "2025-07-29T08:15:00Z",
-      "endTime": "2025-07-29T08:16:25Z",
+      "syncId": "sync-20250801-081500",
+      "startTime": "2025-08-01T08:15:00.000Z",
+      "endTime": "2025-08-01T08:16:25.000Z",
       "duration": 85,
       "status": "completed",
       "feedsProcessed": 3,
@@ -742,7 +818,7 @@ null
 
 ```json
 {
-  "syncId": "sync-20250729-103000"
+  "syncId": "sync-20250801-103000"
 }
 ```
 
@@ -750,9 +826,9 @@ null
 
 ```json
 {
-  "syncId": "sync-20250729-103000",
+  "syncId": "sync-20250801-103000",
   "status": "cancelled",
-  "cancelledAt": "2025-07-29T10:35:00Z"
+  "cancelledAt": "2025-08-01T10:35:00.000Z"
 }
 ```
 
@@ -774,8 +850,9 @@ null
       "name": "每日技术资讯推送",
       "enabled": true,
       "cronExpression": "0 9 * * *",
-      "nextRun": "2025-07-30T09:00:00Z",
-      "lastRun": "2025-07-29T09:00:00Z",
+      "cronDescription": "每天上午9点",
+      "nextRun": "2025-08-02T09:00:00.000Z",
+      "lastRun": "2025-08-01T09:00:00.000Z",
       "lastRunStatus": "success",
       "lastRunDuration": 120,
       "emailConfig": {
@@ -783,11 +860,11 @@ null
         "recipientEmails": ["user@example.com"],
         "senderName": "小天AI助手"
       },
-      "selectedFeeds": ["hacker-news", "rust-blog"],
+      "selectedFeeds": [1, 2],
       "aiSummaryEnabled": true,
       "summaryLength": "medium",
-      "createdAt": "2025-07-01T10:00:00Z",
-      "updatedAt": "2025-07-29T09:00:00Z"
+      "createdAt": "2025-07-01T10:00:00.000Z",
+      "updatedAt": "2025-08-01T09:00:00.000Z"
     }
   ]
 }
@@ -808,7 +885,7 @@ null
     "recipientEmails": ["user@example.com", "team@example.com"],
     "senderName": "技术资讯助手"
   },
-  "selectedFeeds": ["hacker-news", "vue-blog"],
+  "selectedFeeds": [1, 3],
   "aiSummaryEnabled": true,
   "summaryLength": "long",
   "enabled": false
@@ -827,22 +904,23 @@ null
 
 ```json
 {
-  "id": "task-new",
+  "id": "task-workday-tech",
   "name": "工作日技术摘要",
   "enabled": false,
   "cronExpression": "0 9 * * 1-5",
-  "nextRun": "2025-07-30T09:00:00Z",
+  "cronDescription": "工作日上午9点",
+  "nextRun": "2025-08-04T09:00:00.000Z",
   "lastRun": null,
   "emailConfig": {
     "enabled": true,
     "recipientEmails": ["user@example.com", "team@example.com"],
     "senderName": "技术资讯助手"
   },
-  "selectedFeeds": ["hacker-news", "vue-blog"],
+  "selectedFeeds": [1, 3],
   "aiSummaryEnabled": true,
   "summaryLength": "long",
-  "createdAt": "2025-07-29T10:30:00Z",
-  "updatedAt": "2025-07-29T10:30:00Z"
+  "createdAt": "2025-08-01T10:30:00.000Z",
+  "updatedAt": "2025-08-01T10:30:00.000Z"
 }
 ```
 
@@ -873,8 +951,9 @@ null
   "name": "更新后的任务名称",
   "enabled": true,
   "cronExpression": "0 18 * * *",
-  "nextRun": "2025-07-29T18:00:00Z",
-  "updatedAt": "2025-07-29T10:35:00Z"
+  "cronDescription": "每天下午6点",
+  "nextRun": "2025-08-01T18:00:00.000Z",
+  "updatedAt": "2025-08-01T10:35:00.000Z"
 }
 ```
 
@@ -897,8 +976,8 @@ null
 ```json
 {
   "taskId": "task-daily-tech",
-  "executionId": "exec-20250729-103500",
-  "startTime": "2025-07-29T10:35:00Z",
+  "executionId": "exec-20250801-103500",
+  "startTime": "2025-08-01T10:35:00.000Z",
   "status": "started"
 }
 ```
@@ -918,9 +997,9 @@ null
 {
   "items": [
     {
-      "executionId": "exec-20250729-090000",
-      "startTime": "2025-07-29T09:00:00Z",
-      "endTime": "2025-07-29T09:02:15Z",
+      "executionId": "exec-20250801-090000",
+      "startTime": "2025-08-01T09:00:00.000Z",
+      "endTime": "2025-08-01T09:02:15.000Z",
       "duration": 135,
       "status": "success",
       "feedsProcessed": 2,
@@ -1013,7 +1092,7 @@ null
     "includeOriginalLinks": true,
     "groupByFeed": false
   },
-  "updatedAt": "2025-07-29T10:40:00Z"
+  "updatedAt": "2025-08-01T10:40:00.000Z"
 }
 ```
 
@@ -1034,8 +1113,8 @@ null
 
 ```json
 {
-  "messageId": "test-20250729-104000",
-  "sentAt": "2025-07-29T10:40:00Z",
+  "messageId": "test-20250801-104000",
+  "sentAt": "2025-08-01T10:40:00.000Z",
   "recipients": ["test@example.com"],
   "deliveryStatus": "sent"
 }
@@ -1073,7 +1152,7 @@ null
   "username": "newemail@example.com",
   "authConfigured": true,
   "useTLS": true,
-  "updatedAt": "2025-07-29T10:45:00Z"
+  "updatedAt": "2025-08-01T10:45:00.000Z"
 }
 ```
 
@@ -1112,7 +1191,7 @@ null
     "totalRuns": 120,
     "successRate": 0.95,
     "avgDuration": 78,
-    "lastSync": "2025-07-29T09:00:00Z"
+    "lastSync": "2025-08-01T09:00:00.000Z"
   }
 }
 ```
@@ -1126,8 +1205,8 @@ null
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-07-29T10:50:00Z",
-  "version": "v0.0.4",
+  "timestamp": "2025-08-01T10:50:00.000Z",
+  "version": "v0.0.5",
   "uptime": 86400,
   "checks": {
     "database": {
@@ -1140,7 +1219,7 @@ null
     },
     "email": {
       "status": "healthy",
-      "lastTest": "2025-07-29T09:30:00Z"
+      "lastTest": "2025-08-01T09:30:00.000Z"
     },
     "feeds": {
       "status": "healthy",
@@ -1169,13 +1248,13 @@ null
 {
   "items": [
     {
-      "id": "log-20250729-104500",
+      "id": "log-20250801-104500",
       "level": "error",
       "message": "订阅源同步失败",
       "module": "sync",
-      "feedId": "reddit",
+      "feedId": 3,
       "error": "Connection timeout after 30s",
-      "timestamp": "2025-07-29T10:45:00Z",
+      "timestamp": "2025-08-01T10:45:00.000Z",
       "details": {
         "url": "https://www.reddit.com/r/programming/.rss",
         "retryCount": 3
@@ -1218,7 +1297,7 @@ null
   "cleanupType": "old_logs",
   "itemsDeleted": 250,
   "spaceFreed": "15.2MB",
-  "executedAt": "2025-07-29T10:50:00Z"
+  "executedAt": "2025-08-01T10:50:00.000Z"
 }
 ```
 
@@ -1250,6 +1329,26 @@ null
 
 ---
 
-**文档版本**: v0.0.4
-**最后更新**: 2025 年 7 月 31 日
+**文档版本**: v0.0.5
+**最后更新**: 2025 年 8 月 1 日
 **维护团队**: Xiaotian Development Team
+
+## 🔧 重要技术说明
+
+### 数据类型映射
+
+| 字段类型   | v0.0.4 格式 | v0.0.5 格式   | 说明                     |
+| ---------- | ----------- | ------------- | ------------------------ |
+| 资源 ID    | `string`    | `number`      | 订阅源、摘要、会话等 ID  |
+| 消息 ID    | `string`    | `string`      | 聊天消息 ID 保持字符串   |
+| 任务 ID    | `string`    | `string`      | 定时任务 ID 保持字符串   |
+| 创建时间   | ISO 时间戳  | Date 对象格式 | 精确到毫秒的时间格式     |
+| 发布时间   | ISO 时间戳  | 中文日期格式  | 摘要发布时间使用中文格式 |
+| 订阅源列表 | `string[]`  | `number[]`    | 定时任务中的订阅源 ID    |
+
+### 向后兼容
+
+- 前端组件无需修改，直接使用 API 返回的数据结构
+- 减少了数据适配器的使用，提高了性能
+- 保持了原有的用户界面和交互体验
+- 新增字段向前兼容，不影响现有功能

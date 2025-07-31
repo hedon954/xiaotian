@@ -273,8 +273,8 @@ interface ScheduledTaskConfig {
 
 ## 👥 贡献者
 
-- **主要开发**: AI Assistant
-- **项目指导**: 用户
+- **主要开发**: Cursor
+- **项目指导**: Hedon
 - **功能设计**: 定时任务系统、邮件通知、手动同步
 - **UI/UX 设计**: 设置面板、标签输入、进度反馈
 

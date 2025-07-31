@@ -209,8 +209,8 @@ export interface Summary {
 
 ## 👥 贡献者
 
-- 主要开发: AI Assistant
-- 项目指导: 用户
+- 主要开发: Cursor
+- 项目指导: Hedon
 - 技术架构: 重构设计和 TypeScript 迁移
 
 ## 📞 技术支持

@@ -1,0 +1,27 @@
+pub use sea_orm_migration::prelude::*;
+
+mod m20240101_000001_create_feeds_table;
+mod m20240101_000002_create_summaries_table;
+mod m20240101_000003_create_chat_sessions_table;
+mod m20240101_000004_create_chat_messages_table;
+mod m20240101_000005_create_summary_notes_table;
+mod m20240101_000006_create_scheduled_tasks_table;
+mod m20240101_000007_create_task_executions_table;
+mod m20240101_000008_create_sync_histories_table;
+mod m20240101_000009_create_source_materials_table;
+mod m20240101_000010_create_related_summaries_table;
+mod m20240101_000011_create_scheduled_task_feeds_table;
+mod m20240101_000012_create_system_logs_table;
+
+pub use m20240101_000001_create_feeds_table::Migration as CreateFeedsTable;
+pub use m20240101_000002_create_summaries_table::Migration as CreateSummariesTable;
+pub use m20240101_000003_create_chat_sessions_table::Migration as CreateChatSessionsTable;
+pub use m20240101_000004_create_chat_messages_table::Migration as CreateChatMessagesTable;
+pub use m20240101_000005_create_summary_notes_table::Migration as CreateSummaryNotesTable;
+pub use m20240101_000006_create_scheduled_tasks_table::Migration as CreateScheduledTasksTable;
+pub use m20240101_000007_create_task_executions_table::Migration as CreateTaskExecutionsTable;
+pub use m20240101_000008_create_sync_histories_table::Migration as CreateSyncHistoriesTable;
+pub use m20240101_000009_create_source_materials_table::Migration as CreateSourceMaterialsTable;
+pub use m20240101_000010_create_related_summaries_table::Migration as CreateRelatedSummariesTable;
+pub use m20240101_000011_create_scheduled_task_feeds_table::Migration as CreateScheduledTaskFeedsTable;
+pub use m20240101_000012_create_system_logs_table::Migration as CreateSystemLogsTable;

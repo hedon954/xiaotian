@@ -1,0 +1,78 @@
+[package]
+name = "xiaotian-api"
+version = "0.1.0"
+edition = "2021"
+authors = ["Xiaotian Development Team"]
+description = "Xiaotian RSS subscription and AI summarization service backend"
+
+[dependencies]
+# Web framework
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+hyper = "1.0"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "json"] }
+sea-orm = { version = "0.12", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-chrono", "with-uuid", "with-json"] }
+sea-orm-migration = "0.12"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Date and time
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "timeout"] }
+
+# Feed parsing
+feed-rs = "2.0"
+url = "2.0"
+
+# Async utilities
+futures = "0.3"
+async-trait = "0.1"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Configuration
+dotenvy = "0.15"
+config = "0.14"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+regex = "1.0"
+
+# Email
+lettre = "0.11"
+
+# Task scheduling
+tokio-cron-scheduler = "0.10"
+
+# Caching
+redis = { version = "0.24", features = ["tokio-comp", "json"] }
+
+# AI integration (placeholder)
+# openai-api-rust = "0.1" # When we add AI features
+
+[dev-dependencies]
+tempfile = "3.0"
+testcontainers = "0.15"
+
+[[bin]]
+name = "xiaotian-api"
+path = "src/main.rs"
+
+[lib]
+name = "xiaotian_api"
+path = "src/lib.rs"
